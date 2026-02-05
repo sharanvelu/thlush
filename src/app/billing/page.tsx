@@ -2,7 +2,8 @@
 
 import BillingItem from "@/components/BillingItem";
 import {useState} from "react";
-import {MenuItem} from "@/types/menu";
+import {MenuItem as TypeMenuItem} from "@/types/menu";
+import {BillingItem as TypeBillingItem} from "@/types/billing";
 import {MenuItems as MenuItemsData} from "@/data/MenuItem";
 import InputField from "@/components/Inputs/Input";
 
@@ -10,8 +11,61 @@ export default function SetupPage() {
   const [customerName, setCustomerName] = useState<string>('');
   const [filterValue, setFilterValue] = useState<string>('');
 
+  const [billingItems, setBillingItems] = useState<TypeBillingItem[]>([]);
+
   const filterItems = (value: string) => {
     setFilterValue(value)
+  }
+
+  const updateItem = (item: TypeBillingItem, count: number) => {
+    setBillingItems((prev: TypeBillingItem[]) => {
+      const idx: number = prev.findIndex((x: TypeBillingItem): boolean => x.id === item.id);
+
+      if (idx !== -1) {
+        // update existing
+        const next: TypeBillingItem[] = [...prev];
+        next[idx] = {...next[idx], count};
+        return next;
+      }
+
+      // add new
+      return [...prev, {...item, count}];
+    });
+  }
+
+  const calculateBillingItemPrice = (billingItem: TypeBillingItem): number => {
+    const totalAmountBeforeTax: number = billingItem.price * billingItem.count;
+    const totalTax: number = totalAmountBeforeTax * billingItem.tax / 100;
+
+    return totalAmountBeforeTax + totalTax;
+  }
+
+  const totalBillingAmountWithoutTax = (): string => {
+    return billingItems.reduce(
+        (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count),
+        0
+      ).toFixed(2);
+  }
+
+  const totalTax = (): string => {
+    return billingItems.reduce(
+        (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count * billingItem.tax / 100),
+        0
+      ).toFixed(2);
+  }
+
+  const totalBillingAmount = (): string => {
+    return billingItems.reduce(
+        (sum: number, billingItem: TypeBillingItem): number => sum + calculateBillingItemPrice(billingItem),
+        0
+      ).toFixed(2);
+  }
+
+  const clearBilling = () => {
+    const confirmation: boolean = window.confirm('Do you really want to clear the items?')
+    if (confirmation) {
+      setBillingItems([])
+    }
   }
 
   return (
@@ -51,8 +105,8 @@ export default function SetupPage() {
               onchange={(e) => filterItems(e.target.value)}
             />
             <section className="grid gap-4.5" style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}>
-              {MenuItemsData.map((menuItem: MenuItem) => (
-                <BillingItem key={menuItem.id} menu={menuItem} defaultCount={0}/>
+              {MenuItemsData.map((menuItem: TypeMenuItem) => (
+                <BillingItem key={menuItem.id} menu={menuItem} billingCount={0} updateItem={updateItem}/>
               ))}
             </section>
           </div>
@@ -60,7 +114,14 @@ export default function SetupPage() {
           <section className="mt-8 pt-6 border-t border-dashed border-[#e0d7cf] grid gap-3.5 items-center"
                    style={{gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))"}}>
             <div className="text-sm text-[#555] dark:text-gray-300 min-h-15">
-              No food items selected yet. <br/>
+              {billingItems.map((billingItem: TypeBillingItem) => (
+                <div key={billingItem.id}>
+                  <span>{billingItem.count} x {billingItem.name} = {`${billingItem.currency} ${calculateBillingItemPrice(billingItem)}`}</span>
+                </div>
+              ))}
+              {billingItems.length == 0 && (
+                <span>No food items selected yet. <br/></span>
+              )}
             </div>
             <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5">
               {customerName !== '' && (
@@ -70,11 +131,14 @@ export default function SetupPage() {
 
             <div className="flex flex-col justify-between text-xl font-bold h-full">
               <div className="py-5">
-                Grand Total: ₹<span id="totalAmount">0.00</span>
+                <p className="text-right">Item Total: ₹<span>{totalBillingAmountWithoutTax()}</span></p>
+                <p className="text-right">Total Tax: ₹<span>{totalTax()}</span></p>
+                <p className="text-right">Grand Total: ₹<span>{totalBillingAmount()}</span></p>
               </div>
               <div className="flex flex-col gap-3 flex-wrap">
                 <button
                   className="flex-1 min-w-40 rounded-[14px] px-5 py-3.5 text-[15px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer"
+                  onClick={clearBilling}
                 >Clear All
                 </button>
                 <button
