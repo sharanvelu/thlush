@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {MenuItem, MenuItemDto} from "@/types/menu";
 import {useRouter} from 'next/navigation';
 import Loader from "@/components/Loader";
@@ -6,11 +6,12 @@ import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
 
 interface MenuAddProps {
-  menuItem?: Partial<MenuItem>;
-  isEditing?: boolean;
+  menuItem?: Partial<MenuItem | null>;
+  isEditing: boolean;
+  clearForm: () => void;
 }
 
-export default function MenuAdd({menuItem, isEditing}: MenuAddProps) {
+export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) {
   const [formData, setFormData] = useState<MenuItemDto>({
     name: menuItem?.name || '',
     description: menuItem?.description || '',
@@ -94,6 +95,18 @@ export default function MenuAdd({menuItem, isEditing}: MenuAddProps) {
     }
   };
 
+  useEffect(() => {
+    setFormData({
+      name: menuItem?.name || '',
+      description: menuItem?.description || '',
+      price: menuItem?.price || 0,
+      tax: menuItem?.tax || 0,
+      cgst: menuItem?.cgst || 0,
+      sgst: menuItem?.sgst || 0,
+      currency: menuItem?.currency || ''
+    })
+  }, [menuItem]);
+
   if (isPageLoading) {
     return (
       <Loader/>
@@ -143,7 +156,7 @@ export default function MenuAdd({menuItem, isEditing}: MenuAddProps) {
         onchange={handleChange}
       />
 
-      <div className="flex gap-3">
+      <div className="flex justify-between">
         <button
           type="submit"
           disabled={isLoading}
@@ -163,6 +176,15 @@ export default function MenuAdd({menuItem, isEditing}: MenuAddProps) {
           ) : (
             <>{isEditing ? 'Update' : 'Create'} Menu Item</>
           )}
+        </button>
+        <button
+          type="button"
+          disabled={isLoading}
+          className="inline-flex items-center bg-red-400 text-white border-none rounded-xl py-3 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
+          onClick={clearForm}
+        >
+          Clear Form
         </button>
       </div>
     </form>

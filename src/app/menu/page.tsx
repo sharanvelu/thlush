@@ -4,8 +4,11 @@ import {MenuItem as TypeMenuItem} from "@/types/menu";
 import {MenuItems as MenuItemsData} from "@/data/MenuItem";
 import MenuAdd from "@/components/MenuAdd";
 import MenuItem from "@/components/MenuItem";
+import {useState} from "react";
 
 export default function SetupPage() {
+  const [editingMenu, setEditingMenu] = useState<TypeMenuItem | null>(null);
+
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8 rounded-2xl sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
@@ -16,7 +19,11 @@ export default function SetupPage() {
         </div>
 
         <div className="mt-10 space-y-12">
-          <MenuAdd isEditing={true}/>
+          <MenuAdd
+            isEditing={!!editingMenu}
+            menuItem={editingMenu}
+            clearForm={() => setEditingMenu(null)}
+          />
 
           <div
             className="bg-white dark:bg-gray-900 rounded-2xl p-6 mb-8">
@@ -24,7 +31,14 @@ export default function SetupPage() {
             {/*<p class="empty-message">No menu items. Add your first item above!</p>*/}
 
             {MenuItemsData.map((menuItem: TypeMenuItem) => (
-              <MenuItem key={menuItem.id} menu={menuItem}/>
+              <MenuItem
+                key={menuItem.id}
+                menu={menuItem}
+                editAction={(menu: TypeMenuItem) => {
+                  setEditingMenu(menu);
+                  window.scrollTo(0, 0)
+                }}
+              />
             ))}
           </div>
         </div>

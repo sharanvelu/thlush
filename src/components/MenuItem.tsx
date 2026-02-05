@@ -2,9 +2,10 @@ import {MenuItem as TypeMenuItem} from "@/types/menu";
 
 interface MenuItemProps {
   menu: TypeMenuItem;
+  editAction: (menu: TypeMenuItem) => void;
 }
 
-export default function MenuItem({menu}: MenuItemProps) {
+export default function MenuItem({menu, editAction}: MenuItemProps) {
   const removeItem = () => {
     /**/
   }
@@ -20,9 +21,9 @@ export default function MenuItem({menu}: MenuItemProps) {
 
       <div className="flex gap-4">
         <button
-          className="hover:bg-[#dc3545] text-[#dc3545] hover:text-white dark:text-white border-2 border-[#dc3545] rounded-xl px-5 py-2.5 text-sm font-semibold cursor-pointer hover:scale-105 active:scale-95"
+          className="hover:bg-linear-to-br from-[#008559] via-[#006ce0] to-[#6842ff] text-[#dc3545] hover:text-white dark:text-white border-2 border-[#dc3545] rounded-xl px-5 py-2.5 text-sm font-semibold cursor-pointer hover:scale-105 active:scale-95"
           style={{transition: "transform 0.15s"}}
-          onClick={() => removeItem()}
+          onClick={() => editAction(menu)}
         >Edit
         </button>
         <button
