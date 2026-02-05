@@ -42,23 +42,23 @@ export default function SetupPage() {
 
   const totalBillingAmountWithoutTax = (): string => {
     return billingItems.reduce(
-        (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count),
-        0
-      ).toFixed(2);
+      (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count),
+      0
+    ).toFixed(2);
   }
 
   const totalTax = (): string => {
     return billingItems.reduce(
-        (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count * billingItem.tax / 100),
-        0
-      ).toFixed(2);
+      (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count * billingItem.tax / 100),
+      0
+    ).toFixed(2);
   }
 
   const totalBillingAmount = (): string => {
     return billingItems.reduce(
-        (sum: number, billingItem: TypeBillingItem): number => sum + calculateBillingItemPrice(billingItem),
-        0
-      ).toFixed(2);
+      (sum: number, billingItem: TypeBillingItem): number => sum + calculateBillingItemPrice(billingItem),
+      0
+    ).toFixed(2);
   }
 
   const clearBilling = () => {
@@ -77,42 +77,52 @@ export default function SetupPage() {
           </h1>
         </div>
 
-        <div className="mt-10 space-y-12">
-          <div
-            className="bg-[#fffbf6] dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
-            <div className="mb-4">
-              <label className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm">
-                Customer Name:
-              </label>
-              <input
-                className="max-w-100 w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-600 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                type="text"
-                placeholder="Enter customer name (optional)"
-                style={{transition: "border-color 0.2s"}}
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+        <div className="mt-10 lg:flex gap-4">
+          <div className="lg:w-3/4 space-y-12">
+            {/* Billing Customer name */}
+            <div
+              className="bg-[#fffbf6] dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
+              <div className="mb-4">
+                <label className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm">
+                  Customer Name:
+                </label>
+                <input
+                  className="max-w-100 w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-600 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                  type="text"
+                  placeholder="Enter customer name (optional)"
+                  style={{transition: "border-color 0.2s"}}
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Menu Items List */}
+            <div
+              className="bg-gray-100 dark:bg-gray-900 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
+              <InputField
+                id="filter"
+                title="Filter"
+                placeholder="Filter Items"
+                value={filterValue}
+                onchange={(e) => filterItems(e.target.value)}
               />
+              <div className="grid gap-4.5" style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}>
+                {MenuItemsData.map((menuItem: TypeMenuItem) => (
+                  <BillingItem
+                    key={menuItem.id}
+                    menu={menuItem}
+                    billingCount={billingItems.find((x: TypeBillingItem): boolean => x.id === menuItem.id)?.count ?? 0}
+                    updateItem={updateItem}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
+          {/* Bill Pricing Section */}
           <div
-            className="bg-gray-100 dark:bg-gray-900 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
-            <InputField
-              id="filter"
-              title="Filter"
-              placeholder="Filter Items"
-              value={filterValue}
-              onchange={(e) => filterItems(e.target.value)}
-            />
-            <section className="grid gap-4.5" style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}>
-              {MenuItemsData.map((menuItem: TypeMenuItem) => (
-                <BillingItem key={menuItem.id} menu={menuItem} billingCount={0} updateItem={updateItem}/>
-              ))}
-            </section>
-          </div>
-
-          <section className="mt-8 pt-6 border-t border-dashed border-[#e0d7cf] grid gap-3.5 items-center"
-                   style={{gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))"}}>
+            className="pt-6 mt-8 lg:mt-0 border-t border-dashed lg:border-none lg:w-1/4 border-[#e0d7cf] grid gap-3.5 items-center h-2/5">
             <div className="text-sm text-[#555] dark:text-gray-300 min-h-15">
               {billingItems.map((billingItem: TypeBillingItem) => (
                 <div key={billingItem.id}>
@@ -148,7 +158,7 @@ export default function SetupPage() {
                 </button>
               </div>
             </div>
-          </section>
+          </div>
         </div>
       </div>
     </div>
