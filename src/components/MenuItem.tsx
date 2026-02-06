@@ -12,7 +12,7 @@ export default function MenuItem({menu, editAction}: MenuItemProps) {
 
   return (
     <div
-      className="shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center mb-5">
+      className="shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center">
       <div className="item-manage-info">
         <h4 className="m-0 mb-1.5 text-lg">{menu.name}</h4>
         <p className="m-0 mb-1 text-sm">{menu.description || 'No description'}</p>

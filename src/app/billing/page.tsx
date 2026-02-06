@@ -7,7 +7,7 @@ import {BillingItem as TypeBillingItem} from "@/types/billing";
 import {MenuItems as MenuItemsData} from "@/data/MenuItem";
 import InputField from "@/components/Inputs/Input";
 
-export default function SetupPage() {
+export default function BillingPage() {
   const [customerName, setCustomerName] = useState<string>('');
   const [filterValue, setFilterValue] = useState<string>('');
 
@@ -123,27 +123,45 @@ export default function SetupPage() {
           {/* Bill Pricing Section */}
           <div
             className="pt-6 mt-8 lg:mt-0 border-t border-dashed lg:border-none lg:w-1/4 border-[#e0d7cf] grid gap-3.5 items-center h-2/5">
+            {customerName !== '' && (
+              <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5">
+                <><span className="text-[16px] font-extrabold">Customer:</span> {customerName}</>
+              </div>
+            )}
+
             <div className="text-sm text-[#555] dark:text-gray-300 min-h-15">
               {billingItems.map((billingItem: TypeBillingItem) => (
-                <div key={billingItem.id}>
-                  <span>{billingItem.count} x {billingItem.name} = {`${billingItem.currency} ${calculateBillingItemPrice(billingItem)}`}</span>
+                <div key={billingItem.id} className="flex justify-between">
+                  <div className="w-3/6 p-1.5">
+                    {billingItem.name}
+                  </div>
+                  <div className="w-1/6 p-1.5 text-right">
+                    X {billingItem.count}
+                  </div>
+                  <div className="w-2/6 p-1.5 text-right">
+                    {`${billingItem.currency} ${calculateBillingItemPrice(billingItem)}`}
+                  </div>
                 </div>
               ))}
               {billingItems.length == 0 && (
                 <span>No food items selected yet. <br/></span>
               )}
             </div>
-            <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5">
-              {customerName !== '' && (
-                <><span className="text-[16px] font-extrabold">Customer:</span> {customerName}</>
-              )}
-            </div>
 
             <div className="flex flex-col justify-between text-xl font-bold h-full">
               <div className="py-5">
-                <p className="text-right">Item Total: ₹<span>{totalBillingAmountWithoutTax()}</span></p>
-                <p className="text-right">Total Tax: ₹<span>{totalTax()}</span></p>
-                <p className="text-right">Grand Total: ₹<span>{totalBillingAmount()}</span></p>
+                <div className="flex">
+                  <div className="w-3/6 p-1.5">Item Total</div>
+                  <div className="w-3/6 p-1.5 text-right">₹<span>{totalBillingAmountWithoutTax()}</span></div>
+                </div>
+                <div className="flex">
+                  <div className="w-3/6 p-1.5">Total Tax</div>
+                  <div className="w-3/6 p-1.5 text-right">₹<span>{totalTax()}</span></div>
+                </div>
+                <div className="flex">
+                  <div className="w-3/6 p-1.5">Grand Total</div>
+                  <div className="w-3/6 p-1.5 text-right">₹<span>{totalBillingAmount()}</span></div>
+                </div>
               </div>
               <div className="flex flex-col gap-3 flex-wrap">
                 <button
