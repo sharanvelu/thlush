@@ -6,7 +6,7 @@ import MenuAdd from "@/components/MenuAdd";
 import MenuItem from "@/components/MenuItem";
 import {useState} from "react";
 
-export default function SetupPage() {
+export default function MenuPage() {
   const [editingMenu, setEditingMenu] = useState<TypeMenuItem | null>(null);
 
   return (
@@ -27,19 +27,21 @@ export default function SetupPage() {
 
           <div
             className="bg-white dark:bg-gray-900 rounded-2xl p-6 mb-8">
-            <h3 className="m-0 mb-5">Remove New Menu Item</h3>
+            <h3 className="m-0 mb-5">Manage Menu Item</h3>
             {/*<p class="empty-message">No menu items. Add your first item above!</p>*/}
 
-            {MenuItemsData.map((menuItem: TypeMenuItem) => (
-              <MenuItem
-                key={menuItem.id}
-                menu={menuItem}
-                editAction={(menu: TypeMenuItem) => {
-                  setEditingMenu(menu);
-                  window.scrollTo(0, 0)
-                }}
-              />
-            ))}
+            <div className="grid grid-cols-3 gap-4">
+              {MenuItemsData.map((menuItem: TypeMenuItem) => (
+                <MenuItem
+                  key={menuItem.id}
+                  menu={menuItem}
+                  editAction={(menu: TypeMenuItem) => {
+                    setEditingMenu(menu);
+                    window.scrollTo(0, 0)
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
