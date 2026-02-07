@@ -49,7 +49,7 @@ export default function BillingItem({menu, billingCount, updateItem}: BillingIte
       className="flex flex-col gap-1.5 min-h-45 border-2 border-[#f0e6dd] dark:border-gray-700 bg-[#fffbf6] dark:bg-gray-950 text-[#1f1f1f] p-4.5 rounded-2xl">
       <h3 className="m-0 text-[18px] text-[#1f1f1f]] dark:text-gray-300 font-bold">{menu.name}</h3>
       <p className="mt-[1em] mb-[1em] text-[#1f1f1f]] dark:text-gray-300">{menu.description || ''}</p>
-      <span className="text-[#f0673a] font-semibold">{menu.currency}{menu.price.toFixed(2)}</span>
+      <span className="text-[#f0673a] font-semibold">{menu.currency}{menu.total.toFixed(2)}</span>
 
       <div className="controls mt-auto flex items-center justify-between gap-3">
         <button

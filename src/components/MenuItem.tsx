@@ -16,7 +16,7 @@ export default function MenuItem({menu, editAction}: MenuItemProps) {
       <div className="item-manage-info">
         <h4 className="m-0 mb-1.5 text-lg">{menu.name}</h4>
         <p className="m-0 mb-1 text-sm">{menu.description || 'No description'}</p>
-        <span className="text-[#f0673a] font-semibold text-[16px]">₹{menu.price.toFixed(2)}</span>
+        <span className="text-[#f0673a] font-semibold text-[16px]">{menu.currency}{menu.total.toFixed(2)}</span>
       </div>
 
       <div className="flex gap-4">

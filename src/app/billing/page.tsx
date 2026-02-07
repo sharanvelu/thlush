@@ -1,17 +1,36 @@
 'use client';
 
 import BillingItem from "@/components/BillingItem";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {MenuItem as TypeMenuItem} from "@/types/menu";
 import {BillingItem as TypeBillingItem} from "@/types/billing";
-import {MenuItems as MenuItemsData} from "@/data/MenuItem";
 import InputField from "@/components/Inputs/Input";
+import {ApiListResponse as TypeApiListResponse} from "@/types/global";
 
 export default function BillingPage() {
   const [customerName, setCustomerName] = useState<string>('');
   const [filterValue, setFilterValue] = useState<string>('');
 
   const [billingItems, setBillingItems] = useState<TypeBillingItem[]>([]);
+  const [menuItems, setMenuItems] = useState<TypeMenuItem[]>([]);
+
+  async function getMenuItems(): Promise<void> {
+    const response: Response = await fetch(`/api/menu`, {
+      next: {revalidate: 3600} // Revalidate every hour
+    });
+
+    const data: TypeApiListResponse<TypeMenuItem> = await response.json();
+
+    if (!data.success) {
+      throw new Error('Failed to fetch blog post');
+    }
+
+    setMenuItems(data.data);
+  }
+
+  useEffect(() => {
+    getMenuItems().then(r => console.log(r));
+  }, []);
 
   const filterItems = (value: string) => {
     setFilterValue(value)
@@ -108,7 +127,7 @@ export default function BillingPage() {
                 onchange={(e) => filterItems(e.target.value)}
               />
               <div className="grid gap-4.5" style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}>
-                {MenuItemsData.map((menuItem: TypeMenuItem) => (
+                {menuItems.map((menuItem: TypeMenuItem) => (
                   <BillingItem
                     key={menuItem.id}
                     menu={menuItem}
