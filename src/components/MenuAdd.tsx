@@ -1,9 +1,10 @@
 import {useEffect, useState} from "react";
-import {MenuItem, MenuItemDto} from "@/types/menu";
+import {MenuItem, MenuItemActive, MenuItemDto} from "@/types/menu";
 import {useRouter} from 'next/navigation';
 import Loader from "@/components/Loader";
 import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
+import SelectField from "@/components/Inputs/Select";
 
 interface MenuAddProps {
   menuItem?: Partial<MenuItem | null>;
@@ -19,8 +20,37 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     tax: menuItem?.tax || 0,
     cgst: menuItem?.cgst || 0,
     sgst: menuItem?.sgst || 0,
-    currency: menuItem?.currency || ''
+    currency: menuItem?.currency || '₹',
+    status: menuItem?.status || MenuItemActive,
   });
+
+  useEffect(() => {
+    setFormData({
+      name: menuItem?.name || '',
+      description: menuItem?.description || '',
+      price: menuItem?.price || 0,
+      tax: menuItem?.tax || 0,
+      cgst: menuItem?.cgst || 0,
+      sgst: menuItem?.sgst || 0,
+      currency: menuItem?.currency || '₹',
+      status: menuItem?.status || MenuItemActive,
+    })
+  }, [menuItem]);
+
+  const clearFormData = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: 0,
+      tax: 0,
+      cgst: 0,
+      sgst: 0,
+      currency: '₹',
+      status: MenuItemActive,
+    });
+
+    clearForm();
+  }
 
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +60,29 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const {name, value} = e.target;
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    handleChangeValue(name, value);
   };
 
+  const handleChangeValue = (name: string, value: string) => {
+    setFormData((prev: MenuItemDto) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name == 'sgst') {
+      setFormData((prev: MenuItemDto) => ({
+        ...prev,
+        ['tax']: parseInt(value) + formData.cgst
+      }));
+    }
+
+    if (name == 'cgst') {
+      setFormData((prev: MenuItemDto) => ({
+        ...prev,
+        ['tax']: parseInt(value) + formData.sgst
+      }));
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,18 +142,6 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     }
   };
 
-  useEffect(() => {
-    setFormData({
-      name: menuItem?.name || '',
-      description: menuItem?.description || '',
-      price: menuItem?.price || 0,
-      tax: menuItem?.tax || 0,
-      cgst: menuItem?.cgst || 0,
-      sgst: menuItem?.sgst || 0,
-      currency: menuItem?.currency || ''
-    })
-  }, [menuItem]);
-
   if (isPageLoading) {
     return (
       <Loader/>
@@ -124,13 +159,23 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         </div>
       )}
 
-      <InputField
-        id="name"
-        title="Item Name"
-        placeholder="Enter Item Name"
-        value={formData.name}
-        onchange={handleChange}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <InputField
+          id="name"
+          title="Item Name"
+          placeholder="Enter Item Name"
+          value={formData.name}
+          onchange={handleChange}
+        />
+        <SelectField
+          id="status"
+          title="Status"
+          placeholder="Select Status"
+          value={formData.status as string}
+          onchange={handleChangeValue}
+          options={[{value: "active", text: "Active"}, {value: "archive", text: "Archive"}]}
+        />
+      </div>
 
       <TextAreaField
         id="description"
@@ -140,21 +185,52 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         onchange={handleChange}
       />
 
-      <InputField
-        id="price"
-        title="Item Price"
-        placeholder="Enter Item Price"
-        value={formData.price}
-        onchange={handleChange}
-      />
+      <div className="flex gap-4">
+        <div className="w-1/3">
+          <SelectField
+            id="currency"
+            title="Currency"
+            placeholder="Select Currency"
+            value={formData.currency}
+            onchange={handleChangeValue}
+            options={[{value: "₹", text: "₹"}, {value: "$", text: "$"}]}
+          />
+        </div>
+        <div className="w-2/3">
+          <InputField
+            id="price"
+            title="Item Price"
+            placeholder="Enter Item Price"
+            value={formData.price}
+            onchange={handleChange}
+          />
+        </div>
+      </div>
 
-      <InputField
-        id="tax"
-        title="Item tax"
-        placeholder="Enter Item tax"
-        value={formData.tax}
-        onchange={handleChange}
-      />
+      <div className="grid grid-cols-3 gap-4">
+        <InputField
+          id="sgst"
+          title="Item sgst"
+          placeholder="Enter Item sgst"
+          value={formData.sgst}
+          onchange={handleChange}
+        />
+        <InputField
+          id="cgst"
+          title="Item cgst"
+          placeholder="Enter Item cgst"
+          value={formData.cgst}
+          onchange={handleChange}
+        />
+        <InputField
+          id="tax"
+          title="Item tax"
+          disabled={true}
+          placeholder="Enter Item tax"
+          value={formData.tax}
+          onchange={handleChange}
+        />
+      </div>
 
       <div className="flex justify-between">
         <button
@@ -182,7 +258,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
           disabled={isLoading}
           className="inline-flex items-center bg-red-400 text-white border-none rounded-xl py-3 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
-          onClick={clearForm}
+          onClick={clearFormData}
         >
           Clear Form
         </button>

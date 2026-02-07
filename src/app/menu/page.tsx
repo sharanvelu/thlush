@@ -4,10 +4,30 @@ import {MenuItem as TypeMenuItem} from "@/types/menu";
 import {MenuItems as MenuItemsData} from "@/data/MenuItem";
 import MenuAdd from "@/components/MenuAdd";
 import MenuItem from "@/components/MenuItem";
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import {ApiListResponse as TypeApiListResponse} from "@/types/global";
 
 export default function MenuPage() {
+  const [menuItems, setMenuItems] = useState<TypeMenuItem[]>([]);
   const [editingMenu, setEditingMenu] = useState<TypeMenuItem | null>(null);
+
+  async function getMenuItems(): Promise<void> {
+    const response: Response = await fetch(`/api/menu`, {
+      next: { revalidate: 3600 } // Revalidate every hour
+    });
+
+    const data: TypeApiListResponse<TypeMenuItem> = await response.json();
+
+    if (!data.success) {
+      throw new Error('Failed to fetch blog post');
+    }
+
+    setMenuItems(data.data);
+  }
+
+  useEffect(() => {
+    getMenuItems().then(r => console.log(r));
+  }, []);
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
@@ -31,7 +51,7 @@ export default function MenuPage() {
             {/*<p class="empty-message">No menu items. Add your first item above!</p>*/}
 
             <div className="grid grid-cols-3 gap-4">
-              {MenuItemsData.map((menuItem: TypeMenuItem) => (
+              {menuItems.map((menuItem: TypeMenuItem) => (
                 <MenuItem
                   key={menuItem.id}
                   menu={menuItem}

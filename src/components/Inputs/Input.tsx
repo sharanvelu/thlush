@@ -4,14 +4,15 @@ interface InputProps {
   id: string;
   title: string;
   placeholder: string;
+  disabled?: boolean;
   value: string | number | null;
   onchange: ChangeEventHandler<HTMLInputElement>;
 }
 
-export default function InputField({id, title, placeholder, value, onchange}: InputProps) {
+export default function InputField({id, title, placeholder, disabled, value, onchange}: InputProps) {
   return (
-    <div className="mb-4">
-      <label htmlFor="name" className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm">
+    <div className="mb-4 w-full">
+      <label htmlFor={id} className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm">
         {title}
       </label>
       <input
@@ -19,6 +20,7 @@ export default function InputField({id, title, placeholder, value, onchange}: In
         type="text"
         id={id}
         name={id}
+        disabled={disabled}
         placeholder={placeholder}
         value={value ?? ''}
         onChange={onchange}
