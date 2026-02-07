@@ -7,7 +7,7 @@ import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto} from "@/types/
 // Update a specific Menu Item
 export async function PUT(
   request: Request,
-  {params}: { params: Promise<{ id: number }> }
+  context: { params: Promise<{ id: string; }>; },
 ): Promise<NextResponse<ApiResponse<TypeMenuItem>>> {
   // Check authentication
   if (!await SupabaseService.authUser()) {
@@ -17,8 +17,9 @@ export async function PUT(
     );
   }
 
-  const {id}: { id: number } = await params
-  if (isNaN(id)) {
+  const {id} = await context.params
+
+  if (isNaN(parseInt(id))) {
     return NextResponse.json(
       {success: false, error: 'Invalid Menu Item ID'},
       {status: 400}
@@ -27,7 +28,7 @@ export async function PUT(
 
   const data: TypeMenuItemDto = await request.json();
 
-  const updatedMenuItem: TypeMenuItem = await MenuService.updateMenuItem(id, data);
+  const updatedMenuItem: TypeMenuItem = await MenuService.updateMenuItem(parseInt(id), data);
 
   return NextResponse.json({
     success: true,
@@ -36,7 +37,10 @@ export async function PUT(
 }
 
 // Delete a specific Menu Item
-export async function DELETE({params}: { params: Promise<{ id: number }> }): Promise<NextResponse<ApiDeleteResponse>> {
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string; }>; }
+): Promise<NextResponse<ApiDeleteResponse>> {
   // Check authentication
   if (!await SupabaseService.checkAuth()) {
     NextResponse.json(
@@ -45,15 +49,16 @@ export async function DELETE({params}: { params: Promise<{ id: number }> }): Pro
     );
   }
 
-  const {id}: { id: number } = await params
-  if (isNaN(id)) {
+  const {id}: { id: string } = await context.params
+
+  if (isNaN(parseInt(id))) {
     return NextResponse.json(
       {success: false, error: 'Invalid menu item ID'},
       {status: 400}
     );
   }
 
-  await MenuService.deleteMenuItem(id);
+  await MenuService.deleteMenuItem(parseInt(id));
 
   return NextResponse.json({
     success: true,
