@@ -72,6 +72,67 @@
     .edit-form-inline input:focus, .edit-form-inline textarea:focus { outline: none; border-color: #1f70ff; }
     .empty-message { text-align: center; color: #999; padding: 40px; font-style: italic; }
     
+    /* Floating Order Panel */
+    .floating-order-panel {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: #fff;
+      box-shadow: 0 -8px 32px rgba(15,15,20,.2);
+      border-radius: 20px 20px 0 0;
+      max-height: 45vh;
+      overflow-y: auto;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .floating-order-panel.visible {
+      display: block;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .floating-panel-content {
+      padding: 20px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    .floating-panel-content .selected {
+      font-size: 14px;
+      color: #1f1f1f;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+    .floating-panel-content .total {
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .floating-panel-content .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .floating-panel-content .actions button {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+    .floating-panel-drag {
+      width: 40px;
+      height: 4px;
+      background: #e0d7cf;
+      border-radius: 2px;
+      margin: 0 auto 16px;
+      cursor: grab;
+    }
+    .billing-tab-with-panel {
+      padding-bottom: 280px;
+    }
+    
     /* Billing History Styles */
     .history-section { margin-top: 24px; }
     .filter-section { background: #fffbf6; border: 2px solid #f0e6dd; border-radius: 16px; padding: 24px; margin-bottom: 24px; }
@@ -109,6 +170,10 @@
       .item { padding: 16px; }
       .summary { grid-template-columns: 1fr; }
       .actions { flex-direction: column; }
+      .floating-order-panel { max-height: 55vh; }
+      .floating-panel-content .actions { flex-direction: column; }
+      .floating-panel-content .actions button { min-width: 100%; }
+      .billing-tab-with-panel { padding-bottom: 320px; }
       .tabs { flex-direction: column; }
       .tab-btn { text-align: left; }
       .item-manage { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -127,9 +192,9 @@
       h1, p.lead, button, .tabs { display: none !important; visibility: hidden !important; }
       .tab-content { display: none !important; visibility: hidden !important; }
       .tab-content#billingTab { display: block !important; visibility: visible !important; }
-      .add-form, .products, #customerDisplay, .total, .actions { display: none !important; visibility: hidden !important; }
-      .summary { border-top: none; padding-top: 0; visibility: visible !important; }
-      .summary > * { display: none !important; visibility: hidden !important; }
+      .add-form, .products { display: none !important; visibility: hidden !important; }
+      .floating-order-panel { position: static !important; transform: none !important; visibility: visible !important; }
+      .floating-order-panel .floating-panel-drag, .floating-order-panel #customerDisplay, .floating-order-panel .total, .floating-order-panel .actions { display: none !important; visibility: hidden !important; }
       #invoiceHeader, #invoiceHeader *, #summaryList { display: block !important; visibility: visible !important; }
       #printCustomerName { font-size: 24px; font-weight: 700; margin-bottom: 10px; color: #1f1f1f; display: block !important; visibility: visible !important; }
       #printDateTime { font-size: 16px; color: #5c5c68; margin-bottom: 25px; display: block !important; visibility: visible !important; }
@@ -156,27 +221,34 @@
             <label for="customerName">Customer Name: <span style="color: #dc3545;">*</span></label>
             <input type="text" id="customerName" placeholder="Enter customer name (required)" required style="max-width: 400px;">
           </div>
+          <div class="form-group">
+            <label for="billingSearch">Search Menu Items:</label>
+            <input type="text" id="billingSearch" placeholder="Search by item name or category..." style="max-width: 400px;">
+          </div>
       </div>
 
       <section class="products" id="productList">
         <!-- Items will be dynamically generated -->
       </section>
+    </div>
 
-      <section class="summary">
+    <!-- Floating Order Panel (visible when items selected, billing tab only) -->
+    <div id="floatingOrderPanel" class="floating-order-panel">
+      <div class="floating-panel-drag" aria-hidden="true"></div>
+      <div class="floating-panel-content">
         <div id="invoiceHeader" style="display: none;">
           <div id="printCustomerName" style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #1f1f1f;"></div>
           <div id="printDateTime" style="font-size: 14px; color: #5c5c68; margin-bottom: 20px;"></div>
         </div>
         <div class="selected" id="summaryList">No food items selected yet.</div>
-        <div id="customerDisplay" style="font-size: 14px; color: #5c5c68; margin-bottom: 8px; min-height: 20px;">
-          <!-- Customer name will be displayed here -->
-        </div>
+        <div id="customerDisplay" style="font-size: 14px; color: #5c5c68; margin-bottom: 8px; min-height: 20px;"></div>
         <div class="total">Grand Total: ₹<span id="totalAmount">0.00</span></div>
         <div class="actions">
           <button class="secondary" id="resetBtn">Clear All</button>
+          <button class="primary" id="saveInvoiceBtn">Save Invoice</button>
           <button class="primary" id="printInvoiceBtn">Print Invoice</button>
         </div>
-      </section>
+      </div>
     </div>
 
     <!-- Manage Menu Tab -->
@@ -490,6 +562,31 @@
       }
     }
 
+    function saveInvoiceOnly() {
+      // Check if customer name is entered
+      const customer = customerName.value.trim();
+      if (!customer) {
+        alert('⚠️ Customer name is required!\n\nPlease enter a customer name before saving the invoice.');
+        customerName.focus();
+        return;
+      }
+
+      // Check if items are added
+      const items = [...productList.querySelectorAll('.item')];
+      const hasItems = items.some(item => Number(item.dataset.qty || 0) > 0);
+      
+      if (!hasItems) {
+        alert('Please add items to the invoice before saving.');
+        return;
+      }
+
+      // Save invoice and clear selected items (no print dialog)
+      if (saveCurrentInvoice(true)) {
+        clearSelectedItems();
+        alert('Invoice saved successfully!');
+      }
+    }
+
     // DOM elements
     const productList = document.getElementById('productList');
     const totalAmount = document.getElementById('totalAmount');
@@ -497,6 +594,7 @@
     const customerName = document.getElementById('customerName');
     const customerDisplay = document.getElementById('customerDisplay');
     const resetBtn = document.getElementById('resetBtn');
+    const saveInvoiceBtn = document.getElementById('saveInvoiceBtn');
     const printInvoiceBtn = document.getElementById('printInvoiceBtn');
     const manageItemList = document.getElementById('manageItemList');
     const addItemForm = document.getElementById('addItemForm');
@@ -528,6 +626,16 @@
         });
         document.getElementById(targetTab + 'Tab').classList.add('active');
         
+        // Hide floating panel when leaving billing tab
+        const floatingPanel = document.getElementById('floatingOrderPanel');
+        const billingTabEl = document.getElementById('billingTab');
+        if (targetTab !== 'billing') {
+          floatingPanel?.classList.remove('visible');
+          billingTabEl?.classList.remove('billing-tab-with-panel');
+        } else {
+          updateSummary(); // Re-check to show panel if items selected
+        }
+        
         // Render history when switching to history tab
         if (targetTab === 'history') {
           renderHistory();
@@ -538,11 +646,31 @@
 
     // Render items in billing tab grouped by category
     function renderBillingItems() {
+      const searchTerm = (document.getElementById('billingSearch')?.value || '').toLowerCase().trim();
+      
+      // Preserve current quantities before re-rendering
+      const savedQuantities = {};
+      productList.querySelectorAll('.item').forEach(el => {
+        const id = parseInt(el.dataset.id);
+        if (!isNaN(id)) savedQuantities[id] = parseInt(el.dataset.qty || 0) || 0;
+      });
+      
+      // Filter items by search
+      let filteredItems = menuItems;
+      if (searchTerm) {
+        filteredItems = menuItems.filter(item => {
+          const nameMatch = (item.name || '').toLowerCase().includes(searchTerm);
+          const categoryMatch = (item.category || 'Uncategorized').toLowerCase().includes(searchTerm);
+          const descMatch = (item.description || '').toLowerCase().includes(searchTerm);
+          return nameMatch || categoryMatch || descMatch;
+        });
+      }
+
       productList.innerHTML = '';
       
       // Group items by category
       const itemsByCategory = {};
-      menuItems.forEach(item => {
+      filteredItems.forEach(item => {
         const category = item.category || 'Uncategorized';
         if (!itemsByCategory[category]) {
           itemsByCategory[category] = [];
@@ -569,12 +697,13 @@
         categoryItems.className = 'category-items';
 
         itemsByCategory[category].forEach(item => {
+          const savedQty = savedQuantities[item.id] || 0;
           const article = document.createElement('article');
           article.className = 'item';
           article.dataset.id = item.id;
           article.dataset.name = item.name;
           article.dataset.price = item.price;
-          article.dataset.qty = '0';
+          article.dataset.qty = String(savedQty);
           
           article.innerHTML = `
             <h3>${item.name}</h3>
@@ -582,10 +711,11 @@
             <span class="price">₹${item.price.toFixed(2)}</span>
             <div class="controls">
               <button class="minus" aria-label="Decrease quantity">-</button>
-              <div class="qty" data-qty>0</div>
+              <div class="qty" data-qty>${savedQty}</div>
               <button class="plus" aria-label="Increase quantity">+</button>
             </div>
           `;
+          article.classList.toggle('active', savedQty > 0);
           categoryItems.appendChild(article);
         });
 
@@ -851,6 +981,22 @@
 
       summaryList.innerHTML = summary.length ? summary.join('<br>') : 'No food items selected yet.';
       totalAmount.textContent = total.toFixed(2);
+
+      // Show/hide floating panel - only when on billing tab and items selected
+      const floatingPanel = document.getElementById('floatingOrderPanel');
+      const billingTabEl = document.getElementById('billingTab');
+      const isBillingActive = billingTabEl?.classList.contains('active');
+      const hasItems = summary.length > 0;
+
+      if (floatingPanel && billingTabEl) {
+        if (isBillingActive && hasItems) {
+          floatingPanel.classList.add('visible');
+          billingTabEl.classList.add('billing-tab-with-panel');
+        } else {
+          floatingPanel.classList.remove('visible');
+          billingTabEl.classList.remove('billing-tab-with-panel');
+        }
+      }
     }
 
     // Change quantity
@@ -889,11 +1035,17 @@
         item.classList.remove('active');
       });
       customerName.value = '';
+      if (billingSearch) billingSearch.value = '';
       updateCustomerDisplay();
-      updateSummary();
+      renderBillingItems(); // Re-render to show all items after clearing search
     }
 
     customerName.addEventListener('input', updateCustomerDisplay);
+
+    const billingSearch = document.getElementById('billingSearch');
+    billingSearch.addEventListener('input', () => {
+      renderBillingItems();
+    });
 
     resetBtn.addEventListener('click', () => {
       clearSelectedItems();
@@ -925,6 +1077,9 @@
         alert('Please select a category for the item.');
       }
     });
+
+    // Save invoice button (saves without printing)
+    saveInvoiceBtn.addEventListener('click', saveInvoiceOnly);
 
     // Print invoice button (saves and prints)
     printInvoiceBtn.addEventListener('click', saveAndPrintInvoice);
