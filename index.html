@@ -431,6 +431,7 @@
     let categories = getCategories();
     let menuItems = getMenuItems();
     let nextId = Math.max(...menuItems.map(item => item.id), 0) + 1;
+    let selectedQuantities = {}; // Persistent across search filter - prevents losing selections
 
     // Billing History Functions
     function getBillingHistory() {
@@ -443,18 +444,17 @@
     }
 
     function saveCurrentInvoice(silent = false) {
-      const items = [...productList.querySelectorAll('.item')];
       const invoiceItems = [];
       let total = 0;
 
-      items.forEach(item => {
-        const qty = Number(item.dataset.qty || 0);
+      menuItems.forEach(item => {
+        const qty = selectedQuantities[item.id] || 0;
         if (qty > 0) {
-          const price = Number(item.dataset.price);
+          const price = Number(item.price);
           const itemTotal = qty * price;
           total += itemTotal;
           invoiceItems.push({
-            name: item.dataset.name,
+            name: item.name,
             quantity: qty,
             price: price,
             total: itemTotal
@@ -506,9 +506,8 @@
         return;
       }
 
-      // Check if items are added
-      const items = [...productList.querySelectorAll('.item')];
-      const hasItems = items.some(item => Number(item.dataset.qty || 0) > 0);
+      // Check if items are added (use selectedQuantities so search filter doesn't affect check)
+      const hasItems = Object.values(selectedQuantities).some(qty => qty > 0);
       
       if (!hasItems) {
         alert('Please add items to the invoice before printing.');
@@ -571,9 +570,8 @@
         return;
       }
 
-      // Check if items are added
-      const items = [...productList.querySelectorAll('.item')];
-      const hasItems = items.some(item => Number(item.dataset.qty || 0) > 0);
+      // Check if items are added (use selectedQuantities so search filter doesn't affect check)
+      const hasItems = Object.values(selectedQuantities).some(qty => qty > 0);
       
       if (!hasItems) {
         alert('Please add items to the invoice before saving.');
@@ -648,11 +646,10 @@
     function renderBillingItems() {
       const searchTerm = (document.getElementById('billingSearch')?.value || '').toLowerCase().trim();
       
-      // Preserve current quantities before re-rendering
-      const savedQuantities = {};
+      // Merge current DOM quantities into selectedQuantities (preserves items not in filtered view)
       productList.querySelectorAll('.item').forEach(el => {
         const id = parseInt(el.dataset.id);
-        if (!isNaN(id)) savedQuantities[id] = parseInt(el.dataset.qty || 0) || 0;
+        if (!isNaN(id)) selectedQuantities[id] = parseInt(el.dataset.qty || 0) || 0;
       });
       
       // Filter items by search
@@ -697,7 +694,7 @@
         categoryItems.className = 'category-items';
 
         itemsByCategory[category].forEach(item => {
-          const savedQty = savedQuantities[item.id] || 0;
+          const savedQty = selectedQuantities[item.id] || 0;
           const article = document.createElement('article');
           article.className = 'item';
           article.dataset.id = item.id;
@@ -964,18 +961,17 @@
       }
     }
 
-    // Update summary
+    // Update summary (uses selectedQuantities so it includes all selected items, even when search filters the view)
     function updateSummary() {
-      const items = [...productList.querySelectorAll('.item')];
       const summary = [];
       let total = 0;
 
-      items.forEach(item => {
-        const qty = Number(item.dataset.qty || 0);
+      menuItems.forEach(item => {
+        const qty = selectedQuantities[item.id] || 0;
         if (qty > 0) {
-          const price = Number(item.dataset.price);
+          const price = Number(item.price);
           total += qty * price;
-          summary.push(`${qty} x ${item.dataset.name} - ₹${(qty * price).toFixed(2)}`);
+          summary.push(`${qty} x ${item.name} - ₹${(qty * price).toFixed(2)}`);
         }
       });
 
@@ -1001,10 +997,14 @@
 
     // Change quantity
     function changeQty(item, delta) {
+      const id = parseInt(item.dataset.id);
       const current = Number(item.dataset.qty || 0) + delta;
-      item.dataset.qty = Math.max(0, current);
-      item.querySelector('[data-qty]').textContent = item.dataset.qty;
-      item.classList.toggle('active', Number(item.dataset.qty) > 0);
+      const newQty = Math.max(0, current);
+      item.dataset.qty = newQty;
+      item.querySelector('[data-qty]').textContent = newQty;
+      item.classList.toggle('active', newQty > 0);
+      selectedQuantities[id] = newQty;
+      if (newQty === 0) delete selectedQuantities[id];
       updateSummary();
     }
 
@@ -1029,6 +1029,7 @@
 
     // Function to clear selected items
     function clearSelectedItems() {
+      selectedQuantities = {};
       productList.querySelectorAll('.item').forEach(item => {
         item.dataset.qty = 0;
         item.querySelector('[data-qty]').textContent = '0';
