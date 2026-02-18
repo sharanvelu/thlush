@@ -1,5 +1,3 @@
-import {ChangeEventHandler} from "react";
-
 interface InputProps {
   id: string;
   title: string;
@@ -19,8 +17,8 @@ export default function NumberField({id, title, placeholder, disabled, value, mi
       setValue(0);
     }
 
-    if (parseInt(value)) {
-      setValue(parseInt(value));
+    if (parseFloat(value)) {
+      setValue(parseFloat(value));
     }
   }
 

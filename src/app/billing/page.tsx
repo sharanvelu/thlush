@@ -6,6 +6,7 @@ import {MenuItem as TypeMenuItem} from "@/types/menu";
 import {BillingItem as TypeBillingItem} from "@/types/billing";
 import InputField from "@/components/Inputs/Input";
 import {ApiListResponse as TypeApiListResponse} from "@/types/global";
+import {calculateTotalTaxPriceValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
 
 export default function BillingPage() {
   const [customerName, setCustomerName] = useState<string>('');
@@ -13,6 +14,7 @@ export default function BillingPage() {
 
   const [billingItems, setBillingItems] = useState<TypeBillingItem[]>([]);
   const [menuItems, setMenuItems] = useState<TypeMenuItem[]>([]);
+  const [filteredMenuItems, setFilteredMenuItems] = useState<TypeMenuItem[]>([]);
 
   async function getMenuItems(): Promise<void> {
     const response: Response = await fetch(`/api/menu`, {
@@ -26,49 +28,55 @@ export default function BillingPage() {
     }
 
     setMenuItems(data.data);
+    setFilteredMenuItems(data.data);
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     getMenuItems().then(r => console.log(r));
   }, []);
 
   const filterItems = (value: string) => {
     setFilterValue(value)
+    setFilteredMenuItems(menuItems.filter((item: TypeMenuItem) => {
+      return !item.name.toLowerCase().search(value.toLowerCase());
+    }));
   }
 
-  const updateItem = (item: TypeBillingItem, count: number) => {
+  const updateItem = (item: TypeBillingItem, quantity: number) => {
     setBillingItems((prev: TypeBillingItem[]) => {
       const idx: number = prev.findIndex((x: TypeBillingItem): boolean => x.id === item.id);
 
       if (idx !== -1) {
         // update existing
         const next: TypeBillingItem[] = [...prev];
-        next[idx] = {...next[idx], count};
-        return next;
+        next[idx] = {...next[idx], quantity};
+        return filterEmptyItem(next);
       }
 
       // add new
-      return [...prev, {...item, count}];
+      return filterEmptyItem([...prev, {...item, quantity}]);
     });
   }
 
-  const calculateBillingItemPrice = (billingItem: TypeBillingItem): number => {
-    const totalAmountBeforeTax: number = billingItem.price * billingItem.count;
-    const totalTax: number = totalAmountBeforeTax * billingItem.tax / 100;
+  const filterEmptyItem = (billingItems: TypeBillingItem[]): TypeBillingItem[] => {
+    return billingItems.filter((billingItem: TypeBillingItem): boolean => billingItem.quantity > 0);
+  }
 
-    return totalAmountBeforeTax + totalTax;
+  const calculateBillingItemPrice = (billingItem: TypeBillingItem): number => {
+    return calculateTotalValue(billingItem.price, billingItem.sgst, billingItem.cgst, billingItem.quantity);
   }
 
   const totalBillingAmountWithoutTax = (): string => {
     return billingItems.reduce(
-      (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count),
+      (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.quantity),
       0
     ).toFixed(2);
   }
 
   const totalTax = (): string => {
     return billingItems.reduce(
-      (sum: number, billingItem: TypeBillingItem): number => sum + (billingItem.price * billingItem.count * billingItem.tax / 100),
+      (sum: number, billingItem: TypeBillingItem): number => sum + calculateTotalTaxPriceValue(billingItem.price, billingItem.sgst, billingItem.sgst, billingItem.quantity),
       0
     ).toFixed(2);
   }
@@ -127,11 +135,11 @@ export default function BillingPage() {
                 onchange={(e) => filterItems(e.target.value)}
               />
               <div className="grid gap-4.5" style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}>
-                {menuItems.map((menuItem: TypeMenuItem) => (
+                {filteredMenuItems.map((menuItem: TypeMenuItem) => (
                   <BillingItem
                     key={menuItem.id}
                     menu={menuItem}
-                    billingCount={billingItems.find((x: TypeBillingItem): boolean => x.id === menuItem.id)?.count ?? 0}
+                    billingQuantity={billingItems.find((x: TypeBillingItem): boolean => x.id === menuItem.id)?.quantity ?? 0}
                     updateItem={updateItem}
                   />
                 ))}
@@ -155,7 +163,7 @@ export default function BillingPage() {
                     {billingItem.name}
                   </div>
                   <div className="w-1/6 p-1.5 text-right">
-                    X {billingItem.count}
+                    X {billingItem.quantity}
                   </div>
                   <div className="w-2/6 p-1.5 text-right">
                     {`${billingItem.currency} ${calculateBillingItemPrice(billingItem)}`}
@@ -169,14 +177,18 @@ export default function BillingPage() {
 
             <div className="flex flex-col justify-between text-xl font-bold h-full">
               <div className="py-5">
-                <div className="flex">
-                  <div className="w-3/6 p-1.5">Item Total</div>
-                  <div className="w-3/6 p-1.5 text-right">₹<span>{totalBillingAmountWithoutTax()}</span></div>
-                </div>
-                <div className="flex">
-                  <div className="w-3/6 p-1.5">Total Tax</div>
-                  <div className="w-3/6 p-1.5 text-right">₹<span>{totalTax()}</span></div>
-                </div>
+                {!shouldIgnoreTax() && (
+                  <>
+                    <div className="flex">
+                      <div className="w-3/6 p-1.5">Item Total</div>
+                      <div className="w-3/6 p-1.5 text-right">₹<span>{totalBillingAmountWithoutTax()}</span></div>
+                    </div>
+                    <div className="flex">
+                      <div className="w-3/6 p-1.5">Total Tax</div>
+                      <div className="w-3/6 p-1.5 text-right">₹<span>{totalTax()}</span></div>
+                    </div>
+                  </>
+                )}
                 <div className="flex">
                   <div className="w-3/6 p-1.5">Grand Total</div>
                   <div className="w-3/6 p-1.5 text-right">₹<span>{totalBillingAmount()}</span></div>

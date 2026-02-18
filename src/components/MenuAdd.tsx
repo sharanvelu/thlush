@@ -1,11 +1,12 @@
 import {useEffect, useState} from "react";
-import {MenuItem, MenuItemActive, MenuItemDto} from "@/types/menu";
+import {MenuItem, MenuItemStatus, MenuItemDto} from "@/types/menu";
 import {useRouter} from 'next/navigation';
 import Loader from "@/components/Loader";
 import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
 import SelectField from "@/components/Inputs/Select";
 import NumberField from "@/components/Inputs/Number";
+import {calculateTotalTaxValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
 
 interface MenuAddProps {
   menuItem?: Partial<MenuItem | null>;
@@ -24,12 +25,10 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     name: menuItem?.name || '',
     description: menuItem?.description || '',
     price: menuItem?.price || 0,
-    tax: menuItem?.tax || 0,
     cgst: menuItem?.cgst || 0,
     sgst: menuItem?.sgst || 0,
-    total: menuItem?.total || 0,
     currency: menuItem?.currency || '₹',
-    status: menuItem?.status || MenuItemActive,
+    status: menuItem?.status || MenuItemStatus.ACTIVE,
   });
 
   useEffect(() => {
@@ -37,12 +36,10 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
       name: menuItem?.name || '',
       description: menuItem?.description || '',
       price: menuItem?.price || 0,
-      tax: menuItem?.tax || 0,
       cgst: menuItem?.cgst || 0,
       sgst: menuItem?.sgst || 0,
-      total: menuItem?.total || 0,
       currency: menuItem?.currency || '₹',
-      status: menuItem?.status || MenuItemActive,
+      status: menuItem?.status || MenuItemStatus.ACTIVE,
     })
   }, [menuItem]);
 
@@ -51,12 +48,10 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
       name: '',
       description: '',
       price: 0,
-      tax: 0,
       cgst: 0,
       sgst: 0,
-      total: 0,
       currency: '₹',
-      status: MenuItemActive,
+      status: MenuItemStatus.ACTIVE,
     });
 
     setErrors([]);
@@ -71,7 +66,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
 
   const handleChangeValue = (name: string, value: string | number): void => {
     if (name == 'total') {
-      const totalTax: number = parseFloat(formData.sgst + '') + parseFloat(formData.cgst + '');
+      const totalTax: number = calculateTotalTaxValue(formData.sgst, formData.cgst);
 
       setFormData((prev: MenuItemDto) => ({
         ...prev,
@@ -83,25 +78,21 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     }
 
     if (name == 'sgst' || name == 'cgst') {
-      const totalTax: number = parseFloat(value + '') + parseFloat((name == 'cgst' ? formData.sgst : formData.cgst) + '');
-
       setFormData((prev: MenuItemDto) => ({
         ...prev,
         [name]: value,
-        ['tax']: totalTax,
-        ['total']: parseFloat((parseFloat(formData.price + '') + parseFloat((formData.price * totalTax / 100) + '')).toFixed(2))
+        ['tax']: calculateTotalTaxValue(value, name == 'cgst' ? formData.sgst : formData.cgst),
+        ['total']: calculateTotalValue(formData.price, value, name == 'cgst' ? formData.sgst : formData.cgst)
       }));
 
       return;
     }
 
     if (name == 'price') {
-      const totalTax: number = parseFloat(formData.sgst + '') + parseFloat(formData.cgst + '');
-
       setFormData((prev: MenuItemDto) => ({
         ...prev,
         [name]: parseFloat(value + ''),
-        ['total']: parseFloat((parseFloat(value + '') + parseFloat((parseFloat(value + '') * totalTax / 100) + '')).toFixed(2))
+        ['total']: calculateTotalValue(value, formData.sgst, formData.cgst)
       }));
 
       return;
@@ -195,7 +186,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
         <InputField
           id="name"
           title="Item Name"
@@ -221,67 +212,75 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         onchange={handleChange}
       />
 
-      <div className="flex gap-4">
-        <div className="w-1/12">
-          <SelectField
-            id="currency"
-            title="Currency"
-            placeholder="Select Currency"
-            value={formData.currency}
-            onchange={handleChangeValue}
-            options={[{value: "₹", text: "₹"}, {value: "$", text: "$"}]}
-          />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex gap-4 md:w-4/12">
+          <div className="w-1/4">
+            <SelectField
+              id="currency"
+              title="Currency"
+              placeholder="Select Currency"
+              value={formData.currency}
+              onchange={handleChangeValue}
+              options={[{value: "₹", text: "₹"}, {value: "$", text: "$"}]}
+            />
+          </div>
+          <div className="w-3/4 grow">
+            <NumberField
+              id="price"
+              title="Item Price"
+              placeholder="Enter Item Price"
+              value={formData.price}
+              onchange={handleChangeValue}
+            />
+          </div>
         </div>
-        <div className="w-3/12">
-          <NumberField
-            id="price"
-            title="Item Price"
-            placeholder="Enter Item Price"
-            value={formData.price}
-            onchange={handleChangeValue}
-          />
-        </div>
-        <div className="w-1/12">
-          <NumberField
-            id="sgst"
-            title="Item sgst"
-            placeholder="Enter Item sgst"
-            value={formData.sgst}
-            onchange={handleChangeValue}
-            min={0}
-            max={100}
-          />
-        </div>
-        <div className="w-1/12">
-          <NumberField
-            id="cgst"
-            title="Item cgst"
-            placeholder="Enter Item cgst"
-            value={formData.cgst}
-            onchange={handleChangeValue}
-            min={0}
-            max={100}
-          />
-        </div>
-        <div className="w-1/12">
-          <NumberField
-            id="tax"
-            title="Item tax"
-            disabled={true}
-            placeholder="Enter Item tax"
-            value={formData.tax}
-            onchange={handleChangeValue}
-          />
-        </div>
-        <div className="w-4/12">
-          <NumberField
-            id="total"
-            title="Item Total"
-            placeholder="Enter Item Total Price"
-            value={formData.total}
-            onchange={handleChangeValue}
-          />
-        </div>
+        {!shouldIgnoreTax() && (
+          <>
+            <div className="flex flex-row gap-4 md:w-5/12">
+              <div className="w-1/3 md:w-1/5">
+                <NumberField
+                  id="sgst"
+                  title="SGST"
+                  placeholder="Enter SGST"
+                  value={formData.sgst || 0}
+                  onchange={handleChangeValue}
+                  min={0}
+                  max={100}
+                />
+              </div>
+              <div className="w-1/3 md:w-1/5">
+                <NumberField
+                  id="cgst"
+                  title="CGST"
+                  placeholder="Enter CGST"
+                  value={formData.cgst || 0}
+                  onchange={handleChangeValue}
+                  min={0}
+                  max={100}
+                />
+              </div>
+              <div className="w-1/3 md:w-2/5">
+                <NumberField
+                  id="tax"
+                  title="Total Tax"
+                  placeholder="Total Tax"
+                  disabled={true}
+                  value={calculateTotalTaxValue(formData.cgst, formData.sgst)}
+                  onchange={() => {}}
+                />
+              </div>
+            </div>
+            <div className="md:w-3/12">
+              <NumberField
+                id="total"
+                title="Item Total"
+                placeholder="Enter Item Total Price"
+                value={calculateTotalValue(formData.price, formData.cgst, formData.sgst)}
+                onchange={handleChangeValue}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex justify-between">

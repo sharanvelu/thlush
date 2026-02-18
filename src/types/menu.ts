@@ -1,16 +1,16 @@
-export const MenuItemActive = 'active';
-export const MenuItemDisable = 'disable';
+export enum MenuItemStatus {
+  ACTIVE = 'active',
+  DISABLE = 'disable',
+}
 
 export interface MenuItemDto {
   name: string;
   description: string | null;
   price: number;
-  tax: number;
-  sgst: number;
-  cgst: number;
-  total: number;
+  sgst?: number;
+  cgst?: number;
   currency: string;
-  status?: 'active' | 'disable';
+  status?: MenuItemStatus;
 }
 
 export interface MenuItem extends MenuItemDto {
