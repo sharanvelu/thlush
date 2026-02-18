@@ -50,7 +50,7 @@ export default function MenuPage() {
             <h3 className="m-0 mb-5">Manage Menu Item</h3>
             {/*<p class="empty-message">No menu items. Add your first item above!</p>*/}
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {menuItems.map((menuItem: TypeMenuItem) => (
                 <MenuItem
                   key={menuItem.id}

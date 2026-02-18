@@ -3,30 +3,31 @@
 import {MenuItem as TypeMenuItem} from "@/types/menu";
 import {useEffect, useState} from "react";
 import {BillingItem as TypeBillingItem} from "@/types/billing";
+import {calculateTotalValue} from "@/helpers";
 
 interface BillingItemProp {
   menu: TypeMenuItem,
-  billingCount: number,
-  updateItem: (item: TypeBillingItem, count: number) => void
+  billingQuantity: number,
+  updateItem: (item: TypeBillingItem, quantity: number) => void
 }
 
-export default function BillingItem({menu, billingCount, updateItem}: BillingItemProp) {
-  const [count, setCount] = useState<number>(0);
+export default function BillingItem({menu, billingQuantity, updateItem}: BillingItemProp) {
+  const [quantity, setQuantity] = useState<number>(0);
 
   const increment = () => {
-    const currentValue: number = Math.min(100, count + 1);
-    setCount(currentValue);
+    const currentValue: number = Math.min(100, quantity + 1);
+    setQuantity(currentValue);
     updateItem(menu as TypeBillingItem, currentValue);
   }
   const decrement = () => {
-    const currentValue: number = Math.max(0, count - 1);
-    setCount(currentValue);
+    const currentValue: number = Math.max(0, quantity - 1);
+    setQuantity(currentValue);
     updateItem(menu as TypeBillingItem, currentValue);
   }
 
-  const updateCount = (value: string) => {
+  const updateQuantity = (value: string) => {
     if (value === '') {
-      setCount(0);
+      setQuantity(0);
       updateItem(menu as TypeBillingItem, 0);
       return
     }
@@ -34,22 +35,22 @@ export default function BillingItem({menu, billingCount, updateItem}: BillingIte
     if (parseInt(value)) {
       // Should be less than 0 and greater than 100
       const currentValue: number = Math.max(0, Math.min(100, parseInt(value)));
-      setCount(currentValue);
+      setQuantity(currentValue);
       updateItem(menu as TypeBillingItem, currentValue)
       return
     }
   }
 
   useEffect(() => {
-    setCount(billingCount)
-  }, [billingCount]);
+    setQuantity(billingQuantity)
+  }, [billingQuantity]);
 
   return (
     <div
       className="flex flex-col gap-1.5 min-h-45 border-2 border-[#f0e6dd] dark:border-gray-700 bg-[#fffbf6] dark:bg-gray-950 text-[#1f1f1f] p-4.5 rounded-2xl">
       <h3 className="m-0 text-[18px] text-[#1f1f1f]] dark:text-gray-300 font-bold">{menu.name}</h3>
       <p className="mt-[1em] mb-[1em] text-[#1f1f1f]] dark:text-gray-300">{menu.description || ''}</p>
-      <span className="text-[#f0673a] font-semibold">{menu.currency}{menu.total.toFixed(2)}</span>
+      <span className="text-[#f0673a] font-semibold">{menu.currency}{calculateTotalValue(menu.price, menu.cgst, menu.sgst)}</span>
 
       <div className="controls mt-auto flex items-center justify-between gap-3">
         <button
@@ -57,15 +58,15 @@ export default function BillingItem({menu, billingCount, updateItem}: BillingIte
           aria-label="Decrease quantity"
           style={{transition: "transform .15s"}}
           onClick={() => decrement()}
-          disabled={count == 0}
+          disabled={quantity == 0}
         >-
         </button>
         <div className="flex-1 text-center text-[18px] text-[#1f1f1f]] dark:text-gray-300 font-semibold">
           <input
             className="w-full p-1.5 text-center focus-visible:outline-none"
             type="text"
-            value={count}
-            onChange={(e) => updateCount(e.target.value)}
+            value={quantity}
+            onChange={(e) => updateQuantity(e.target.value)}
           />
         </div>
         <button
