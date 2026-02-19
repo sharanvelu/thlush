@@ -5,12 +5,17 @@ import {useEffect, useState} from "react";
 import {ApiListResponse as TypeApiListResponse} from "@/types/global";
 import Category from "@/components/Category";
 import CategoryAdd from "@/components/CategoryAdd";
+import Loader from "@/components/Loader";
 
 export default function CategoryPage() {
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
   const [categories, setCategories] = useState<TypeCategory[]>([]);
   const [editingCategory, setEditingCategory] = useState<TypeCategory | null>(null);
 
   async function getCategories(): Promise<void> {
+    setIsPageLoading(true);
+
     const response: Response = await fetch(`/api/categories`, {
       next: { revalidate: 3600 } // Revalidate every hour
     });
@@ -22,11 +27,18 @@ export default function CategoryPage() {
     }
 
     setCategories(data.data);
+    setIsPageLoading(false);
   }
 
   useEffect(() => {
     getCategories().then(r => console.log(r));
   }, []);
+
+  if (isPageLoading) {
+    return (
+      <Loader/>
+    );
+  }
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
@@ -42,6 +54,7 @@ export default function CategoryPage() {
             isEditing={!!editingCategory}
             category={editingCategory}
             clearForm={() => setEditingCategory(null)}
+            refreshCategories={() => getCategories()}
           />
 
           <div
@@ -58,6 +71,10 @@ export default function CategoryPage() {
                   editAction={(category: TypeCategory) => {
                     setEditingCategory(category);
                     window.scrollTo(0, 0)
+                  }}
+                  refreshCategories={() => {
+                    getCategories().then(r => console.log(r));
+                    setEditingCategory(null)
                   }}
                 />
               ))}

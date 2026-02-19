@@ -1,14 +1,14 @@
 import {NextResponse} from 'next/server';
 import {SupabaseService} from "@/services/SupabaseService.server";
 import {MenuService} from '@/services/MenuService';
-import {ApiDeleteResponse, ApiResponse} from "@/types/global";
+import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
 
 // Update a specific Menu Item
 export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string; }>; },
-): Promise<NextResponse<ApiResponse<TypeMenuItem>>> {
+): Promise<NextResponse<TypeApiResponse<TypeMenuItem>>> {
   // Check authentication
   if (!await SupabaseService.authUser()) {
     NextResponse.json(
@@ -40,7 +40,7 @@ export async function PUT(
 export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string; }>; }
-): Promise<NextResponse<ApiDeleteResponse>> {
+): Promise<NextResponse<TypeApiDeleteResponse>> {
   // Check authentication
   if (!await SupabaseService.checkAuth()) {
     NextResponse.json(
