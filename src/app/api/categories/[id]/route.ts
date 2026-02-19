@@ -1,14 +1,14 @@
 import {NextResponse} from 'next/server';
 import {SupabaseService} from "@/services/SupabaseService.server";
 import {CategoryService} from '@/services/CategoryService';
-import {ApiDeleteResponse, ApiResponse} from "@/types/global";
+import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {Category as TypeCategory, CategoryDto as TypeCategoryDto} from "@/types/category";
 
 // Update a specific Category
 export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string; }>; },
-): Promise<NextResponse<ApiResponse<TypeCategory>>> {
+): Promise<NextResponse<TypeApiResponse<TypeCategory>>> {
   // Check authentication
   if (!await SupabaseService.authUser()) {
     NextResponse.json(
@@ -40,7 +40,7 @@ export async function PUT(
 export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string; }>; }
-): Promise<NextResponse<ApiDeleteResponse>> {
+): Promise<NextResponse<TypeApiDeleteResponse>> {
   // Check authentication
   if (!await SupabaseService.checkAuth()) {
     NextResponse.json(

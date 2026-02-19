@@ -1,6 +1,4 @@
 import Image from "next/image";
-import BillingItem from "@/components/BillingItem";
-import { BillingItem as TypeBillingItem } from "@/types/billing";
 
 export default function Home() {
   return (

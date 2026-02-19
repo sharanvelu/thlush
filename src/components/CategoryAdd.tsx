@@ -1,25 +1,23 @@
 import {useEffect, useState} from "react";
-import {Category, CategoryStatus, CategoryDto} from "@/types/category";
-import {useRouter} from 'next/navigation';
-import Loader from "@/components/Loader";
+import {Category as TypeCategory, CategoryStatus, CategoryDto as TypeCategoryDto} from "@/types/category";
 import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
 import SelectField from "@/components/Inputs/Select";
+import {ApiResponse as TypeApiResponse} from "@/types/global";
 
 interface CategoryAddProps {
-  category?: Partial<Category | null>;
+  category?: Partial<TypeCategory | null>;
   isEditing: boolean;
   clearForm: () => void;
+  refreshCategories: () => void;
 }
 
-export default function CategoryAdd({category, isEditing, clearForm}: CategoryAddProps) {
+export default function CategoryAdd({category, isEditing, clearForm, refreshCategories}: CategoryAddProps) {
   const [errors, setErrors] = useState<string[]>([]);
 
-  const [isPageLoading, setIsPageLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const [formData, setFormData] = useState<CategoryDto>({
+  const [formData, setFormData] = useState<TypeCategoryDto>({
     name: category?.name || '',
     description: category?.description || '',
     status: category?.status || CategoryStatus.ACTIVE,
@@ -51,7 +49,7 @@ export default function CategoryAdd({category, isEditing, clearForm}: CategoryAd
   };
 
   const handleChangeValue = (name: string, value: string | number): void => {
-    setFormData((prev: CategoryDto) => ({
+    setFormData((prev: TypeCategoryDto) => ({
       ...prev,
       [name]: value,
     }));
@@ -101,13 +99,14 @@ export default function CategoryAdd({category, isEditing, clearForm}: CategoryAd
         });
       }
 
-      const data = await response.json();
+      const data: TypeApiResponse<TypeCategory> = await response.json();
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to save Category');
       }
 
-      router.refresh();
+      refreshCategories()
+      clearFormData()
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error saving Category:', error);
@@ -116,12 +115,6 @@ export default function CategoryAdd({category, isEditing, clearForm}: CategoryAd
       setIsLoading(false);
     }
   };
-
-  if (isPageLoading) {
-    return (
-      <Loader/>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit}

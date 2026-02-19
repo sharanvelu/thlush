@@ -1,31 +1,27 @@
 import {useEffect, useState} from "react";
-import {MenuItem, MenuItemStatus, MenuItemDto} from "@/types/menu";
-import {useRouter} from 'next/navigation';
-import Loader from "@/components/Loader";
+import {MenuItem as TypeMenuItem, MenuItemStatus, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
+import {Category as TypeCategory} from "@/types/category";
 import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
 import SelectField from "@/components/Inputs/Select";
 import NumberField from "@/components/Inputs/Number";
 import {calculateTotalTaxValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
-import {ApiListResponse as TypeApiListResponse} from "@/types/global";
-import {Category as TypeCategory} from "@/types/category";
+import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 
 interface MenuAddProps {
-  menuItem?: Partial<MenuItem | null>;
+  menuItem?: Partial<TypeMenuItem | null>;
   isEditing: boolean;
   clearForm: () => void;
+  refreshMenuItems: () => void;
 }
 
-export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) {
+export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItems}: MenuAddProps) {
   const [errors, setErrors] = useState<string[]>([]);
-  const [categories, setCategories]= useState<TypeCategory[]>([]);
+  const [categories, setCategories] = useState<TypeCategory[]>([]);
 
-  const [isPageLoading, setIsPageLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const [totalPrice, setTotalPrice] = useState<number>(0);
-  const [formData, setFormData] = useState<MenuItemDto>({
+  const [formData, setFormData] = useState<TypeMenuItemDto>({
     name: menuItem?.name || '',
     description: menuItem?.description || '',
     category_id: menuItem?.category_id || null,
@@ -75,7 +71,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     if (name == 'total') {
       const totalTax: number = calculateTotalTaxValue(formData.sgst, formData.cgst);
 
-      setFormData((prev: MenuItemDto) => ({
+      setFormData((prev: TypeMenuItemDto) => ({
         ...prev,
         ['price']: parseFloat((parseFloat(value + '') / (1 + (totalTax / 100))).toFixed(2)),
       }));
@@ -83,7 +79,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
       return;
     }
 
-    setFormData((prev: MenuItemDto) => ({
+    setFormData((prev: TypeMenuItemDto) => ({
       ...prev,
       [name]: value,
     }));
@@ -136,13 +132,14 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         });
       }
 
-      const data = await response.json();
+      const data: TypeApiResponse<TypeMenuItem> = await response.json();
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to save menu item');
       }
 
-      router.refresh();
+      refreshMenuItems()
+      clearFormData()
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error saving menu Item:', error);
@@ -154,7 +151,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
 
   async function getCategories(): Promise<void> {
     const response: Response = await fetch(`/api/categories`, {
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: {revalidate: 3600} // Revalidate every hour
     });
 
     const data: TypeApiListResponse<TypeCategory> = await response.json();
@@ -169,13 +166,6 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
   useEffect(() => {
     getCategories().then(r => console.log(r));
   }, []);
-
-
-  if (isPageLoading) {
-    return (
-      <Loader/>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit}
@@ -205,7 +195,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
           placeholder="Select Category"
           value={formData.category_id}
           onchange={handleChangeValue}
-          options={categories.map((category: TypeCategory)=> {
+          options={categories.map((category: TypeCategory) => {
             return {value: category.id, text: category.name}
           })}
         />
@@ -281,7 +271,8 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
                   placeholder="Total Tax"
                   disabled={true}
                   value={calculateTotalTaxValue(formData.cgst, formData.sgst)}
-                  onchange={() => {}}
+                  onchange={() => {
+                  }}
                 />
               </div>
             </div>
