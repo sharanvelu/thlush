@@ -1,14 +1,14 @@
 import {NextResponse} from 'next/server';
 import {SupabaseService} from "@/services/SupabaseService.server";
-import {MenuService} from '@/services/MenuService';
+import {CategoryService} from '@/services/CategoryService';
 import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
-import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
+import {Category as TypeCategory, CategoryDto as TypeCategoryDto} from "@/types/category";
 
-// Update a specific Menu Item
+// Update a specific Category
 export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string; }>; },
-): Promise<NextResponse<TypeApiResponse<TypeMenuItem>>> {
+): Promise<NextResponse<TypeApiResponse<TypeCategory>>> {
   // Check authentication
   if (!await SupabaseService.authUser()) {
     NextResponse.json(
@@ -21,22 +21,22 @@ export async function PUT(
 
   if (isNaN(parseInt(id))) {
     return NextResponse.json(
-      {success: false, error: 'Invalid Menu Item ID'},
+      {success: false, error: 'Invalid Category ID'},
       {status: 400}
     );
   }
 
-  const data: TypeMenuItemDto = await request.json();
+  const data: TypeCategoryDto = await request.json();
 
-  const updatedMenuItem: TypeMenuItem = await MenuService.updateMenuItem(parseInt(id), data);
+  const updatedCategory: TypeCategory = await CategoryService.updateCategory(parseInt(id), data);
 
   return NextResponse.json({
     success: true,
-    data: updatedMenuItem,
+    data: updatedCategory,
   });
 }
 
-// Delete a specific Menu Item
+// Delete a specific Category
 export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string; }>; }
@@ -53,15 +53,15 @@ export async function DELETE(
 
   if (isNaN(parseInt(id))) {
     return NextResponse.json(
-      {success: false, error: 'Invalid menu item ID'},
+      {success: false, error: 'Invalid category ID'},
       {status: 400}
     );
   }
 
-  await MenuService.deleteMenuItem(parseInt(id));
+  await CategoryService.deleteCategory(parseInt(id));
 
   return NextResponse.json({
     success: true,
-    message: 'Menu Item deleted successfully',
+    message: 'Category deleted successfully',
   });
 }

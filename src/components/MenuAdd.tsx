@@ -1,29 +1,30 @@
 import {useEffect, useState} from "react";
-import {MenuItem, MenuItemStatus, MenuItemDto} from "@/types/menu";
-import {useRouter} from 'next/navigation';
-import Loader from "@/components/Loader";
+import {MenuItem as TypeMenuItem, MenuItemStatus, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
+import {Category as TypeCategory} from "@/types/category";
 import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
 import SelectField from "@/components/Inputs/Select";
 import NumberField from "@/components/Inputs/Number";
 import {calculateTotalTaxValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
+import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 
 interface MenuAddProps {
-  menuItem?: Partial<MenuItem | null>;
+  menuItem?: Partial<TypeMenuItem | null>;
   isEditing: boolean;
   clearForm: () => void;
+  refreshMenuItems: () => void;
 }
 
-export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) {
+export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItems}: MenuAddProps) {
   const [errors, setErrors] = useState<string[]>([]);
+  const [categories, setCategories] = useState<TypeCategory[]>([]);
 
-  const [isPageLoading, setIsPageLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const [formData, setFormData] = useState<MenuItemDto>({
+  const [formData, setFormData] = useState<TypeMenuItemDto>({
     name: menuItem?.name || '',
     description: menuItem?.description || '',
+    category_id: menuItem?.category_id || null,
     price: menuItem?.price || 0,
     cgst: menuItem?.cgst || 0,
     sgst: menuItem?.sgst || 0,
@@ -35,6 +36,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     setFormData({
       name: menuItem?.name || '',
       description: menuItem?.description || '',
+      category_id: menuItem?.category_id || null,
       price: menuItem?.price || 0,
       cgst: menuItem?.cgst || 0,
       sgst: menuItem?.sgst || 0,
@@ -47,6 +49,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     setFormData({
       name: '',
       description: '',
+      category_id: null,
       price: 0,
       cgst: 0,
       sgst: 0,
@@ -68,37 +71,15 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     if (name == 'total') {
       const totalTax: number = calculateTotalTaxValue(formData.sgst, formData.cgst);
 
-      setFormData((prev: MenuItemDto) => ({
+      setFormData((prev: TypeMenuItemDto) => ({
         ...prev,
-        [name]: parseFloat(value + ''),
         ['price']: parseFloat((parseFloat(value + '') / (1 + (totalTax / 100))).toFixed(2)),
       }));
 
       return;
     }
 
-    if (name == 'sgst' || name == 'cgst') {
-      setFormData((prev: MenuItemDto) => ({
-        ...prev,
-        [name]: value,
-        ['tax']: calculateTotalTaxValue(value, name == 'cgst' ? formData.sgst : formData.cgst),
-        ['total']: calculateTotalValue(formData.price, value, name == 'cgst' ? formData.sgst : formData.cgst)
-      }));
-
-      return;
-    }
-
-    if (name == 'price') {
-      setFormData((prev: MenuItemDto) => ({
-        ...prev,
-        [name]: parseFloat(value + ''),
-        ['total']: calculateTotalValue(value, formData.sgst, formData.cgst)
-      }));
-
-      return;
-    }
-
-    setFormData((prev: MenuItemDto) => ({
+    setFormData((prev: TypeMenuItemDto) => ({
       ...prev,
       [name]: value,
     }));
@@ -112,6 +93,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     if (!formData.price || formData.price <= 0) errors.push('Price is required');
     if (!formData.sgst || formData.sgst <= 0) errors.push('SGST is required');
     if (!formData.cgst || formData.cgst <= 0) errors.push('CGST is required');
+    if (!formData.category_id) errors.push('Category is required');
 
     setErrors(errors);
     return errors.length > 0;
@@ -150,13 +132,14 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         });
       }
 
-      const data = await response.json();
+      const data: TypeApiResponse<TypeMenuItem> = await response.json();
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to save menu item');
       }
 
-      router.refresh();
+      refreshMenuItems()
+      clearFormData()
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error saving menu Item:', error);
@@ -166,11 +149,23 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     }
   };
 
-  if (isPageLoading) {
-    return (
-      <Loader/>
-    );
+  async function getCategories(): Promise<void> {
+    const response: Response = await fetch(`/api/categories`, {
+      next: {revalidate: 3600} // Revalidate every hour
+    });
+
+    const data: TypeApiListResponse<TypeCategory> = await response.json();
+
+    if (!data.success) {
+      throw new Error('Failed to fetch blog post');
+    }
+
+    setCategories(data.data);
   }
+
+  useEffect(() => {
+    getCategories().then(r => console.log(r));
+  }, []);
 
   return (
     <form onSubmit={handleSubmit}
@@ -186,13 +181,23 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
         <InputField
           id="name"
           title="Item Name"
           placeholder="Enter Item Name"
           value={formData.name}
           onchange={handleChange}
+        />
+        <SelectField
+          id="category_id"
+          title="Category"
+          placeholder="Select Category"
+          value={formData.category_id}
+          onchange={handleChangeValue}
+          options={categories.map((category: TypeCategory) => {
+            return {value: category.id, text: category.name}
+          })}
         />
         <SelectField
           id="status"
@@ -266,7 +271,8 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
                   placeholder="Total Tax"
                   disabled={true}
                   value={calculateTotalTaxValue(formData.cgst, formData.sgst)}
-                  onchange={() => {}}
+                  onchange={() => {
+                  }}
                 />
               </div>
             </div>

@@ -6,6 +6,7 @@ export enum MenuItemStatus {
 export interface MenuItemDto {
   name: string;
   description: string | null;
+  category_id: number | null;
   price: number;
   sgst?: number;
   cgst?: number;

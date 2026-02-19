@@ -1,5 +1,5 @@
 import {SupabaseService} from "@/services/SupabaseService.server";
-import {MenuItem as TypeMenuItem, MenuItemDto, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
+import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
 
 export const MenuService = {
   getAllMenuItems: async (): Promise<TypeMenuItem[]> => {
@@ -39,6 +39,7 @@ export const MenuService = {
   },
 
   createMenuItem: async (menuItemDto: TypeMenuItemDto): Promise<TypeMenuItem> => {
+    console.log({menuItemDto});
     const supabase = await SupabaseService.getServerClient();
 
     const {data: menuItem, error} = await supabase

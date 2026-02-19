@@ -1,17 +1,21 @@
 'use client';
 
 import {MenuItem as TypeMenuItem} from "@/types/menu";
-import {MenuItems as MenuItemsData} from "@/data/MenuItem";
 import MenuAdd from "@/components/MenuAdd";
 import MenuItem from "@/components/MenuItem";
 import {useEffect, useState} from "react";
 import {ApiListResponse as TypeApiListResponse} from "@/types/global";
+import Loader from "@/components/Loader";
 
 export default function MenuPage() {
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
   const [menuItems, setMenuItems] = useState<TypeMenuItem[]>([]);
   const [editingMenu, setEditingMenu] = useState<TypeMenuItem | null>(null);
 
   async function getMenuItems(): Promise<void> {
+    setIsPageLoading(true);
+
     const response: Response = await fetch(`/api/menu`, {
       next: { revalidate: 3600 } // Revalidate every hour
     });
@@ -23,11 +27,18 @@ export default function MenuPage() {
     }
 
     setMenuItems(data.data);
+    setIsPageLoading(false);
   }
 
   useEffect(() => {
     getMenuItems().then(r => console.log(r));
   }, []);
+
+  if (isPageLoading) {
+    return (
+      <Loader/>
+    );
+  }
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
@@ -43,6 +54,7 @@ export default function MenuPage() {
             isEditing={!!editingMenu}
             menuItem={editingMenu}
             clearForm={() => setEditingMenu(null)}
+            refreshMenuItems={() => getMenuItems()}
           />
 
           <div
@@ -58,6 +70,10 @@ export default function MenuPage() {
                   editAction={(menu: TypeMenuItem) => {
                     setEditingMenu(menu);
                     window.scrollTo(0, 0)
+                  }}
+                  refreshMenuItems={() => {
+                    getMenuItems().then(r => console.log(r));
+                    setEditingMenu(null)
                   }}
                 />
               ))}

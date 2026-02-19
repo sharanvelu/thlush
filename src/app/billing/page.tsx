@@ -9,6 +9,8 @@ import {ApiListResponse as TypeApiListResponse} from "@/types/global";
 import {calculateTotalTaxPriceValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
 
 export default function BillingPage() {
+  const [isLoading, setIsLoading] = useState(true);
+
   const [customerName, setCustomerName] = useState<string>('');
   const [filterValue, setFilterValue] = useState<string>('');
 
@@ -17,6 +19,8 @@ export default function BillingPage() {
   const [filteredMenuItems, setFilteredMenuItems] = useState<TypeMenuItem[]>([]);
 
   async function getMenuItems(): Promise<void> {
+    setIsLoading(true);
+
     const response: Response = await fetch(`/api/menu`, {
       next: {revalidate: 3600} // Revalidate every hour
     });
@@ -29,6 +33,7 @@ export default function BillingPage() {
 
     setMenuItems(data.data);
     setFilteredMenuItems(data.data);
+    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -134,15 +139,30 @@ export default function BillingPage() {
                 value={filterValue}
                 onchange={(e) => filterItems(e.target.value)}
               />
-              <div className="grid gap-4.5" style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}>
-                {filteredMenuItems.map((menuItem: TypeMenuItem) => (
-                  <BillingItem
-                    key={menuItem.id}
-                    menu={menuItem}
-                    billingQuantity={billingItems.find((x: TypeBillingItem): boolean => x.id === menuItem.id)?.quantity ?? 0}
-                    updateItem={updateItem}
-                  />
-                ))}
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4.5"
+                   // style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}
+              >
+                {isLoading ? (
+                  <div className="min-h-60 flex items-center justify-center bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-5">
+                    <div className="relative">
+                      {/* Outer circle */}
+                      <div className="w-12 h-12 border-4 border-blue-200 dark:border-blue-900 rounded-full"></div>
+                      {/* Inner circle - blue spinning part */}
+                      <div className="absolute top-0 left-0 w-12 h-12 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {filteredMenuItems.map((menuItem: TypeMenuItem) => (
+                      <BillingItem
+                        key={menuItem.id}
+                        menu={menuItem}
+                        billingQuantity={billingItems.find((x: TypeBillingItem): boolean => x.id === menuItem.id)?.quantity ?? 0}
+                        updateItem={updateItem}
+                      />
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
