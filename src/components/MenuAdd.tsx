@@ -7,6 +7,8 @@ import TextAreaField from "@/components/Inputs/TextArea";
 import SelectField from "@/components/Inputs/Select";
 import NumberField from "@/components/Inputs/Number";
 import {calculateTotalTaxValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
+import {ApiListResponse as TypeApiListResponse} from "@/types/global";
+import {Category as TypeCategory} from "@/types/category";
 
 interface MenuAddProps {
   menuItem?: Partial<MenuItem | null>;
@@ -16,14 +18,17 @@ interface MenuAddProps {
 
 export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) {
   const [errors, setErrors] = useState<string[]>([]);
+  const [categories, setCategories]= useState<TypeCategory[]>([]);
 
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const [totalPrice, setTotalPrice] = useState<number>(0);
   const [formData, setFormData] = useState<MenuItemDto>({
     name: menuItem?.name || '',
     description: menuItem?.description || '',
+    category_id: menuItem?.category_id || null,
     price: menuItem?.price || 0,
     cgst: menuItem?.cgst || 0,
     sgst: menuItem?.sgst || 0,
@@ -35,6 +40,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     setFormData({
       name: menuItem?.name || '',
       description: menuItem?.description || '',
+      category_id: menuItem?.category_id || null,
       price: menuItem?.price || 0,
       cgst: menuItem?.cgst || 0,
       sgst: menuItem?.sgst || 0,
@@ -47,6 +53,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     setFormData({
       name: '',
       description: '',
+      category_id: null,
       price: 0,
       cgst: 0,
       sgst: 0,
@@ -70,29 +77,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
 
       setFormData((prev: MenuItemDto) => ({
         ...prev,
-        [name]: parseFloat(value + ''),
         ['price']: parseFloat((parseFloat(value + '') / (1 + (totalTax / 100))).toFixed(2)),
-      }));
-
-      return;
-    }
-
-    if (name == 'sgst' || name == 'cgst') {
-      setFormData((prev: MenuItemDto) => ({
-        ...prev,
-        [name]: value,
-        ['tax']: calculateTotalTaxValue(value, name == 'cgst' ? formData.sgst : formData.cgst),
-        ['total']: calculateTotalValue(formData.price, value, name == 'cgst' ? formData.sgst : formData.cgst)
-      }));
-
-      return;
-    }
-
-    if (name == 'price') {
-      setFormData((prev: MenuItemDto) => ({
-        ...prev,
-        [name]: parseFloat(value + ''),
-        ['total']: calculateTotalValue(value, formData.sgst, formData.cgst)
       }));
 
       return;
@@ -112,6 +97,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     if (!formData.price || formData.price <= 0) errors.push('Price is required');
     if (!formData.sgst || formData.sgst <= 0) errors.push('SGST is required');
     if (!formData.cgst || formData.cgst <= 0) errors.push('CGST is required');
+    if (!formData.category_id) errors.push('Category is required');
 
     setErrors(errors);
     return errors.length > 0;
@@ -166,6 +152,25 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
     }
   };
 
+  async function getCategories(): Promise<void> {
+    const response: Response = await fetch(`/api/categories`, {
+      next: { revalidate: 3600 } // Revalidate every hour
+    });
+
+    const data: TypeApiListResponse<TypeCategory> = await response.json();
+
+    if (!data.success) {
+      throw new Error('Failed to fetch blog post');
+    }
+
+    setCategories(data.data);
+  }
+
+  useEffect(() => {
+    getCategories().then(r => console.log(r));
+  }, []);
+
+
   if (isPageLoading) {
     return (
       <Loader/>
@@ -186,13 +191,23 @@ export default function MenuAdd({menuItem, isEditing, clearForm}: MenuAddProps) 
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
         <InputField
           id="name"
           title="Item Name"
           placeholder="Enter Item Name"
           value={formData.name}
           onchange={handleChange}
+        />
+        <SelectField
+          id="category_id"
+          title="Category"
+          placeholder="Select Category"
+          value={formData.category_id}
+          onchange={handleChangeValue}
+          options={categories.map((category: TypeCategory)=> {
+            return {value: category.id, text: category.name}
+          })}
         />
         <SelectField
           id="status"

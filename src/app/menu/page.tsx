@@ -1,7 +1,6 @@
 'use client';
 
 import {MenuItem as TypeMenuItem} from "@/types/menu";
-import {MenuItems as MenuItemsData} from "@/data/MenuItem";
 import MenuAdd from "@/components/MenuAdd";
 import MenuItem from "@/components/MenuItem";
 import {useEffect, useState} from "react";

@@ -1,8 +1,7 @@
-import {ChangeEventHandler, useState} from "react";
-import {BillingItem as TypeBillingItem} from "@/types/billing";
+import {useState} from "react";
 
 interface Option {
-  value: string;
+  value: string | number;
   text: string;
 }
 
@@ -13,7 +12,7 @@ interface SelectProps {
   disabled?: boolean;
   value: string | number | null;
   options: Option[];
-  onchange: (name: string, value: string) => void;
+  onchange: (name: string, value: string | number) => void;
 }
 
 export default function SelectField({id, title, placeholder, disabled, value, options, onchange}: SelectProps) {
@@ -27,7 +26,7 @@ export default function SelectField({id, title, placeholder, disabled, value, op
     setIsDropDownOpen(false);
   }
 
-  const selectOption = (value: string) => {
+  const selectOption = (value: string | number) => {
     onchange(id, value);
 
     closeDropdown();
