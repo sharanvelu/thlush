@@ -17,7 +17,7 @@ export default function CategoryPage() {
     setIsPageLoading(true);
 
     const response: Response = await fetch(`/api/categories`, {
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: {revalidate: 3600} // Revalidate every hour
     });
 
     const data: TypeApiListResponse<TypeCategory> = await response.json();
@@ -42,44 +42,36 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 rounded-2xl sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
-        <div className="text-left">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            Manage Category
-          </h1>
-        </div>
+      <CategoryAdd
+        isEditing={!!editingCategory}
+        category={editingCategory}
+        clearForm={() => setEditingCategory(null)}
+        refreshCategories={() => getCategories()}
+      />
 
-        <div className="mt-10 space-y-12">
-          <CategoryAdd
-            isEditing={!!editingCategory}
-            category={editingCategory}
-            clearForm={() => setEditingCategory(null)}
-            refreshCategories={() => getCategories()}
-          />
+      <div className="container mx-auto px-4 mt-4 py-8 rounded-2xl sm:px-6 lg:px-8 bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700">
+        <h1 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          Manage Category
+        </h1>
 
-          <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 mb-8">
-            <h3 className="m-0 mb-5">Manage Category</h3>
-            {categories.length == 0 && (
-              <p className="empty-message">No Categories. Add your first category above!</p>
-            )}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {categories.map((category: TypeCategory) => (
-                <Category
-                  key={category.id}
-                  category={category}
-                  editAction={(category: TypeCategory) => {
-                    setEditingCategory(category);
-                    window.scrollTo(0, 0)
-                  }}
-                  refreshCategories={() => {
-                    getCategories().then(r => console.log(r));
-                    setEditingCategory(null)
-                  }}
-                />
-              ))}
-            </div>
-          </div>
+        {categories.length == 0 && (
+          <p className="empty-message">No Categories. Add your first category above!</p>
+        )}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {categories.map((category: TypeCategory) => (
+            <Category
+              key={category.id}
+              category={category}
+              editAction={(category: TypeCategory) => {
+                setEditingCategory(category);
+                window.scrollTo(0, 0)
+              }}
+              refreshCategories={() => {
+                getCategories().then(r => console.log(r));
+                setEditingCategory(null)
+              }}
+            />
+          ))}
         </div>
       </div>
     </div>

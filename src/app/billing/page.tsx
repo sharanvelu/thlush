@@ -1,12 +1,13 @@
 'use client';
 
-import BillingItem from "@/components/BillingItem";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {MenuItem as TypeMenuItem} from "@/types/menu";
 import {BillingItem as TypeBillingItem} from "@/types/billing";
 import InputField from "@/components/Inputs/Input";
 import {ApiListResponse as TypeApiListResponse} from "@/types/global";
 import {calculateTotalTaxPriceValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
+import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
+import CategoryBillingItem from "@/components/CategoryBillingItem";
 
 export default function BillingPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,24 +16,46 @@ export default function BillingPage() {
   const [filterValue, setFilterValue] = useState<string>('');
 
   const [billingItems, setBillingItems] = useState<TypeBillingItem[]>([]);
-  const [menuItems, setMenuItems] = useState<TypeMenuItem[]>([]);
-  const [filteredMenuItems, setFilteredMenuItems] = useState<TypeMenuItem[]>([]);
+  const [categoryWithMenuItems, setCategoryWithMenuItems] = useState<TypeCategoryWithMenuItem[]>([]);
+
+  const filteredCategoryWithMenuItems: TypeCategoryWithMenuItem[] = useMemo(() => {
+    if (!filterValue) return categoryWithMenuItems;
+
+    return categoryWithMenuItems
+      .map((categoryWithMenuItem: TypeCategoryWithMenuItem) => {
+        const categoryMatches: boolean = (categoryWithMenuItem.name ?? "").toLowerCase().includes(filterValue);
+
+        const matchingItems: TypeMenuItem[] = categoryWithMenuItem.menu_items.filter((menuItem: TypeMenuItem) =>
+          (menuItem.name ?? "").toLowerCase().includes(filterValue)
+        );
+
+        // If category matches, return all items; otherwise only matching items
+        return categoryMatches
+          ? {...categoryWithMenuItem, menu_items: categoryWithMenuItem.menu_items}
+          : {...categoryWithMenuItem, menu_items: matchingItems};
+      })
+      .filter(
+        // keep categories that match OR have at least one matching item
+        (categoryWithMenuItem: TypeCategoryWithMenuItem) =>
+          (categoryWithMenuItem.name ?? "").toLowerCase().includes(filterValue) ||
+          (categoryWithMenuItem.menu_items?.length ?? 0) > 0
+      );
+  }, [categoryWithMenuItems, filterValue]);
 
   async function getMenuItems(): Promise<void> {
     setIsLoading(true);
 
-    const response: Response = await fetch(`/api/menu`, {
+    const response: Response = await fetch(`/api/categories/with_menu_items`, {
       next: {revalidate: 3600} // Revalidate every hour
     });
 
-    const data: TypeApiListResponse<TypeMenuItem> = await response.json();
+    const data: TypeApiListResponse<TypeCategoryWithMenuItem> = await response.json();
 
     if (!data.success) {
       throw new Error('Failed to fetch blog post');
     }
 
-    setMenuItems(data.data);
-    setFilteredMenuItems(data.data);
+    setCategoryWithMenuItems(data.data);
     setIsLoading(false);
   }
 
@@ -40,13 +63,6 @@ export default function BillingPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     getMenuItems().then(r => console.log(r));
   }, []);
-
-  const filterItems = (value: string) => {
-    setFilterValue(value)
-    setFilteredMenuItems(menuItems.filter((item: TypeMenuItem) => {
-      return !item.name.toLowerCase().search(value.toLowerCase());
-    }));
-  }
 
   const updateItem = (item: TypeBillingItem, quantity: number) => {
     setBillingItems((prev: TypeBillingItem[]) => {
@@ -102,18 +118,12 @@ export default function BillingPage() {
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 rounded-2xl sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
-        <div className="text-left">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            New Bill
-          </h1>
-        </div>
-
-        <div className="mt-10 lg:flex gap-4">
+      <div className="container mx-auto">
+        <div className="lg:flex gap-4">
           <div className="lg:w-3/4 space-y-12">
             {/* Billing Customer name */}
             <div
-              className="bg-[#fffbf6] dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
+              className=" px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800  border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
               <div className="mb-4">
                 <label className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm">
                   Customer Name:
@@ -130,35 +140,34 @@ export default function BillingPage() {
             </div>
 
             {/* Menu Items List */}
-            <div
-              className="bg-gray-100 dark:bg-gray-900 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
+            <div className="bg-gray-50 dark:bg-gray-800 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
               <InputField
                 id="filter"
                 title="Filter"
                 placeholder="Filter Items"
                 value={filterValue}
-                onchange={(e) => filterItems(e.target.value)}
+                onchange={(e) => setFilterValue(e.target.value.trim().toLowerCase())}
               />
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4.5"
-                   // style={{gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"}}
-              >
+              <div className="flex flex-col gap-4">
                 {isLoading ? (
-                  <div className="min-h-60 flex items-center justify-center bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-5">
+                  <div
+                    className="min-h-60 flex items-center justify-center bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-5">
                     <div className="relative">
                       {/* Outer circle */}
                       <div className="w-12 h-12 border-4 border-blue-200 dark:border-blue-900 rounded-full"></div>
                       {/* Inner circle - blue spinning part */}
-                      <div className="absolute top-0 left-0 w-12 h-12 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
+                      <div
+                        className="absolute top-0 left-0 w-12 h-12 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
                     </div>
                   </div>
                 ) : (
                   <>
-                    {filteredMenuItems.map((menuItem: TypeMenuItem) => (
-                      <BillingItem
-                        key={menuItem.id}
-                        menu={menuItem}
-                        billingQuantity={billingItems.find((x: TypeBillingItem): boolean => x.id === menuItem.id)?.quantity ?? 0}
-                        updateItem={updateItem}
+                    {filteredCategoryWithMenuItems.map((categoryWithMenuItem: TypeCategoryWithMenuItem) => (
+                      <CategoryBillingItem
+                        key={categoryWithMenuItem.id}
+                        categoryWithMenuItem={categoryWithMenuItem}
+                        billingItems={billingItems}
+                        updateBillingItemAction={updateItem}
                       />
                     ))}
                   </>
@@ -168,8 +177,7 @@ export default function BillingPage() {
           </div>
 
           {/* Bill Pricing Section */}
-          <div
-            className="pt-6 mt-8 lg:mt-0 border-t border-dashed lg:border-none lg:w-1/4 border-[#e0d7cf] grid gap-3.5 items-center h-2/5">
+          <div className="p-6 mt-8 lg:mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 lg:w-1/4 items-center h-2/5 bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl">
             {customerName !== '' && (
               <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5">
                 <><span className="text-[16px] font-extrabold">Customer:</span> {customerName}</>
