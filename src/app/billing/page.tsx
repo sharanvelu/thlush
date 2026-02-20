@@ -177,7 +177,7 @@ export default function BillingPage() {
           </div>
 
           {/* Bill Pricing Section */}
-          <div className="p-6 mt-8 lg:mt-0 border-t border-dashed lg:border-none lg:w-1/4 items-center h-2/5 bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
+          <div className="p-6 mt-8 lg:mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 lg:w-1/4 items-center h-2/5 bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl">
             {customerName !== '' && (
               <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5">
                 <><span className="text-[16px] font-extrabold">Customer:</span> {customerName}</>
