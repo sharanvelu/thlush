@@ -118,18 +118,12 @@ export default function BillingPage() {
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 rounded-2xl sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
-        <div className="text-left">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            New Bill
-          </h1>
-        </div>
-
-        <div className="mt-10 lg:flex gap-4">
+      <div className="container mx-auto">
+        <div className="lg:flex gap-4">
           <div className="lg:w-3/4 space-y-12">
             {/* Billing Customer name */}
             <div
-              className="bg-[#fffbf6] dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
+              className=" px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800  border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
               <div className="mb-4">
                 <label className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm">
                   Customer Name:
@@ -147,7 +141,7 @@ export default function BillingPage() {
 
             {/* Menu Items List */}
             <div
-              className="bg-gray-100 dark:bg-gray-900 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
+              className="bg-gray-50 dark:bg-gray-800 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
               <InputField
                 id="filter"
                 title="Filter"
