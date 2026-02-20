@@ -169,8 +169,10 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
 
   return (
     <form onSubmit={handleSubmit}
-          className="bg-[#fffbf6] dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
-      <h3 className="m-0 mb-5">Add New Menu Item</h3>
+          className="container mx-auto bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
+      <h1 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+        Add New Menu Item
+      </h1>
 
       {errors.length > 0 && (
         <div className="flex flex-col gap-2 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 mb-6"

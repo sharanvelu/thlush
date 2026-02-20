@@ -6,27 +6,31 @@ import MenuItem from "@/components/MenuItem";
 import {useEffect, useState} from "react";
 import {ApiListResponse as TypeApiListResponse} from "@/types/global";
 import Loader from "@/components/Loader";
+import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
+import CategoryMenuItem from "@/components/CategoryMenuItem";
 
 export default function MenuPage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
 
-  const [menuItems, setMenuItems] = useState<TypeMenuItem[]>([]);
+  const [categoryWithMenuItems, setCategoryWithMenuItems] = useState<TypeCategoryWithMenuItem[]>([]);
   const [editingMenu, setEditingMenu] = useState<TypeMenuItem | null>(null);
 
   async function getMenuItems(): Promise<void> {
     setIsPageLoading(true);
 
-    const response: Response = await fetch(`/api/menu`, {
-      next: { revalidate: 3600 } // Revalidate every hour
+    const response: Response = await fetch(`/api/categories/with_menu_items`, {
+      next: {revalidate: 3600} // Revalidate every hour
     });
 
-    const data: TypeApiListResponse<TypeMenuItem> = await response.json();
+    const data: TypeApiListResponse<TypeCategoryWithMenuItem> = await response.json();
+
+    console.log({data});
 
     if (!data.success) {
       throw new Error('Failed to fetch blog post');
     }
 
-    setMenuItems(data.data);
+    setCategoryWithMenuItems(data.data);
     setIsPageLoading(false);
   }
 
@@ -42,32 +46,25 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 rounded-2xl sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
-        <div className="text-left">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            Manage Menu
-          </h1>
-        </div>
+      <MenuAdd
+        isEditing={!!editingMenu}
+        menuItem={editingMenu}
+        clearForm={() => setEditingMenu(null)}
+        refreshMenuItems={() => getMenuItems()}
+      />
 
-        <div className="mt-10 space-y-12">
-          <MenuAdd
-            isEditing={!!editingMenu}
-            menuItem={editingMenu}
-            clearForm={() => setEditingMenu(null)}
-            refreshMenuItems={() => getMenuItems()}
-          />
+      <div className="container mx-auto px-4 mt-4 py-8 rounded-2xl sm:px-6 lg:px-8 bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700">
+        <h1 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          Manage Menu Item
+        </h1>
 
-          <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 mb-8">
-            <h3 className="m-0 mb-5">Manage Menu Item</h3>
-            {/*<p class="empty-message">No menu items. Add your first item above!</p>*/}
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {menuItems.map((menuItem: TypeMenuItem) => (
-                <MenuItem
-                  key={menuItem.id}
-                  menu={menuItem}
-                  editAction={(menu: TypeMenuItem) => {
+        <div className="flex flex-col gap-4">
+          {categoryWithMenuItems.map((categoryWithMenuItem: TypeCategoryWithMenuItem) => (
+            <div key={categoryWithMenuItem.id}>
+              {categoryWithMenuItem.menu_items.length > 0 && (
+                <CategoryMenuItem
+                  categoryWithMenuItem={categoryWithMenuItem}
+                  menuItemEditAction={(menu: TypeMenuItem) => {
                     setEditingMenu(menu);
                     window.scrollTo(0, 0)
                   }}
@@ -76,9 +73,9 @@ export default function MenuPage() {
                     setEditingMenu(null)
                   }}
                 />
-              ))}
+              )}
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

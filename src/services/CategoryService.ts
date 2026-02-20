@@ -1,5 +1,8 @@
 import {SupabaseService} from "@/services/SupabaseService.server";
-import {Category as TypeCategory, CategoryDto as TypeCategoryDto} from "@/types/category";
+import {Category as TypeCategory, CategoryDto as TypeCategoryDto, CategoryWithMenuItem} from "@/types/category";
+import {MenuItem as TypeMenuItem} from "@/types/menu";
+import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
+import {MenuService} from "@/services/MenuService";
 
 export const CategoryService = {
   getAllCategories: async (): Promise<TypeCategory[]> => {
@@ -17,6 +20,34 @@ export const CategoryService = {
     }
 
     return await CategoryService.formatCategories(categories);
+  },
+
+  getCategoryWithMenuItem: async (): Promise<TypeCategoryWithMenuItem[]> => {
+    const supabase = await SupabaseService.getServerClient();
+
+    // Get All Categories
+    const {data: categories, error} = await supabase
+      .from('thlush_categories')
+      .select('*')
+      .order('created_at', {ascending: false});
+
+    if (error) {
+      console.error('Error fetching categories from Supabase:', error);
+      throw error;
+    }
+
+    const menuItems: TypeMenuItem[] = await MenuService.getAllMenuItems();
+
+    return (await CategoryService.formatCategories(categories))
+      .map((category: TypeCategory): TypeCategoryWithMenuItem => {
+        const categoryWithMenuItems = category as CategoryWithMenuItem;
+
+        categoryWithMenuItems.menu_items = menuItems.filter(
+          (menuItem: TypeMenuItem) => menuItem.category_id === category.id
+        );
+
+        return categoryWithMenuItems;
+      });
   },
 
   formatCategories: async (categories: TypeCategory[]): Promise<TypeCategory[]> => {
