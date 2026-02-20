@@ -8,7 +8,280 @@
     :root { font-family: "Segoe UI", Arial, sans-serif; color: #1f1f1f; background: #f7f5f2; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .shell { width: min(1100px, 100%); background: #fff; border-radius: 18px; box-shadow: 0 30px 80px rgba(15,15,20,.15); padding: clamp(20px, 4vw, 40px); }
+    .shell { width: min(1100px, 100%); background: #fff; border-radius: 18px; box-shadow: 0 30px 80px rgba(15,15,20,.15); padding: clamp(20px, 4vw, 40px); position: relative; }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+    body.theme-dark .theme-toggle {
+      background: rgba(10, 10, 18, 0.9);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    }
+
+    .theme-toggle-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 8px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+    .theme-toggle-btn:active {
+      transform: scale(0.95);
+    }
+
+    .theme-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+    }
+    /* Light theme logo */
+    .light-icon {
+      background: linear-gradient(135deg, #ffd36f, #ff9f1c);
+      box-shadow: 0 0 8px rgba(255, 200, 100, 0.6);
+    }
+    /* Dark theme logo */
+    .dark-icon {
+      background: radial-gradient(circle at 30% 30%, #ffffff, #444);
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.7) inset;
+    }
+
+    /* Highlight opposite theme button */
+    body.theme-dark .toggle-light {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
+    }
+    body.theme-dark .toggle-dark {
+      opacity: 0.7;
+    }
+    body:not(.theme-dark) .toggle-dark {
+      background: rgba(0, 0, 0, 0.06);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+    }
+    body:not(.theme-dark) .toggle-light {
+      opacity: 0.7;
+    }
+
+    /* Dark theme overrides */
+    body.theme-dark {
+      background: #050509;
+      color: #f5f5f7;
+    }
+    body.theme-dark :root {
+      color: #f5f5f7;
+      background: #050509;
+    }
+    body.theme-dark .shell {
+      background: #11121a;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85);
+    }
+    body.theme-dark .item,
+    body.theme-dark .add-form,
+    body.theme-dark .filter-section,
+    body.theme-dark .history-item,
+    body.theme-dark .stat-card,
+    body.theme-dark .floating-order-panel {
+      background: #181a24;
+      border-color: #272936;
+    }
+    body.theme-dark .category-title,
+    body.theme-dark .item-manage-info h4,
+    body.theme-dark h3 {
+      color: #f5f5f7;
+    }
+    body.theme-dark p.lead,
+    body.theme-dark .history-date,
+    body.theme-dark .item-manage-info p,
+    body.theme-dark .filter-section p,
+    body.theme-dark .stat-label {
+      color: #b0b3c1;
+    }
+    body.theme-dark .history-id,
+    body.theme-dark .empty-message {
+      color: #777a8b;
+    }
+    body.theme-dark .history-item-name {
+      color: #f5f5f7;
+    }
+    body.theme-dark .history-item-price {
+      color: #ced3ff;
+    }
+    body.theme-dark .tabs {
+      border-bottom-color: #272936;
+    }
+    body.theme-dark .tab-btn {
+      color: #b0b3c1;
+    }
+    body.theme-dark .tab-btn:hover {
+      color: #ffffff;
+      background-color: #181a24;
+    }
+    body.theme-dark .tab-btn.active {
+      color: #ffb347;
+      border-bottom-color: #ffb347;
+    }
+    body.theme-dark .form-group input,
+    body.theme-dark .form-group textarea,
+    body.theme-dark .filter-group input,
+    body.theme-dark .filter-group select,
+    body.theme-dark .edit-form-inline input,
+    body.theme-dark .edit-form-inline textarea {
+      background: #11121a;
+      border-color: #272936;
+      color: #f5f5f7;
+    }
+    body.theme-dark .form-group input::placeholder,
+    body.theme-dark .form-group textarea::placeholder,
+    body.theme-dark .filter-group input::placeholder {
+      color: #777a8b;
+    }
+    body.theme-dark h1 {
+      color: #f5f5f7;
+    }
+    body.theme-dark .item h3,
+    body.theme-dark .item p {
+      color: #f5f5f7;
+    }
+    body.theme-dark .item span.price {
+      color: #ff8c5a;
+    }
+    body.theme-dark .selected,
+    body.theme-dark .floating-panel-content .selected {
+      color: #b0b3c1;
+    }
+    body.theme-dark .total,
+    body.theme-dark .floating-panel-content .total {
+      color: #f5f5f7;
+    }
+    body.theme-dark .qty {
+      color: #f5f5f7;
+    }
+    body.theme-dark .form-group label,
+    body.theme-dark .filter-group label {
+      color: #f5f5f7;
+    }
+    body.theme-dark .remove-section h3,
+    body.theme-dark .filter-section h3 {
+      color: #f5f5f7;
+    }
+    body.theme-dark .history-total {
+      color: #ff8c5a;
+    }
+    body.theme-dark .stat-value {
+      color: #f5f5f7;
+    }
+    body.theme-dark .btn-reset-filter {
+      color: #b0b3c1;
+      border-color: #272936;
+    }
+    body.theme-dark .btn-reset-filter:hover {
+      color: #ffb347;
+      border-color: #ffb347;
+    }
+    body.theme-dark #storageInfo,
+    body.theme-dark .storageInfo {
+      background: #181a24;
+      color: #b0b3c1;
+    }
+    body.theme-dark #customerDisplay {
+      color: #b0b3c1;
+    }
+    body.theme-dark .floating-panel-drag {
+      background: #272936;
+    }
+    body.theme-dark .summary {
+      border-top-color: #272936;
+    }
+    body.theme-dark .edit-form-inline {
+      background: #181a24;
+      border-color: #272936;
+    }
+    body.theme-dark .item-manage {
+      background: #181a24;
+      border-color: #272936;
+    }
+    body.theme-dark .item-manage-info h4 {
+      color: #f5f5f7;
+    }
+    body.theme-dark .item-manage-info .price {
+      color: #ff8c5a;
+    }
+    /* Override inline styles for dark theme */
+    body.theme-dark #printCustomerName,
+    body.theme-dark #printDateTime {
+      color: #f5f5f7 !important;
+    }
+    body.theme-dark #customerDisplay {
+      color: #b0b3c1 !important;
+    }
+    body.theme-dark #storageInfo {
+      background: #181a24 !important;
+      color: #b0b3c1 !important;
+    }
+    body.theme-dark .filter-section p {
+      color: #b0b3c1 !important;
+    }
+    body.theme-dark [style*="color: #5c5c68"] {
+      color: #b0b3c1 !important;
+    }
+    body.theme-dark [style*="color: #1f1f1f"] {
+      color: #f5f5f7 !important;
+    }
+    body.theme-dark [style*="color: #999"] {
+      color: #777a8b !important;
+    }
+    body.theme-dark [style*="background: #f7f5f2"] {
+      background: #181a24 !important;
+    }
+    body.theme-dark [style*="color: #dc3545"] {
+      color: #ff6b6b !important;
+    }
+    body.theme-dark .history-items {
+      border-top-color: #272936;
+    }
+    body.theme-dark .category-title {
+      border-bottom-color: #ffb347;
+    }
+    body.theme-dark button.secondary {
+      border-color: #ffb347;
+      color: #ffb347;
+    }
+    body.theme-dark button.secondary:hover {
+      background: rgba(255, 179, 71, 0.1);
+    }
+    body.theme-dark strong {
+      color: #f5f5f7;
+    }
+    body.theme-dark .history-header div div[style*="color: #5c5c68"] {
+      color: #b0b3c1 !important;
+    }
+    body.theme-dark .item-manage-info p[style*="color: #999"] {
+      color: #777a8b !important;
+    }
+    body.theme-dark select {
+      background: #11121a;
+      border-color: #272936;
+      color: #f5f5f7;
+    }
+    body.theme-dark select option {
+      background: #11121a;
+      color: #f5f5f7;
+    }
     h1 { margin: 0 0 12px; font-size: clamp(26px, 4vw, 34px); }
     p.lead { margin: 0 0 28px; color: #5c5c68; font-size: clamp(14px, 2vw, 16px); }
     
@@ -205,6 +478,14 @@
 </head>
 <body>
   <div class="shell">
+    <div class="theme-toggle" aria-label="Toggle color theme">
+      <button type="button" id="lightThemeBtn" class="theme-toggle-btn toggle-light" title="Light mode">
+        <span class="theme-icon light-icon"></span>
+      </button>
+      <button type="button" id="darkThemeBtn" class="theme-toggle-btn toggle-dark" title="Dark mode">
+        <span class="theme-icon dark-icon"></span>
+      </button>
+    </div>
     <h1>Thlush Order Billing</h1>
     <p class="lead">Select food items and adjust quantities with + and -. Your total updates instantly and you can print and save the invoice anytime.</p>
 
@@ -608,6 +889,28 @@
     const importFileInput = document.getElementById('importFileInput');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     const storageInfo = document.getElementById('storageInfo');
+    const lightThemeBtn = document.getElementById('lightThemeBtn');
+    const darkThemeBtn = document.getElementById('darkThemeBtn');
+
+    // Theme handling
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.body.classList.add('theme-dark');
+      } else {
+        document.body.classList.remove('theme-dark');
+      }
+      localStorage.setItem('billingTheme', theme);
+    }
+
+    // Load saved theme or default to light
+    const savedTheme = localStorage.getItem('billingTheme') || 'light';
+    applyTheme(savedTheme);
+
+    // Toggle handlers
+    if (lightThemeBtn && darkThemeBtn) {
+      lightThemeBtn.addEventListener('click', () => applyTheme('light'));
+      darkThemeBtn.addEventListener('click', () => applyTheme('dark'));
+    }
 
     // Tab switching
     tabButtons.forEach(btn => {
