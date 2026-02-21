@@ -19,8 +19,9 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
   const [errors, setErrors] = useState<string[]>([]);
   const [categories, setCategories] = useState<TypeCategory[]>([]);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const [total, setTotal] = useState<number>(0);
   const [formData, setFormData] = useState<TypeMenuItemDto>({
     name: menuItem?.name || '',
     description: menuItem?.description || '',
@@ -71,6 +72,8 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
     if (name == 'total') {
       const totalTax: number = calculateTotalTaxValue(formData.sgst, formData.cgst);
 
+      setTotal(parseFloat(value + '') || 0);
+
       setFormData((prev: TypeMenuItemDto) => ({
         ...prev,
         ['price']: parseFloat((parseFloat(value + '') / (1 + (totalTax / 100))).toFixed(2)),
@@ -83,7 +86,6 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
       ...prev,
       [name]: value,
     }));
-
   }
 
   const validateData = () => {
@@ -167,6 +169,10 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
     getCategories().then(r => console.log(r));
   }, []);
 
+  useEffect(() => {
+    setTotal(calculateTotalValue(formData.price, formData.sgst, formData.cgst));
+  }, [formData.price, formData.sgst, formData.cgst]);
+
   return (
     <form onSubmit={handleSubmit} className="container mx-auto bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
       <h1 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
@@ -206,7 +212,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
           placeholder="Select Status"
           value={formData.status as string}
           onchange={handleChangeValue}
-          options={[{value: "active", text: "Active"}, {value: "archive", text: "Archive"}]}
+          options={[{value: "active", text: "Active"}, {value: "disable", text: "Disabled"}]}
         />
       </div>
 
@@ -282,7 +288,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
                 id="total"
                 title="Item Total"
                 placeholder="Enter Item Total Price"
-                value={calculateTotalValue(formData.price, formData.cgst, formData.sgst)}
+                value={total}
                 onchange={handleChangeValue}
               />
             </div>

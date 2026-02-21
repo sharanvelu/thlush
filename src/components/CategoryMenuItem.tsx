@@ -2,6 +2,7 @@ import {MenuItem as TypeMenuItem} from "@/types/menu";
 import MenuItem from "@/components/MenuItem";
 import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
 import {useState} from "react";
+import CategoryStatusTag from "@/components/Tags/CategoryStatusTag";
 
 interface CategoryWithMenuItemProps {
   categoryWithMenuItem: TypeCategoryWithMenuItem;
@@ -19,8 +20,9 @@ export default function CategoryMenuItem(
   }
 
   return (
-    <div key={categoryWithMenuItem.id}
-         className="bg-gray-50 dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl">
+    <div className="relative bg-gray-50 dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl">
+      <CategoryStatusTag status={categoryWithMenuItem.status} />
+
       <div className="flex items-center justify-between px-6 py-4 cursor-pointer" onClick={toggleMenuItems}>
         <div className="text-xl">{categoryWithMenuItem.name}</div>
         <div className={isExpanded ? '' : 'rotate-180'}>

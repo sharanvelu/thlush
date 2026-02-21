@@ -1,5 +1,10 @@
 import {SupabaseService} from "@/services/SupabaseService.server";
-import {Category as TypeCategory, CategoryDto as TypeCategoryDto, CategoryWithMenuItem} from "@/types/category";
+import {
+  Category as TypeCategory,
+  CategoryDto as TypeCategoryDto,
+  CategoryStatus,
+  CategoryWithMenuItem
+} from "@/types/category";
 import {MenuItem as TypeMenuItem} from "@/types/menu";
 import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
 import {MenuService} from "@/services/MenuService";
@@ -12,7 +17,7 @@ export const CategoryService = {
     const {data: categories, error} = await supabase
       .from('thlush_categories')
       .select('*')
-      .order('created_at', {ascending: false});
+      .order('created_at', {ascending: true});
 
     if (error) {
       console.error('Error fetching categories from Supabase:', error);
@@ -22,21 +27,22 @@ export const CategoryService = {
     return await CategoryService.formatCategories(categories);
   },
 
-  getCategoryWithMenuItem: async (): Promise<TypeCategoryWithMenuItem[]> => {
+  getCategoryWithMenuItem: async (getAll: boolean = false): Promise<TypeCategoryWithMenuItem[]> => {
     const supabase = await SupabaseService.getServerClient();
 
     // Get All Categories
     const {data: categories, error} = await supabase
       .from('thlush_categories')
       .select('*')
-      .order('created_at', {ascending: false});
+      .in('status', getAll ? [CategoryStatus.ACTIVE, CategoryStatus.DISABLE] : [CategoryStatus.ACTIVE])
+      .order('created_at', {ascending: true});
 
     if (error) {
       console.error('Error fetching categories from Supabase:', error);
       throw error;
     }
 
-    const menuItems: TypeMenuItem[] = await MenuService.getAllMenuItems();
+    const menuItems: TypeMenuItem[] = await MenuService.getAllMenuItems(getAll);
 
     return (await CategoryService.formatCategories(categories))
       .map((category: TypeCategory): TypeCategoryWithMenuItem => {
@@ -47,7 +53,8 @@ export const CategoryService = {
         );
 
         return categoryWithMenuItems;
-      });
+      })
+      .filter((category: TypeCategoryWithMenuItem) => getAll || (category.menu_items.length > 0));
   },
 
   formatCategories: async (categories: TypeCategory[]): Promise<TypeCategory[]> => {

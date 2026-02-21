@@ -18,13 +18,11 @@ export default function MenuPage() {
   async function getMenuItems(): Promise<void> {
     setIsPageLoading(true);
 
-    const response: Response = await fetch(`/api/categories/with_menu_items`, {
+    const response: Response = await fetch(`/api/categories/with_menu_items?get_all=true`, {
       next: {revalidate: 3600} // Revalidate every hour
     });
 
     const data: TypeApiListResponse<TypeCategoryWithMenuItem> = await response.json();
-
-    console.log({data});
 
     if (!data.success) {
       throw new Error('Failed to fetch blog post');
@@ -60,21 +58,18 @@ export default function MenuPage() {
 
         <div className="flex flex-col gap-4">
           {categoryWithMenuItems.map((categoryWithMenuItem: TypeCategoryWithMenuItem) => (
-            <div key={categoryWithMenuItem.id}>
-              {categoryWithMenuItem.menu_items.length > 0 && (
-                <CategoryMenuItem
-                  categoryWithMenuItem={categoryWithMenuItem}
-                  menuItemEditAction={(menu: TypeMenuItem) => {
-                    setEditingMenu(menu);
-                    window.scrollTo(0, 0)
-                  }}
-                  refreshMenuItems={() => {
-                    getMenuItems().then(r => console.log(r));
-                    setEditingMenu(null)
-                  }}
-                />
-              )}
-            </div>
+            <CategoryMenuItem
+              key={categoryWithMenuItem.id}
+              categoryWithMenuItem={categoryWithMenuItem}
+              menuItemEditAction={(menu: TypeMenuItem) => {
+                setEditingMenu(menu);
+                window.scrollTo(0, 0)
+              }}
+              refreshMenuItems={() => {
+                getMenuItems().then(r => console.log(r));
+                setEditingMenu(null)
+              }}
+            />
           ))}
         </div>
       </div>
