@@ -145,7 +145,7 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
           placeholder="Select Status"
           value={formData.status as string}
           onchange={handleChangeValue}
-          options={[{value: "active", text: "Active"}, {value: "archive", text: "Archive"}]}
+          options={[{value: "active", text: "Active"}, {value: "disable", text: "Disabled"}]}
         />
       </div>
 

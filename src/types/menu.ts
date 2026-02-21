@@ -11,7 +11,7 @@ export interface MenuItemDto {
   sgst?: number;
   cgst?: number;
   currency: string;
-  status?: MenuItemStatus;
+  status: MenuItemStatus;
 }
 
 export interface MenuItem extends MenuItemDto {

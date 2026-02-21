@@ -1,16 +1,16 @@
 import {SupabaseService} from "@/services/SupabaseService.server";
-import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
+import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto, MenuItemStatus} from "@/types/menu";
 
 export const MenuService = {
-  getAllMenuItems: async (): Promise<TypeMenuItem[]> => {
+  getAllMenuItems: async (getAll: boolean = false): Promise<TypeMenuItem[]> => {
     const supabase = await SupabaseService.getServerClient();
 
     // Get All Menu Items
     const {data: menuItems, error} = await supabase
       .from('thlush_menu_items')
       .select('*')
-      .eq('status', 'active')
-      .order('created_at', {ascending: false});
+      .in('status', getAll ? [MenuItemStatus.ACTIVE, MenuItemStatus.DISABLE] : [MenuItemStatus.ACTIVE])
+      .order('created_at', {ascending: true});
 
     if (error) {
       console.error('Error fetching menu items from Supabase:', error);
