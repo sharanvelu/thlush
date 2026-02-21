@@ -1,6 +1,7 @@
 import {Category as TypeCategory} from "@/types/category";
 import {useState} from "react";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
+import CategoryStatusTag from "@/components/Tags/CategoryStatusTag";
 
 interface CategoryProps {
   category: TypeCategory;
@@ -31,7 +32,10 @@ export default function Category({category, editAction, refreshCategories}: Cate
 
   return (
     <div
-      className="shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center">
+      className="relative shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center">
+
+      <CategoryStatusTag status={category.status} />
+
       <div className="flex flex-col gap-2">
         <h4 className="m-0 mb-1.5 text-lg">{category.name}</h4>
         <p className="m-0 mb-1 text-sm">{category.description || 'No description'}</p>

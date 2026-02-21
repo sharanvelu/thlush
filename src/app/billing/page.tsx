@@ -151,7 +151,7 @@ export default function BillingPage() {
               <div className="flex flex-col gap-4">
                 {isLoading ? (
                   <div
-                    className="min-h-60 flex items-center justify-center bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-5">
+                    className="min-h-60 flex items-center justify-center bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-5 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl">
                     <div className="relative">
                       {/* Outer circle */}
                       <div className="w-12 h-12 border-4 border-blue-200 dark:border-blue-900 rounded-full"></div>
