@@ -33,6 +33,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
     status: menuItem?.status || MenuItemStatus.ACTIVE,
   });
 
+
   useEffect(() => {
     setFormData({
       name: menuItem?.name || '',
