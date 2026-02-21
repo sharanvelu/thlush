@@ -82,6 +82,14 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
       return;
     }
 
+    if (name == 'price') {
+      setTotal(calculateTotalValue(value, formData.sgst, formData.cgst));
+    }
+
+    if (name == 'sgst' || name == 'cgst') {
+      setTotal(calculateTotalValue(formData.price, value, name == 'sgst' ? formData.cgst : formData.sgst));
+    }
+
     setFormData((prev: TypeMenuItemDto) => ({
       ...prev,
       [name]: value,
@@ -168,10 +176,6 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
   useEffect(() => {
     getCategories().then(r => console.log(r));
   }, []);
-
-  useEffect(() => {
-    setTotal(calculateTotalValue(formData.price, formData.sgst, formData.cgst));
-  }, [formData.price, formData.sgst, formData.cgst]);
 
   return (
     <form onSubmit={handleSubmit} className="container mx-auto bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
