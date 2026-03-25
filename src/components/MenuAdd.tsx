@@ -198,7 +198,7 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
           title="Item Name"
           placeholder="Enter Item Name"
           value={formData.name}
-          onchange={handleChange}
+          onchange={handleChangeValue}
         />
         <SelectField
           id="category_id"

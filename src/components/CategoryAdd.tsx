@@ -137,7 +137,7 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
           title="Item Name"
           placeholder="Enter Item Name"
           value={formData.name}
-          onchange={handleChange}
+          onchange={handleChangeValue}
         />
         <SelectField
           id="status"
