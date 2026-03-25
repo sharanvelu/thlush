@@ -146,7 +146,8 @@ export default function BillingPage() {
                 title="Filter"
                 placeholder="Filter Items"
                 value={filterValue}
-                onchange={(e) => setFilterValue(e.target.value.trim().toLowerCase())}
+                onchange={(id: string, value: string | number) => setFilterValue((value + '').toLowerCase())}
+                clearButton={true}
               />
               <div className="flex flex-col gap-4">
                 {isLoading ? (
@@ -177,14 +178,14 @@ export default function BillingPage() {
           </div>
 
           {/* Bill Pricing Section */}
-          <div className="p-6 mt-8 lg:mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 lg:w-1/4 items-center h-2/5 bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl">
+          <div className={`fixed bottom-0 lg:relative ${billingItems.length > 0 ? '' : 'hidden'} lg:block container lg:w-1/4 h-1/3 lg:h-2/5 overflow-auto p-6 mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 items-center bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl`}>
             {customerName !== '' && (
-              <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5">
+              <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5 pb-2 border-b">
                 <><span className="text-[16px] font-extrabold">Customer:</span> {customerName}</>
               </div>
             )}
 
-            <div className="text-sm text-[#555] dark:text-gray-300 min-h-15">
+            <div className="text-sm text-[#555] dark:text-gray-300 min-h-15 pb-2 border-b">
               {billingItems.map((billingItem: TypeBillingItem) => (
                 <div key={billingItem.id} className="flex justify-between">
                   <div className="w-3/6 p-1.5">
@@ -203,7 +204,7 @@ export default function BillingPage() {
               )}
             </div>
 
-            <div className="flex flex-col justify-between text-xl font-bold h-full">
+            <div className="flex flex-col justify-between text-xl font-bold md:h-full">
               <div className="py-5">
                 {!shouldIgnoreTax() && (
                   <>
