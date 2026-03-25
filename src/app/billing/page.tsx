@@ -120,7 +120,7 @@ export default function BillingPage() {
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
       <div className="container mx-auto">
         <div className="lg:flex gap-4">
-          <div className="lg:w-3/4 space-y-12">
+          <div className={`lg:w-3/4 space-y-12 lg:pb-0 ${billingItems.length > 0 ? 'pb-[25vh]' : ''}`}>
             {/* Billing Customer name */}
             <div
               className=" px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800  border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
@@ -140,7 +140,8 @@ export default function BillingPage() {
             </div>
 
             {/* Menu Items List */}
-            <div className="bg-gray-50 dark:bg-gray-800 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
+            <div
+              className="bg-gray-50 dark:bg-gray-800 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
               <InputField
                 id="filter"
                 title="Filter"
@@ -178,23 +179,24 @@ export default function BillingPage() {
           </div>
 
           {/* Bill Pricing Section */}
-          <div className={`fixed bottom-0 lg:relative ${billingItems.length > 0 ? '' : 'hidden'} lg:block container lg:w-1/4 h-1/3 lg:h-2/5 overflow-auto p-6 mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 items-center bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl`}>
+          <div
+            className={`fixed bottom-0 lg:relative ${billingItems.length > 0 ? '' : 'hidden'} lg:block container lg:w-1/4 h-1/3 lg:h-2/5 overflow-auto p-6 mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 items-center bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl`}>
             {customerName !== '' && (
-              <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 mb-2 min-h-5 pb-2 border-b">
+              <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 lg:mb-2 min-h-5 lg:pb-2 border-b">
                 <><span className="text-[16px] font-extrabold">Customer:</span> {customerName}</>
               </div>
             )}
 
-            <div className="text-sm text-[#555] dark:text-gray-300 min-h-15 pb-2 border-b">
+            <div className="text-sm text-[#555] dark:text-gray-300 min-h-15 lg:pb-2 border-b">
               {billingItems.map((billingItem: TypeBillingItem) => (
-                <div key={billingItem.id} className="flex justify-between">
-                  <div className="w-3/6 p-1.5">
+                <div key={billingItem.id} className="flex justify-between py-1">
+                  <div className="w-3/6 px-1.5">
                     {billingItem.name}
                   </div>
-                  <div className="w-1/6 p-1.5 text-right">
+                  <div className="w-1/6 px-1.5 text-right">
                     X {billingItem.quantity}
                   </div>
-                  <div className="w-2/6 p-1.5 text-right">
+                  <div className="w-2/6 px-1.5 text-right">
                     {`${billingItem.currency} ${calculateBillingItemPrice(billingItem)}`}
                   </div>
                 </div>
@@ -204,33 +206,40 @@ export default function BillingPage() {
               )}
             </div>
 
-            <div className="flex flex-col justify-between text-xl font-bold md:h-full">
-              <div className="py-5">
-                {!shouldIgnoreTax() && (
-                  <>
-                    <div className="flex">
-                      <div className="w-3/6 p-1.5">Item Total</div>
-                      <div className="w-3/6 p-1.5 text-right">₹<span>{totalBillingAmountWithoutTax()}</span></div>
-                    </div>
-                    <div className="flex">
-                      <div className="w-3/6 p-1.5">Total Tax</div>
-                      <div className="w-3/6 p-1.5 text-right">₹<span>{totalTax()}</span></div>
-                    </div>
-                  </>
-                )}
+            <div className="flex flex-col justify-between text-sm lg:text-xl lg:font-bold lg:h-full">
+              <div className="py-2 lg:py-5">
                 <div className="flex">
-                  <div className="w-3/6 p-1.5">Grand Total</div>
-                  <div className="w-3/6 p-1.5 text-right">₹<span>{totalBillingAmount()}</span></div>
+                  {!shouldIgnoreTax() && (
+                    <>
+                      <div className="w-3/6 p-1.5">Price</div>
+                      <div className="w-3/6 p-1.5">Tax</div>
+                    </>
+                  )}
+                  <div className="w-3/6 p-1.5">Total</div>
+                </div>
+                <div className="flex">
+                  {!shouldIgnoreTax() && (
+                    <>
+                      <div className="w-3/6 p-1.5">₹<span>{totalBillingAmountWithoutTax()}</span></div>
+                      <div className="w-3/6 p-1.5">₹<span>{totalTax()}</span></div>
+                    </>
+                  )}
+                  <div className="w-3/6 p-1.5">₹<span>{totalBillingAmount()}</span></div>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 flex-wrap">
+              <div className="flex flex-row gap-3 flex-wrap">
                 <button
-                  className="flex-1 min-w-40 rounded-[14px] px-5 py-3.5 text-[15px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer"
+                  className="flex-1 min-w-40 rounded-[14px] px-5 py-2 text-[15px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer"
                   onClick={clearBilling}
                 >Clear All
                 </button>
                 <button
-                  className="flex-1 min-w-45 border-none rounded-2xl px-5 py-3.5 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
+                  className="flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
+                  style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
+                >Save Invoice
+                </button>
+                <button
+                  className="flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
                   style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
                 >Print Invoice
                 </button>
