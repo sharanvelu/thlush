@@ -101,8 +101,6 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
 
     if (!formData.name.trim()) errors.push('Name is required');
     if (!formData.price || formData.price <= 0) errors.push('Price is required');
-    if (!formData.sgst || formData.sgst <= 0) errors.push('SGST is required');
-    if (!formData.cgst || formData.cgst <= 0) errors.push('CGST is required');
     if (!formData.category_id) errors.push('Category is required');
 
     setErrors(errors);

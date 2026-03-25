@@ -124,17 +124,14 @@ export default function BillingPage() {
             {/* Billing Customer name */}
             <div
               className=" px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800  border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
-              <div className="mb-4">
-                <label className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm">
-                  Customer Name:
-                </label>
-                <input
-                  className="max-w-100 w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-600 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                  type="text"
+              <div className="mb-4 max-w-100">
+                <InputField
+                  id="customer_name"
+                  title="Customer Name:"
                   placeholder="Enter customer name (optional)"
-                  style={{transition: "border-color 0.2s"}}
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  onchange={(id: string, value: string | number) => setCustomerName(value + '')}
+                  clearButton={true}
                 />
               </div>
             </div>
