@@ -1,14 +1,38 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Thlush Billing</title>
   <style>
-    :root { font-family: "Segoe UI", Arial, sans-serif; color: #1f1f1f; background: #f7f5f2; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .shell { width: min(1100px, 100%); background: #fff; border-radius: 18px; box-shadow: 0 30px 80px rgba(15,15,20,.15); padding: clamp(20px, 4vw, 40px); position: relative; }
+    :root {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #1f1f1f;
+      background: #f7f5f2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 30px 80px rgba(15, 15, 20, .15);
+      padding: clamp(20px, 4vw, 40px);
+      position: relative;
+    }
 
     /* Theme Toggle */
     .theme-toggle {
@@ -25,6 +49,7 @@
       backdrop-filter: blur(8px);
       z-index: 10;
     }
+
     body.theme-dark .theme-toggle {
       background: rgba(10, 10, 18, 0.9);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
@@ -41,6 +66,7 @@
       cursor: pointer;
       transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     }
+
     .theme-toggle-btn:active {
       transform: scale(0.95);
     }
@@ -50,11 +76,13 @@
       height: 18px;
       border-radius: 50%;
     }
+
     /* Light theme logo */
     .light-icon {
       background: linear-gradient(135deg, #ffd36f, #ff9f1c);
       box-shadow: 0 0 8px rgba(255, 200, 100, 0.6);
     }
+
     /* Dark theme logo */
     .dark-icon {
       background: radial-gradient(circle at 30% 30%, #ffffff, #444);
@@ -66,13 +94,16 @@
       background: rgba(255, 255, 255, 0.08);
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
     }
+
     body.theme-dark .toggle-dark {
       opacity: 0.7;
     }
+
     body:not(.theme-dark) .toggle-dark {
       background: rgba(0, 0, 0, 0.06);
       box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
     }
+
     body:not(.theme-dark) .toggle-light {
       opacity: 0.7;
     }
@@ -82,14 +113,17 @@
       background: #050509;
       color: #f5f5f7;
     }
+
     body.theme-dark :root {
       color: #f5f5f7;
       background: #050509;
     }
+
     body.theme-dark .shell {
       background: #11121a;
       box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85);
     }
+
     body.theme-dark .item,
     body.theme-dark .add-form,
     body.theme-dark .filter-section,
@@ -99,11 +133,13 @@
       background: #181a24;
       border-color: #272936;
     }
+
     body.theme-dark .category-title,
     body.theme-dark .item-manage-info h4,
     body.theme-dark h3 {
       color: #f5f5f7;
     }
+
     body.theme-dark p.lead,
     body.theme-dark .history-date,
     body.theme-dark .item-manage-info p,
@@ -111,30 +147,38 @@
     body.theme-dark .stat-label {
       color: #b0b3c1;
     }
+
     body.theme-dark .history-id,
     body.theme-dark .empty-message {
       color: #777a8b;
     }
+
     body.theme-dark .history-item-name {
       color: #f5f5f7;
     }
+
     body.theme-dark .history-item-price {
       color: #ced3ff;
     }
+
     body.theme-dark .tabs {
       border-bottom-color: #272936;
     }
+
     body.theme-dark .tab-btn {
       color: #b0b3c1;
     }
+
     body.theme-dark .tab-btn:hover {
       color: #ffffff;
       background-color: #181a24;
     }
+
     body.theme-dark .tab-btn.active {
       color: #ffb347;
       border-bottom-color: #ffb347;
     }
+
     body.theme-dark .form-group input,
     body.theme-dark .form-group textarea,
     body.theme-dark .filter-group input,
@@ -145,206 +189,639 @@
       border-color: #272936;
       color: #f5f5f7;
     }
+
     body.theme-dark .form-group input::placeholder,
     body.theme-dark .form-group textarea::placeholder,
     body.theme-dark .filter-group input::placeholder {
       color: #777a8b;
     }
+
     body.theme-dark h1 {
       color: #f5f5f7;
     }
+
     body.theme-dark .item h3,
     body.theme-dark .item p {
       color: #f5f5f7;
     }
+
     body.theme-dark .item span.price {
       color: #ff8c5a;
     }
+
     body.theme-dark .selected,
     body.theme-dark .floating-panel-content .selected {
       color: #b0b3c1;
     }
+
     body.theme-dark .total,
     body.theme-dark .floating-panel-content .total {
       color: #f5f5f7;
     }
+
     body.theme-dark .qty {
       color: #f5f5f7;
     }
+
     body.theme-dark .form-group label,
     body.theme-dark .filter-group label {
       color: #f5f5f7;
     }
+
     body.theme-dark .remove-section h3,
     body.theme-dark .filter-section h3 {
       color: #f5f5f7;
     }
+
     body.theme-dark .history-total {
       color: #ff8c5a;
     }
+
     body.theme-dark .stat-value {
       color: #f5f5f7;
     }
+
     body.theme-dark .btn-reset-filter {
       color: #b0b3c1;
       border-color: #272936;
     }
+
     body.theme-dark .btn-reset-filter:hover {
       color: #ffb347;
       border-color: #ffb347;
     }
+
     body.theme-dark #storageInfo,
     body.theme-dark .storageInfo {
       background: #181a24;
       color: #b0b3c1;
     }
+
     body.theme-dark #customerDisplay {
       color: #b0b3c1;
     }
+
     body.theme-dark .floating-panel-drag {
       background: #272936;
     }
+
     body.theme-dark .summary {
       border-top-color: #272936;
     }
+
     body.theme-dark .edit-form-inline {
       background: #181a24;
       border-color: #272936;
     }
+
     body.theme-dark .item-manage {
       background: #181a24;
       border-color: #272936;
     }
+
     body.theme-dark .item-manage-info h4 {
       color: #f5f5f7;
     }
+
     body.theme-dark .item-manage-info .price {
       color: #ff8c5a;
     }
+
     /* Override inline styles for dark theme */
     body.theme-dark #printCustomerName,
     body.theme-dark #printDateTime {
       color: #f5f5f7 !important;
     }
+
     body.theme-dark #customerDisplay {
       color: #b0b3c1 !important;
     }
+
     body.theme-dark #storageInfo {
       background: #181a24 !important;
       color: #b0b3c1 !important;
     }
+
     body.theme-dark .filter-section p {
       color: #b0b3c1 !important;
     }
+
     body.theme-dark [style*="color: #5c5c68"] {
       color: #b0b3c1 !important;
     }
+
     body.theme-dark [style*="color: #1f1f1f"] {
       color: #f5f5f7 !important;
     }
+
     body.theme-dark [style*="color: #999"] {
       color: #777a8b !important;
     }
+
     body.theme-dark [style*="background: #f7f5f2"] {
       background: #181a24 !important;
     }
+
     body.theme-dark [style*="color: #dc3545"] {
       color: #ff6b6b !important;
     }
+
     body.theme-dark .history-items {
       border-top-color: #272936;
     }
+
     body.theme-dark .category-title {
       border-bottom-color: #ffb347;
     }
+
     body.theme-dark button.secondary {
       border-color: #ffb347;
       color: #ffb347;
     }
+
     body.theme-dark button.secondary:hover {
       background: rgba(255, 179, 71, 0.1);
     }
+
     body.theme-dark strong {
       color: #f5f5f7;
     }
+
     body.theme-dark .history-header div div[style*="color: #5c5c68"] {
       color: #b0b3c1 !important;
     }
+
     body.theme-dark .item-manage-info p[style*="color: #999"] {
       color: #777a8b !important;
     }
+
     body.theme-dark select {
       background: #11121a;
       border-color: #272936;
       color: #f5f5f7;
     }
+
     body.theme-dark select option {
       background: #11121a;
       color: #f5f5f7;
     }
-    h1 { margin: 0 0 12px; font-size: clamp(26px, 4vw, 34px); }
-    p.lead { margin: 0 0 28px; color: #5c5c68; font-size: clamp(14px, 2vw, 16px); }
-    
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(26px, 4vw, 34px);
+    }
+
+    p.lead {
+      margin: 0 0 28px;
+      color: #5c5c68;
+      font-size: clamp(14px, 2vw, 16px);
+    }
+
     /* Tabs */
-    .tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid #e0d7cf; }
-    .tab-btn { padding: 12px 24px; background: none; border: none; border-bottom: 3px solid transparent; font-size: 16px; font-weight: 600; color: #5c5c68; cursor: pointer; transition: all 0.3s; }
-    .tab-btn:hover { color: #1f1f1f; background-color: #f7f5f2; }
-    .tab-btn.active { color: #ff7a18; border-bottom-color: #ff7a18; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    
-    .products { display: flex; flex-direction: column; gap: 24px; }
-    .category-section { margin-bottom: 24px; }
-    .category-title { font-size: 20px; font-weight: 700; color: #1f1f1f; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #ff7a18; }
-    .category-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
-    .item { border: 2px solid #f0e6dd; border-radius: 16px; padding: 18px; background: #fffbf6; display: flex; flex-direction: column; gap: 6px; min-height: 180px; transition: border .2s, transform .2s; }
-    .item h3 { margin: 0; font-size: 18px; }
-    .item span.price { color: #f0673a; font-weight: 600; }
-    .controls { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .controls button { width: 38px; height: 38px; border-radius: 12px; border: none; font-size: 22px; background: #1f70ff; color: #fff; cursor: pointer; transition: transform .15s; }
-    .controls button:active { transform: scale(.94); }
-    .qty { flex: 1; text-align: center; font-size: 18px; font-weight: 600; }
-    .summary { margin-top: 32px; padding-top: 24px; border-top: 1px dashed #e0d7cf; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: center; }
-    .selected { font-size: 14px; color: #555; min-height: 60px; }
-    .total { font-size: 22px; font-weight: 700; }
-    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    button.primary { flex: 1; min-width: 180px; border: none; border-radius: 14px; padding: 14px 20px; font-size: 16px; font-weight: 600; background: linear-gradient(120deg, #ff7a18, #ffb347); color: #fff; cursor: pointer; box-shadow: 0 12px 25px rgba(255,122,24,.3); }
-    button.secondary { flex: 1; min-width: 160px; border-radius: 14px; padding: 14px 20px; font-size: 15px; border: 2px solid #ffb347; background: transparent; color: #ff7a18; font-weight: 600; cursor: pointer; }
-    
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #e0d7cf;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 16px;
+      font-weight: 600;
+      color: #5c5c68;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .tab-btn:hover {
+      color: #1f1f1f;
+      background-color: #f7f5f2;
+    }
+
+    .tab-btn.active {
+      color: #ff7a18;
+      border-bottom-color: #ff7a18;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .products {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .category-section {
+      margin-bottom: 24px;
+    }
+
+    .category-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1f1f1f;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #ff7a18;
+    }
+
+    .category-items {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .item {
+      border: 2px solid #f0e6dd;
+      border-radius: 16px;
+      padding: 18px;
+      background: #fffbf6;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 180px;
+      transition: border .2s, transform .2s;
+    }
+
+    .item h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .item span.price {
+      color: #f0673a;
+      font-weight: 600;
+    }
+
+    .controls {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .controls button {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: none;
+      font-size: 22px;
+      background: #1f70ff;
+      color: #fff;
+      cursor: pointer;
+      transition: transform .15s;
+    }
+
+    .controls button:active {
+      transform: scale(.94);
+    }
+
+    .qty {
+      flex: 1;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .summary {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px dashed #e0d7cf;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      align-items: center;
+    }
+
+    .selected {
+      font-size: 14px;
+      color: #555;
+      min-height: 60px;
+    }
+
+    .total {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button.primary {
+      flex: 1;
+      min-width: 180px;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      background: linear-gradient(120deg, #ff7a18, #ffb347);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 12px 25px rgba(255, 122, 24, .3);
+    }
+
+    button.secondary {
+      flex: 1;
+      min-width: 160px;
+      border-radius: 14px;
+      padding: 14px 20px;
+      font-size: 15px;
+      border: 2px solid #ffb347;
+      background: transparent;
+      color: #ff7a18;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
     /* Manage Menu Styles */
-    .manage-section { margin-top: 24px; }
-    .add-form { background: #fffbf6; border: 2px solid #f0e6dd; border-radius: 16px; padding: 24px; margin-bottom: 32px; }
-    .add-form h3 { margin: 0 0 20px; color: #1f1f1f; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #1f1f1f; font-size: 14px; }
-    .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e0d7cf; border-radius: 12px; font-size: 15px; font-family: inherit; transition: border-color 0.2s; }
-    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #ff7a18; }
-    .form-group textarea { resize: vertical; min-height: 80px; }
-    .form-actions { display: flex; gap: 12px; }
-    .btn-add { background: linear-gradient(120deg, #28a745, #20c997); color: #fff; border: none; border-radius: 12px; padding: 12px 24px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(40,167,69,.3); }
-    .btn-add:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(40,167,69,.4); }
-    .remove-section h3 { margin: 0 0 20px; color: #1f1f1f; }
-    .item-manage { border: 2px solid #f0e6dd; border-radius: 16px; padding: 18px; background: #fffbf6; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .item-manage-info h4 { margin: 0 0 6px; font-size: 18px; }
-    .item-manage-info p { margin: 0 0 4px; color: #5c5c68; font-size: 14px; }
-    .item-manage-info .price { color: #f0673a; font-weight: 600; font-size: 16px; }
-    .btn-remove { background: #dc3545; color: #fff; border: none; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.15s; }
-    .btn-remove:hover { transform: scale(1.05); }
-    .btn-remove:active { transform: scale(.95); }
-    .btn-edit { background: #1f70ff; color: #fff; border: none; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.15s; margin-right: 8px; }
-    .btn-edit:hover { transform: scale(1.05); }
-    .btn-edit:active { transform: scale(.95); }
-    .btn-cancel-edit { background: #6c757d; color: #fff; border: none; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.15s; margin-left: 8px; }
-    .btn-cancel-edit:hover { transform: scale(1.05); }
-    .btn-save-edit { background: #28a745; color: #fff; border: none; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.15s; }
-    .btn-save-edit:hover { transform: scale(1.05); }
-    .item-manage-actions { display: flex; gap: 8px; align-items: center; }
-    .edit-form-inline { display: none; flex-direction: column; gap: 12px; margin-top: 12px; padding: 16px; background: #f7f5f2; border-radius: 12px; border: 2px solid #e0d7cf; }
-    .edit-form-inline.active { display: flex; }
-    .edit-form-inline input, .edit-form-inline textarea { padding: 8px; border: 2px solid #e0d7cf; border-radius: 8px; font-size: 14px; font-family: inherit; }
-    .edit-form-inline input:focus, .edit-form-inline textarea:focus { outline: none; border-color: #1f70ff; }
-    .empty-message { text-align: center; color: #999; padding: 40px; font-style: italic; }
-    
+    .manage-section {
+      margin-top: 24px;
+    }
+
+    .add-form {
+      background: #fffbf6;
+      border: 2px solid #f0e6dd;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .add-form h3 {
+      margin: 0 0 20px;
+      color: #1f1f1f;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #1f1f1f;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0d7cf;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #ff7a18;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-add {
+      background: linear-gradient(120deg, #28a745, #20c997);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(40, 167, 69, .3);
+    }
+
+    .btn-add:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(40, 167, 69, .4);
+    }
+
+    /* Search Bar Clear Button */
+    .search-wrapper {
+      position: relative;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-wrapper input {
+      padding-right: 40px !important;
+      width: 100% !important;
+    }
+
+    .clear-search-btn {
+      position: absolute;
+      right: 12px;
+      background: #e0d7cf;
+      border: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: #5c5c68;
+      font-size: 14px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .clear-search-btn:hover {
+      background: #d0c7bf;
+      color: #1f1f1f;
+    }
+
+    .search-wrapper input:not(:placeholder-shown)+.clear-search-btn {
+      display: flex;
+    }
+
+    body.theme-dark .clear-search-btn {
+      background: #272936;
+      color: #b0b3c1;
+    }
+
+    body.theme-dark .clear-search-btn:hover {
+      background: #32354a;
+      color: #ffffff;
+    }
+
+    .remove-section h3 {
+      margin: 0 0 20px;
+      color: #1f1f1f;
+    }
+
+    .item-manage {
+      border: 2px solid #f0e6dd;
+      border-radius: 16px;
+      padding: 18px;
+      background: #fffbf6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .item-manage-info h4 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .item-manage-info p {
+      margin: 0 0 4px;
+      color: #5c5c68;
+      font-size: 14px;
+    }
+
+    .item-manage-info .price {
+      color: #f0673a;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .btn-remove {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .btn-remove:hover {
+      transform: scale(1.05);
+    }
+
+    .btn-remove:active {
+      transform: scale(.95);
+    }
+
+    .btn-edit {
+      background: #1f70ff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s;
+      margin-right: 8px;
+    }
+
+    .btn-edit:hover {
+      transform: scale(1.05);
+    }
+
+    .btn-edit:active {
+      transform: scale(.95);
+    }
+
+    .btn-cancel-edit {
+      background: #6c757d;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s;
+      margin-left: 8px;
+    }
+
+    .btn-cancel-edit:hover {
+      transform: scale(1.05);
+    }
+
+    .btn-save-edit {
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .btn-save-edit:hover {
+      transform: scale(1.05);
+    }
+
+    .item-manage-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .edit-form-inline {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 16px;
+      background: #f7f5f2;
+      border-radius: 12px;
+      border: 2px solid #e0d7cf;
+    }
+
+    .edit-form-inline.active {
+      display: flex;
+    }
+
+    .edit-form-inline input,
+    .edit-form-inline textarea {
+      padding: 8px;
+      border: 2px solid #e0d7cf;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .edit-form-inline input:focus,
+    .edit-form-inline textarea:focus {
+      outline: none;
+      border-color: #1f70ff;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #999;
+      padding: 40px;
+      font-style: italic;
+    }
+
     /* Floating Order Panel */
     .floating-order-panel {
       display: none;
@@ -354,24 +831,35 @@
       right: 0;
       z-index: 1000;
       background: #fff;
-      box-shadow: 0 -8px 32px rgba(15,15,20,.2);
+      box-shadow: 0 -8px 32px rgba(15, 15, 20, .2);
       border-radius: 20px 20px 0 0;
       max-height: 45vh;
       overflow-y: auto;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
+
     .floating-order-panel.visible {
       display: block;
       animation: slideUp 0.3s ease;
     }
+
     @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
+
     .floating-panel-content {
       padding: 20px;
       padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
+
     .floating-panel-content .selected {
       font-size: 14px;
       color: #1f1f1f;
@@ -379,21 +867,25 @@
       overflow-y: auto;
       margin-bottom: 12px;
     }
+
     .floating-panel-content .total {
       font-size: 20px;
       margin-bottom: 16px;
     }
+
     .floating-panel-content .actions {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
+
     .floating-panel-content .actions button {
       flex: 1;
       min-width: 100px;
       padding: 12px 16px;
       font-size: 14px;
     }
+
     .floating-panel-drag {
       width: 40px;
       height: 4px;
@@ -402,80 +894,388 @@
       margin: 0 auto 16px;
       cursor: grab;
     }
+
     .billing-tab-with-panel {
       padding-bottom: 280px;
     }
-    
+
     /* Billing History Styles */
-    .history-section { margin-top: 24px; }
-    .filter-section { background: #fffbf6; border: 2px solid #f0e6dd; border-radius: 16px; padding: 24px; margin-bottom: 24px; }
-    .filter-section h3 { margin: 0 0 20px; color: #1f1f1f; }
-    .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
-    .filter-row:last-child { margin-bottom: 0; }
-    .filter-group { display: flex; flex-direction: column; gap: 6px; }
-    .filter-group label { font-weight: 600; color: #1f1f1f; font-size: 14px; }
-    .filter-group input, .filter-group select { padding: 10px; border: 2px solid #e0d7cf; border-radius: 12px; font-size: 14px; font-family: inherit; transition: border-color 0.2s; }
-    .filter-group input:focus, .filter-group select:focus { outline: none; border-color: #ff7a18; }
-    .filter-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-    .btn-filter { background: linear-gradient(120deg, #1f70ff, #4a90e2); color: #fff; border: none; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-filter:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(31,112,255,.3); }
-    .btn-download { background: linear-gradient(120deg, #28a745, #20c997); color: #fff; border: none; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(40,167,69,.3); }
-    .btn-reset-filter { background: transparent; color: #5c5c68; border: 2px solid #e0d7cf; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-reset-filter:hover { border-color: #ff7a18; color: #ff7a18; }
-    .history-list { display: flex; flex-direction: column; gap: 16px; }
-    .history-item { border: 2px solid #f0e6dd; border-radius: 16px; padding: 20px; background: #fffbf6; }
-    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px; }
-    .history-date { font-size: 14px; color: #5c5c68; font-weight: 600; }
-    .history-total { font-size: 20px; font-weight: 700; color: #f0673a; }
-    .history-id { font-size: 12px; color: #999; }
-    .history-items { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e0d7cf; }
-    .history-item-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
-    .history-item-name { color: #1f1f1f; }
-    .history-item-price { color: #5c5c68; font-weight: 600; }
-    .history-stats { margin-top: 24px; padding-top: 24px; border-top: 2px solid #e0d7cf; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
-    .stat-card { background: #fffbf6; border: 2px solid #f0e6dd; border-radius: 12px; padding: 16px; text-align: center; }
-    .stat-label { font-size: 12px; color: #5c5c68; margin-bottom: 8px; }
-    .stat-value { font-size: 24px; font-weight: 700; color: #1f1f1f; }
-    
-    @media (max-width: 600px) {
-      .controls button { width: 34px; height: 34px; }
-      .item { padding: 16px; }
-      .summary { grid-template-columns: 1fr; }
-      .actions { flex-direction: column; }
-      .floating-order-panel { max-height: 55vh; }
-      .floating-panel-content .actions { flex-direction: column; }
-      .floating-panel-content .actions button { min-width: 100%; }
-      .billing-tab-with-panel { padding-bottom: 320px; }
-      .tabs { flex-direction: column; }
-      .tab-btn { text-align: left; }
-      .item-manage { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .btn-remove, .btn-edit { width: 100%; margin: 4px 0; }
-      .item-manage-actions { flex-direction: column; width: 100%; }
-      .edit-form-inline { width: 100%; }
-      .filter-row { grid-template-columns: 1fr; }
-      .filter-actions { flex-direction: column; }
-      .filter-actions button { width: 100%; }
-      .history-header { flex-direction: column; align-items: flex-start; }
+    .history-section {
+      margin-top: 24px;
     }
+
+    .filter-section {
+      background: #fffbf6;
+      border: 2px solid #f0e6dd;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .filter-section h3 {
+      margin: 0 0 20px;
+      color: #1f1f1f;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .filter-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-group label {
+      font-weight: 600;
+      color: #1f1f1f;
+      font-size: 14px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      padding: 10px;
+      border: 2px solid #e0d7cf;
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: #ff7a18;
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .btn-filter {
+      background: linear-gradient(120deg, #1f70ff, #4a90e2);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-filter:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(31, 112, 255, .3);
+    }
+
+    .btn-download {
+      background: linear-gradient(120deg, #28a745, #20c997);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(40, 167, 69, .3);
+    }
+
+    .btn-reset-filter {
+      background: transparent;
+      color: #5c5c68;
+      border: 2px solid #e0d7cf;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-reset-filter:hover {
+      border-color: #ff7a18;
+      color: #ff7a18;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .history-item {
+      border: 2px solid #f0e6dd;
+      border-radius: 16px;
+      padding: 20px;
+      background: #fffbf6;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .history-date {
+      font-size: 14px;
+      color: #5c5c68;
+      font-weight: 600;
+    }
+
+    .history-total {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f0673a;
+    }
+
+    .history-id {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .history-items {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #e0d7cf;
+    }
+
+    .history-item-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+
+    .history-item-name {
+      color: #1f1f1f;
+    }
+
+    .history-item-price {
+      color: #5c5c68;
+      font-weight: 600;
+    }
+
+    .history-stats {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 2px solid #e0d7cf;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: #fffbf6;
+      border: 2px solid #f0e6dd;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #5c5c68;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f1f1f;
+    }
+
+    @media (max-width: 600px) {
+      .controls button {
+        width: 34px;
+        height: 34px;
+      }
+
+      .item {
+        padding: 16px;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .floating-order-panel {
+        max-height: 55vh;
+      }
+
+      .floating-panel-content .actions {
+        flex-direction: column;
+      }
+
+      .floating-panel-content .actions button {
+        min-width: 100%;
+      }
+
+      .billing-tab-with-panel {
+        padding-bottom: 320px;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+
+      .tab-btn {
+        text-align: left;
+      }
+
+      .item-manage {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .btn-remove,
+      .btn-edit {
+        width: 100%;
+        margin: 4px 0;
+      }
+
+      .item-manage-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .edit-form-inline {
+        width: 100%;
+      }
+
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-actions {
+        flex-direction: column;
+      }
+
+      .filter-actions button {
+        width: 100%;
+      }
+
+      .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
     @media print {
-      * { visibility: hidden; }
-      body { padding: 20px; background: #fff; }
-      .shell { box-shadow: none; border-radius: 0; padding: 20px; max-width: 100%; }
-      h1, p.lead, button, .tabs { display: none !important; visibility: hidden !important; }
-      .tab-content { display: none !important; visibility: hidden !important; }
-      .tab-content#billingTab { display: block !important; visibility: visible !important; }
-      .add-form, .products { display: none !important; visibility: hidden !important; }
-      .floating-order-panel { position: static !important; transform: none !important; visibility: visible !important; }
-      .floating-order-panel .floating-panel-drag, .floating-order-panel #customerDisplay, .floating-order-panel .total, .floating-order-panel .actions { display: none !important; visibility: hidden !important; }
-      #invoiceHeader, #invoiceHeader *, #summaryList { display: block !important; visibility: visible !important; }
-      #printCustomerName { font-size: 24px; font-weight: 700; margin-bottom: 10px; color: #1f1f1f; display: block !important; visibility: visible !important; }
-      #printDateTime { font-size: 16px; color: #5c5c68; margin-bottom: 25px; display: block !important; visibility: visible !important; }
-      #summaryList { font-size: 16px; line-height: 1.8; color: #1f1f1f; display: block !important; visibility: visible !important; }
-      @page { margin: 1cm; }
+      * {
+        visibility: hidden;
+      }
+
+      body {
+        padding: 20px;
+        background: #fff;
+      }
+
+      .shell {
+        box-shadow: none;
+        border-radius: 0;
+        padding: 20px;
+        max-width: 100%;
+      }
+
+      h1,
+      p.lead,
+      button,
+      .tabs {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      .tab-content {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      .tab-content#billingTab {
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      .add-form,
+      .products {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      .floating-order-panel {
+        position: static !important;
+        transform: none !important;
+        visibility: visible !important;
+      }
+
+      .floating-order-panel .floating-panel-drag,
+      .floating-order-panel #customerDisplay,
+      .floating-order-panel .total,
+      .floating-order-panel .actions {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      #invoiceHeader,
+      #invoiceHeader *,
+      #summaryList {
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      #printCustomerName {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #1f1f1f;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      #printDateTime {
+        font-size: 16px;
+        color: #5c5c68;
+        margin-bottom: 25px;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      #summaryList {
+        font-size: 16px;
+        line-height: 1.8;
+        color: #1f1f1f;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      @page {
+        margin: 1cm;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="shell">
     <div class="theme-toggle" aria-label="Toggle color theme">
@@ -487,7 +1287,8 @@
       </button>
     </div>
     <h1>Thlush Order Billing</h1>
-    <p class="lead">Select food items and adjust quantities with + and -. Your total updates instantly and you can print and save the invoice anytime.</p>
+    <p class="lead">Select food items and adjust quantities with + and -. Your total updates instantly and you can print
+      and save the invoice anytime.</p>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="billing">Billing</button>
@@ -498,14 +1299,18 @@
     <!-- Billing Tab -->
     <div class="tab-content active" id="billingTab">
       <div class="add-form" style="margin-bottom: 24px;">
-          <div class="form-group">
-            <label for="customerName">Customer Name: <span style="color: #dc3545;">*</span></label>
-            <input type="text" id="customerName" placeholder="Enter customer name (required)" required style="max-width: 400px;">
+        <div class="form-group">
+          <label for="customerName">Customer Name: <span style="color: #dc3545;">*</span></label>
+          <input type="text" id="customerName" placeholder="Enter customer name (required)" required
+            style="max-width: 400px;">
+        </div>
+        <div class="form-group">
+          <label for="billingSearch">Search Menu Items:</label>
+          <div class="search-wrapper">
+            <input type="text" id="billingSearch" placeholder="Search by item name or category...">
+            <button type="button" id="clearBillingSearch" class="clear-search-btn" title="Clear search">&times;</button>
           </div>
-          <div class="form-group">
-            <label for="billingSearch">Search Menu Items:</label>
-            <input type="text" id="billingSearch" placeholder="Search by item name or category..." style="max-width: 400px;">
-          </div>
+        </div>
       </div>
 
       <section class="products" id="productList">
@@ -518,7 +1323,8 @@
       <div class="floating-panel-drag" aria-hidden="true"></div>
       <div class="floating-panel-content">
         <div id="invoiceHeader" style="display: none;">
-          <div id="printCustomerName" style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #1f1f1f;"></div>
+          <div id="printCustomerName" style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #1f1f1f;">
+          </div>
           <div id="printDateTime" style="font-size: 14px; color: #5c5c68; margin-bottom: 20px;"></div>
         </div>
         <div class="selected" id="summaryList">No food items selected yet.</div>
@@ -574,7 +1380,8 @@
           </div>
           <div class="form-group">
             <label for="itemDescription">Description:</label>
-            <textarea id="itemDescription" name="description" placeholder="e.g., Stone-baked, fresh mozzarella and basil"></textarea>
+            <textarea id="itemDescription" name="description"
+              placeholder="e.g., Stone-baked, fresh mozzarella and basil"></textarea>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn-add">Add Item</button>
@@ -638,17 +1445,21 @@
         <div class="filter-section" style="margin-top: 24px;">
           <h3>Data Management</h3>
           <p style="margin: 0 0 16px; color: #5c5c68; font-size: 14px;">
-            Your billing history is stored locally in your browser. Use these tools to backup, restore, or manage your data.
+            Your billing history is stored locally in your browser. Use these tools to backup, restore, or manage your
+            data.
           </p>
           <div class="filter-actions">
             <button class="btn-download" id="exportAllBtn">Export All Data (Backup)</button>
             <button class="btn-filter" id="importBtn" style="position: relative; overflow: hidden;">
               Import Data (Restore)
-              <input type="file" id="importFileInput" accept=".json" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+              <input type="file" id="importFileInput" accept=".json"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
             </button>
-            <button class="btn-reset-filter" id="clearHistoryBtn" style="background: #dc3545; color: #fff; border-color: #dc3545;">Clear All History</button>
+            <button class="btn-reset-filter" id="clearHistoryBtn"
+              style="background: #dc3545; color: #fff; border-color: #dc3545;">Clear All History</button>
           </div>
-          <div id="storageInfo" style="margin-top: 16px; padding: 12px; background: #f7f5f2; border-radius: 8px; font-size: 13px; color: #5c5c68;">
+          <div id="storageInfo"
+            style="margin-top: 16px; padding: 12px; background: #f7f5f2; border-radius: 8px; font-size: 13px; color: #5c5c68;">
             <!-- Storage info will be displayed here -->
           </div>
         </div>
@@ -789,7 +1600,7 @@
 
       // Check if items are added (use selectedQuantities so search filter doesn't affect check)
       const hasItems = Object.values(selectedQuantities).some(qty => qty > 0);
-      
+
       if (!hasItems) {
         alert('Please add items to the invoice before printing.');
         return;
@@ -815,7 +1626,7 @@
       if (saveCurrentInvoice(true)) {
         // Set up print event listeners
         let printCompleted = false;
-        
+
         const handleAfterPrint = () => {
           printCompleted = true;
           // Clear selected items after print dialog closes
@@ -825,9 +1636,9 @@
           // Remove event listener
           window.removeEventListener('afterprint', handleAfterPrint);
         };
-        
+
         window.addEventListener('afterprint', handleAfterPrint);
-        
+
         setTimeout(() => {
           window.print();
           // Fallback: if afterprint doesn't fire within 2 seconds, clear items anyway
@@ -853,7 +1664,7 @@
 
       // Check if items are added (use selectedQuantities so search filter doesn't affect check)
       const hasItems = Object.values(selectedQuantities).some(qty => qty > 0);
-      
+
       if (!hasItems) {
         alert('Please add items to the invoice before saving.');
         return;
@@ -916,17 +1727,17 @@
     tabButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const targetTab = btn.dataset.tab;
-        
+
         // Update active tab button
         tabButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
+
         // Update active tab content
         tabContents.forEach(content => {
           content.classList.remove('active');
         });
         document.getElementById(targetTab + 'Tab').classList.add('active');
-        
+
         // Hide floating panel when leaving billing tab
         const floatingPanel = document.getElementById('floatingOrderPanel');
         const billingTabEl = document.getElementById('billingTab');
@@ -936,7 +1747,7 @@
         } else {
           updateSummary(); // Re-check to show panel if items selected
         }
-        
+
         // Render history when switching to history tab
         if (targetTab === 'history') {
           renderHistory();
@@ -948,13 +1759,13 @@
     // Render items in billing tab grouped by category
     function renderBillingItems() {
       const searchTerm = (document.getElementById('billingSearch')?.value || '').toLowerCase().trim();
-      
+
       // Merge current DOM quantities into selectedQuantities (preserves items not in filtered view)
       productList.querySelectorAll('.item').forEach(el => {
         const id = parseInt(el.dataset.id);
         if (!isNaN(id)) selectedQuantities[id] = parseInt(el.dataset.qty || 0) || 0;
       });
-      
+
       // Filter items by search
       let filteredItems = menuItems;
       if (searchTerm) {
@@ -967,7 +1778,7 @@
       }
 
       productList.innerHTML = '';
-      
+
       // Group items by category
       const itemsByCategory = {};
       filteredItems.forEach(item => {
@@ -987,7 +1798,7 @@
       sortedCategories.forEach(category => {
         const categorySection = document.createElement('div');
         categorySection.className = 'category-section';
-        
+
         const categoryTitle = document.createElement('div');
         categoryTitle.className = 'category-title';
         categoryTitle.textContent = category;
@@ -1004,7 +1815,7 @@
           article.dataset.name = item.name;
           article.dataset.price = item.price;
           article.dataset.qty = String(savedQty);
-          
+
           article.innerHTML = `
             <h3>${item.name}</h3>
             <p>${item.description || ''}</p>
@@ -1033,7 +1844,7 @@
         manageItemList.innerHTML = '<p class="empty-message">No menu items. Add your first item above!</p>';
         return;
       }
-      
+
       menuItems.forEach(item => {
         const div = document.createElement('div');
         div.className = 'item-manage';
@@ -1122,7 +1933,7 @@
       if (confirm(`Are you sure you want to remove the category "${categoryName}"?\n\nItems in this category will be moved to "Uncategorized".`)) {
         categories = categories.filter(cat => cat !== categoryName);
         saveCategories(categories);
-        
+
         // Update items in this category to "Uncategorized"
         menuItems.forEach(item => {
           if (item.category === categoryName) {
@@ -1130,7 +1941,7 @@
           }
         });
         saveMenuItems(menuItems);
-        
+
         renderCategoryList();
         updateCategorySelect();
         renderBillingItems();
@@ -1143,7 +1954,7 @@
     function renderCategoryList() {
       const categoryListEl = document.getElementById('categoryList');
       if (!categoryListEl) return;
-      
+
       if (categories.length === 0) {
         categoryListEl.innerHTML = '<p class="empty-message">No categories. Add your first category above!</p>';
         return;
@@ -1171,7 +1982,7 @@
     function updateCategorySelect() {
       const categorySelect = document.getElementById('itemCategory');
       if (!categorySelect) return;
-      
+
       categorySelect.innerHTML = '<option value="">Select a category</option>';
       categories.forEach(category => {
         const option = document.createElement('option');
@@ -1211,7 +2022,7 @@
       document.querySelectorAll('.edit-form-inline').forEach(form => {
         form.classList.remove('active');
       });
-      
+
       // Show the edit form for this item
       const editForm = document.getElementById(`editForm-${id}`);
       if (editForm) {
@@ -1255,11 +2066,11 @@
         menuItems[itemIndex].name = name;
         menuItems[itemIndex].price = price;
         menuItems[itemIndex].description = description;
-        
+
         saveMenuItems(menuItems);
         renderBillingItems();
         renderManageItems();
-        
+
         alert('Menu item updated successfully!');
       }
     }
@@ -1347,9 +2158,21 @@
     customerName.addEventListener('input', updateCustomerDisplay);
 
     const billingSearch = document.getElementById('billingSearch');
-    billingSearch.addEventListener('input', () => {
-      renderBillingItems();
-    });
+    const clearBillingSearch = document.getElementById('clearBillingSearch');
+
+    if (billingSearch) {
+      billingSearch.addEventListener('input', () => {
+        renderBillingItems();
+      });
+    }
+
+    if (clearBillingSearch && billingSearch) {
+      clearBillingSearch.addEventListener('click', () => {
+        billingSearch.value = '';
+        billingSearch.focus();
+        renderBillingItems();
+      });
+    }
 
     resetBtn.addEventListener('click', () => {
       clearSelectedItems();
@@ -1373,7 +2196,7 @@
       const category = formData.get('category');
       const price = formData.get('price');
       const description = formData.get('description') || '';
-      
+
       if (name && category && price) {
         addMenuItem(name, category, price, description);
         addItemForm.reset();
@@ -1393,9 +2216,9 @@
 
     function formatDate(dateString) {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -1418,7 +2241,7 @@
         const matchesMinTotal = invoice.total >= minTotal;
         const matchesMaxTotal = invoice.total <= maxTotal;
         const customerName = (invoice.customerName || 'Walk-in Customer').toLowerCase();
-        const matchesSearch = !searchTerm || 
+        const matchesSearch = !searchTerm ||
           invoice.items.some(item => item.name.toLowerCase().includes(searchTerm)) ||
           customerName.includes(searchTerm);
 
@@ -1427,7 +2250,7 @@
 
       // Sort filtered history
       filteredHistory.sort((a, b) => {
-        switch(sortBy) {
+        switch (sortBy) {
           case 'date-desc':
             return new Date(b.date) - new Date(a.date);
           case 'date-asc':
@@ -1457,7 +2280,7 @@
 
     function renderHistory() {
       const history = filteredHistory.length > 0 ? filteredHistory : getBillingHistory();
-      
+
       // Sort by date descending if no filters applied
       if (filteredHistory.length === 0) {
         history.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -1467,7 +2290,7 @@
       const totalInvoices = history.length;
       const totalRevenue = history.reduce((sum, inv) => sum + inv.total, 0);
       const avgOrder = totalInvoices > 0 ? totalRevenue / totalInvoices : 0;
-      const totalItems = history.reduce((sum, inv) => 
+      const totalItems = history.reduce((sum, inv) =>
         sum + inv.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
       );
 
@@ -1527,7 +2350,7 @@
 
     function downloadFilteredData() {
       const history = filteredHistory.length > 0 ? filteredHistory : getBillingHistory();
-      
+
       if (history.length === 0) {
         alert('No data to download.');
         return;
@@ -1535,7 +2358,7 @@
 
       // Create CSV content
       let csv = 'Invoice ID,Date,Customer Name,Item Name,Quantity,Unit Price,Item Total,Invoice Total\n';
-      
+
       history.forEach(invoice => {
         const customer = invoice.customerName || 'Walk-in Customer';
         invoice.items.forEach((item, index) => {
@@ -1559,21 +2382,24 @@
     // Data Management Functions
     function updateStorageInfo() {
       if (!storageInfo) return; // Element might not exist if not on history tab
-      
+
       const history = getBillingHistory();
       const menuItems = getMenuItems();
+      const currentCategories = getCategories();
       const historySize = JSON.stringify(history).length;
       const menuSize = JSON.stringify(menuItems).length;
-      const totalSize = historySize + menuSize;
+      const categoriesSize = JSON.stringify(currentCategories).length;
+      const totalSize = historySize + menuSize + categoriesSize;
       const sizeKB = (totalSize / 1024).toFixed(2);
       const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-      
+
       let sizeDisplay = sizeKB < 1024 ? `${sizeKB} KB` : `${sizeMB} MB`;
-      
+
       storageInfo.innerHTML = `
         <strong>Storage Information:</strong><br>
         • Total Invoices: ${history.length}<br>
         • Menu Items: ${menuItems.length}<br>
+        • Categories: ${currentCategories.length}<br>
         • Data Size: ${sizeDisplay}<br>
         • Storage Location: Browser LocalStorage (local to this device)
       `;
@@ -1583,10 +2409,11 @@
       const data = {
         billingHistory: getBillingHistory(),
         menuItems: getMenuItems(),
+        categories: getCategories(),
         exportDate: new Date().toISOString(),
         version: '1.0'
       };
-      
+
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const link = document.createElement('a');
@@ -1597,31 +2424,40 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      alert('All data exported successfully! Save this file to restore your data later.');
+
+      alert(`All data exported successfully!\n\nBackup includes:\n- ${data.billingHistory.length} Invoices\n- ${data.menuItems.length} Menu Items\n- ${data.categories.length} Categories`);
     }
 
     function importData(file) {
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         try {
           const data = JSON.parse(e.target.result);
-          
+
           if (!data.billingHistory || !data.menuItems) {
             throw new Error('Invalid backup file format');
           }
-          
-          if (confirm(`This will replace your current data with the imported data.\n\nImported:\n- ${data.billingHistory.length} invoices\n- ${data.menuItems.length} menu items\n\nContinue?`)) {
+
+          const categoriesCount = data.categories ? data.categories.length : 0;
+          const confirmMessage = `This will replace your current data with the imported data.\n\nImported:\n- ${data.billingHistory.length} invoices\n- ${data.menuItems.length} menu items\n- ${categoriesCount} categories\n\nContinue?`;
+
+          if (confirm(confirmMessage)) {
             saveBillingHistory(data.billingHistory);
             saveMenuItems(data.menuItems);
+            if (data.categories && Array.isArray(data.categories)) {
+              saveCategories(data.categories);
+              categories = data.categories;
+            }
             menuItems = data.menuItems;
             nextId = Math.max(...menuItems.map(item => item.id), 0) + 1;
-            
+
+            renderCategoryList();
+            updateCategorySelect();
             renderBillingItems();
             renderManageItems();
             renderHistory();
             updateStorageInfo();
-            
+
             alert('Data imported successfully!');
           }
         } catch (error) {
@@ -1647,7 +2483,7 @@
     applyFilterBtn.addEventListener('click', applyFilters);
     resetFilterBtn.addEventListener('click', resetFilters);
     downloadBtn.addEventListener('click', downloadFilteredData);
-    
+
     // Data management event listeners
     exportAllBtn.addEventListener('click', exportAllData);
     importFileInput.addEventListener('change', (e) => {
@@ -1666,4 +2502,5 @@
     // Storage info will be updated when history tab is opened
   </script>
 </body>
+
 </html>
