@@ -118,7 +118,7 @@ export default function BillingPage() {
 
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto">
+      <div className="md:px-[2%] mx-auto">
         <div className="lg:flex gap-4">
           <div className={`lg:w-3/4 space-y-12 lg:pb-0 ${billingItems.length > 0 ? 'pb-[25vh]' : ''}`}>
             {/* Billing Customer name */}
@@ -180,7 +180,7 @@ export default function BillingPage() {
 
           {/* Bill Pricing Section */}
           <div
-            className={`fixed bottom-0 lg:relative ${billingItems.length > 0 ? '' : 'hidden'} lg:block container lg:w-1/4 h-1/3 lg:h-2/5 overflow-auto p-6 mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 items-center bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl`}>
+            className={`fixed bottom-0 lg:sticky lg:top-18.5 ${billingItems.length > 0 ? '' : 'hidden'} lg:block w-full lg:w-1/4 h-1/3 lg:h-2/5 overflow-auto p-6 mt-0 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 items-center bg-gray-50 dark:bg-gray-800 px-4 rounded-2xl`}>
             {customerName !== '' && (
               <div className="text-[14px] text-[#5c5c68] dark:text-gray-300 lg:mb-2 min-h-5 lg:pb-2 border-b">
                 <><span className="text-[16px] font-extrabold">Customer:</span> {customerName}</>
