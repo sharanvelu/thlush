@@ -2,13 +2,30 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const pathname = usePathname();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+
+  const isActive = (href: string): boolean => {
+    if (href === '/') return pathname === '/';
+    return pathname === href;
+  };
+
+  const linkClass = (href: string): string =>
+    isActive(href)
+      ? 'text-[#ff7a18] px-3 py-2 text-sm font-medium rounded-lg bg-orange-50 dark:bg-gray-800 transition duration-150'
+      : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150';
+
+  const mobileLinkClass = (href: string): string =>
+    isActive(href)
+      ? 'text-[#ff7a18] block px-3 py-2 rounded-xl text-base font-medium bg-orange-50 dark:bg-gray-800 transition duration-150'
+      : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white block px-3 py-2 rounded-xl text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150';
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white bg-opacity-90 dark:bg-gray-900 dark:bg-opacity-90 z-50 backdrop-blur-sm py-1 shadow-sm">
@@ -23,16 +40,16 @@ export default function Navbar() {
           {/* Desktop menu */}
           <div className="hidden md:block">
             <div className="flex items-center space-x-4">
-              <Link href="/billing" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+              <Link href="/billing" className={linkClass('/billing')}>
                 Billing
               </Link>
-              <Link href="/menu" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+              <Link href="/menu" className={linkClass('/menu')}>
                 Manage Menu
               </Link>
-              <Link href="/categories" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+              <Link href="/categories" className={linkClass('/categories')}>
                 Manage Category
               </Link>
-              <Link href="/billing/history" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+              <Link href="/billing/history" className={linkClass('/billing/history')}>
                 Billing History
               </Link>
             </div>
@@ -65,16 +82,16 @@ export default function Navbar() {
       {/* Mobile menu, toggle based on menu state */}
       <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden`} id="mobile-menu">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-900 shadow-md rounded-b-2xl">
-          <Link href="/billing" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white block px-3 py-2 rounded-xl text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+          <Link href="/billing" className={mobileLinkClass('/billing')}>
             Billing
           </Link>
-          <Link href="/menu" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white block px-3 py-2 rounded-xl text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+          <Link href="/menu" className={mobileLinkClass('/menu')}>
             Manage Menu
           </Link>
-          <Link href="/categories" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white block px-3 py-2 rounded-xl text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+          <Link href="/categories" className={mobileLinkClass('/categories')}>
             Manage Category
           </Link>
-          <Link href="/billing/history" className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white block px-3 py-2 rounded-xl text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150">
+          <Link href="/billing/history" className={mobileLinkClass('/billing/history')}>
             Billing History
           </Link>
         </div>
