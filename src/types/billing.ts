@@ -71,6 +71,9 @@ export interface TodayStats {
 
 export interface OverallStats {
   total_bills: number;
+  total_revenue: number;
+  total_menu_items: number;
+  total_categories: number;
 }
 
 export interface BillItem {

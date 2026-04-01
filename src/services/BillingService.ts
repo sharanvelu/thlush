@@ -229,17 +229,27 @@ export const BillingService = {
   getOverallStats: async (): Promise<TypeOverallStats> => {
     const supabase = await SupabaseService.getServerClient();
 
-    const {count, error} = await supabase
-      .from('thlush_bills')
-      .select('*', {count: 'exact', head: true});
+    const [billsResult, revenueResult, menuResult, categoryResult] = await Promise.all([
+      supabase.from('thlush_bills').select('*', {count: 'exact', head: true}),
+      supabase.from('thlush_bills').select('total_amount'),
+      supabase.from('thlush_menu_items').select('*', {count: 'exact', head: true}),
+      supabase.from('thlush_categories').select('*', {count: 'exact', head: true}),
+    ]);
 
-    if (error) {
-      console.error('Error fetching overall stats:', error);
+    if (billsResult.error || revenueResult.error || menuResult.error || categoryResult.error) {
+      console.error('Error fetching overall stats');
       throw new Error('Failed to fetch overall stats');
     }
 
+    const totalRevenue: number = (revenueResult.data ?? []).reduce(
+      (sum: number, b) => sum + (b.total_amount ?? 0), 0
+    );
+
     return {
-      total_bills: count ?? 0,
+      total_bills: billsResult.count ?? 0,
+      total_revenue: parseFloat(totalRevenue.toFixed(2)),
+      total_menu_items: menuResult.count ?? 0,
+      total_categories: categoryResult.count ?? 0,
     };
   },
 };
