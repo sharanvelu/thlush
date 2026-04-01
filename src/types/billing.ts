@@ -37,6 +37,23 @@ export interface Bill {
   created_at: string;
 }
 
+export interface BillWithCustomer extends Bill {
+  thlush_customers: Customer | null;
+  thlush_bill_items: BillItem[];
+}
+
+// Stats types
+export interface TodayStats {
+  total_bills: number;
+  total_revenue: number;
+  avg_order_value: number;
+  total_items: number;
+}
+
+export interface OverallStats {
+  total_bills: number;
+}
+
 export interface BillItem {
   id: number;
   bill_id: number;
