@@ -113,6 +113,10 @@ export default function BillingPage() {
 
   const saveInvoice = async () => {
     if (billingItems.length === 0) return;
+    if (!customerName.trim()) {
+      alert('Please enter a customer name.');
+      return;
+    }
 
     setIsSaving(true);
 
@@ -172,7 +176,7 @@ export default function BillingPage() {
                 <InputField
                   id="customer_name"
                   title="Customer Name:"
-                  placeholder="Enter customer name (optional)"
+                  placeholder="Enter customer name"
                   value={customerName}
                   onchange={(id: string, value: string | number) => setCustomerName(value + '')}
                   clearButton={true}
@@ -278,7 +282,7 @@ export default function BillingPage() {
                   className="flex gap-2 justify-center flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
                   onClick={saveInvoice}
-                  disabled={isSaving || billingItems.length === 0}
+                  disabled={isSaving || billingItems.length === 0 || !customerName.trim()}
                 >
                   <svg width="23px" height="23px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 13V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V16M4 8V6C4 4.89543 4.89543 4 6 4H14.1716C14.702 4 15.2107 4.21071 15.5858 4.58579L19.4142 8.41421C19.7893 8.78929 20 9.29799 20 9.82843V12M15 20V15H9V20" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
