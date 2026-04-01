@@ -24,7 +24,7 @@ export default function InputField({id, title, placeholder, disabled, value, onc
         value={value ?? ''}
         onChange={e => onchange(id, e.target.value.trim())}
       />
-      {clearButton && (
+      {clearButton && ((value + '').trim() !== '') && (
         <button
           type="button"
           className="absolute right-0 top-7 py-2.75 px-4 text-[#1f1f1f] dark:text-gray-300 cursor-pointer hover:text-orange-300"

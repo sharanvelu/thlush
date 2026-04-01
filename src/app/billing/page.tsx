@@ -2,9 +2,10 @@
 
 import {useEffect, useMemo, useState} from "react";
 import {MenuItem as TypeMenuItem} from "@/types/menu";
-import {BillingItem as TypeBillingItem} from "@/types/billing";
+import {BillingItem as TypeBillingItem, SaveInvoiceDto as TypeSaveInvoiceDto, SaveInvoiceItemDto as TypeSaveInvoiceItemDto} from "@/types/billing";
 import InputField from "@/components/Inputs/Input";
-import {ApiListResponse as TypeApiListResponse} from "@/types/global";
+import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse} from "@/types/global";
+import {Bill as TypeBill} from "@/types/billing";
 import {calculateTotalTaxPriceValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
 import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
 import CategoryBillingItem from "@/components/CategoryBillingItem";
@@ -15,6 +16,7 @@ export default function BillingPage() {
   const [customerName, setCustomerName] = useState<string>('');
   const [filterValue, setFilterValue] = useState<string>('');
 
+  const [isSaving, setIsSaving] = useState(false);
   const [billingItems, setBillingItems] = useState<TypeBillingItem[]>([]);
   const [categoryWithMenuItems, setCategoryWithMenuItems] = useState<TypeCategoryWithMenuItem[]>([]);
 
@@ -109,6 +111,48 @@ export default function BillingPage() {
     ).toFixed(2);
   }
 
+  const saveInvoice = async () => {
+    if (billingItems.length === 0) return;
+
+    setIsSaving(true);
+
+    const invoiceDto: TypeSaveInvoiceDto = {
+      customer_name: customerName,
+      items: billingItems.map((item: TypeBillingItem): TypeSaveInvoiceItemDto => ({
+        menu_item_id: item.id,
+        name: item.name,
+        price: item.price,
+        sgst: item.sgst ?? 0,
+        cgst: item.cgst ?? 0,
+        quantity: item.quantity,
+        total: calculateBillingItemPrice(item),
+      })),
+    };
+
+    try {
+      const response: Response = await fetch('/api/billing', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(invoiceDto),
+      });
+
+      const data: TypeApiResponse<TypeBill> = await response.json();
+
+      if (!data.success) {
+        alert('Failed to save invoice: ' + data.error);
+        return;
+      }
+
+      alert('Invoice saved successfully!');
+      setBillingItems([]);
+      setCustomerName('');
+    } catch {
+      alert('Failed to save invoice. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   const clearBilling = () => {
     const confirmation: boolean = window.confirm('Do you really want to clear the items?')
     if (confirmation) {
@@ -145,7 +189,7 @@ export default function BillingPage() {
                 placeholder="Filter Items"
                 value={filterValue}
                 onchange={(id: string, value: string | number) => setFilterValue((value + '').toLowerCase())}
-                clearButton={filterValue.trim() !== ''}
+                clearButton={true}
               />
               <div className="flex flex-col gap-4">
                 {isLoading ? (
@@ -231,13 +275,15 @@ export default function BillingPage() {
                 >Clear All
                 </button>
                 <button
-                  className="flex gap-2 justify-center flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
+                  className="flex gap-2 justify-center flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
+                  onClick={saveInvoice}
+                  disabled={isSaving || billingItems.length === 0}
                 >
                   <svg width="23px" height="23px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 13V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V16M4 8V6C4 4.89543 4.89543 4 6 4H14.1716C14.702 4 15.2107 4.21071 15.5858 4.58579L19.4142 8.41421C19.7893 8.78929 20 9.29799 20 9.82843V12M15 20V15H9V20" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  Save Invoice
+                  {isSaving ? 'Saving...' : 'Save Invoice'}
                 </button>
                 <button
                   className="flex gap-2 justify-center flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
