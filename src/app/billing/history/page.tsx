@@ -1,23 +1,64 @@
 'use client';
 
 import {useEffect, useState} from "react";
-import {BillWithCustomer as TypeBillWithCustomer, BillItem as TypeBillItem, TodayStats as TypeTodayStats, OverallStats as TypeOverallStats} from "@/types/billing";
+import {BillFilters as TypeBillFilters, BillSortBy, BillWithCustomer as TypeBillWithCustomer, BillItem as TypeBillItem, TodayStats as TypeTodayStats, OverallStats as TypeOverallStats} from "@/types/billing";
 import {Pagination as TypePagination, PaginatedResponse as TypePaginatedResponse, ErrorResponse as TypeErrorResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import Loader from "@/components/Loader";
 import {shouldIgnoreTax} from "@/helpers";
 
 export default function BillingHistoryPage() {
+  const defaultFilters: TypeBillFilters = {
+    start_date: '',
+    end_date: '',
+    customer_name: '',
+    item_name: '',
+    min_total: '',
+    max_total: '',
+    sort_by: BillSortBy.DATE_NEWEST,
+  };
+
   const [isLoading, setIsLoading] = useState(true);
   const [bills, setBills] = useState<TypeBillWithCustomer[]>([]);
   const [pagination, setPagination] = useState<TypePagination | null>(null);
   const [expandedBillId, setExpandedBillId] = useState<number | null>(null);
   const [todayStats, setTodayStats] = useState<TypeTodayStats | null>(null);
   const [overallStats, setOverallStats] = useState<TypeOverallStats | null>(null);
+  const [filters, setFilters] = useState<TypeBillFilters>({...defaultFilters});
+  const [appliedFilters, setAppliedFilters] = useState<TypeBillFilters>({...defaultFilters});
+  const [showFilters, setShowFilters] = useState(false);
 
-  async function fetchBills(page: number = 1): Promise<void> {
+  const updateFilter = (key: keyof TypeBillFilters, value: string) => {
+    setFilters((prev: TypeBillFilters) => ({...prev, [key]: value}));
+  };
+
+  const applyFilters = () => {
+    setAppliedFilters({...filters});
+    fetchBills(1, filters);
+  };
+
+  const resetFilters = () => {
+    setFilters({...defaultFilters});
+    setAppliedFilters({...defaultFilters});
+    fetchBills(1, defaultFilters);
+  };
+
+  async function fetchBills(page: number = 1, currentFilters?: TypeBillFilters): Promise<void> {
     setIsLoading(true);
 
-    const response: Response = await fetch(`/api/billing/history?page=${page}&per_page=10`);
+    const f: TypeBillFilters = currentFilters ?? appliedFilters;
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('per_page', '10');
+
+    if (f.start_date) params.set('start_date', f.start_date);
+    if (f.end_date) params.set('end_date', f.end_date);
+    if (f.customer_name) params.set('customer_name', f.customer_name);
+    if (f.item_name) params.set('item_name', f.item_name);
+    if (f.min_total) params.set('min_total', f.min_total);
+    if (f.max_total) params.set('max_total', f.max_total);
+    if (f.sort_by !== BillSortBy.DATE_NEWEST) params.set('sort_by', f.sort_by);
+
+    const response: Response = await fetch(`/api/billing/history?${params.toString()}`);
     const data: TypePaginatedResponse<TypeBillWithCustomer> | TypeErrorResponse = await response.json();
 
     if (!data.success) {
@@ -57,6 +98,16 @@ export default function BillingHistoryPage() {
       minute: '2-digit',
     });
   };
+
+  const activeFilterCount: number = [
+    appliedFilters.start_date,
+    appliedFilters.end_date,
+    appliedFilters.customer_name,
+    appliedFilters.item_name,
+    appliedFilters.min_total,
+    appliedFilters.max_total,
+    appliedFilters.sort_by !== BillSortBy.DATE_NEWEST ? appliedFilters.sort_by : '',
+  ].filter(Boolean).length;
 
   const toggleExpand = (billId: number) => {
     setExpandedBillId(expandedBillId === billId ? null : billId);
@@ -100,6 +151,163 @@ export default function BillingHistoryPage() {
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Overall Bills</div>
               <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{overallStats?.total_bills ?? '-'}</div>
             </div>
+          </div>
+
+          {/* Filters Section */}
+          <div className="mb-6 bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl overflow-hidden">
+            <button
+              className="w-full flex items-center justify-between p-4 cursor-pointer bg-transparent border-none text-left"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <span className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
+                Filters & Sort
+                {activeFilterCount > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold text-white -bg-linear-120 from-[#ff7a18] to-[#ffb347] rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </span>
+              <svg
+                className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            {showFilters && (
+              <div className="border-t-2 border-[#f0e6dd] dark:border-gray-700 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Start Date */}
+                  <div>
+                    <label htmlFor="start_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      id="start_date"
+                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                      value={filters.start_date}
+                      onChange={(e) => updateFilter('start_date', e.target.value)}
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div>
+                    <label htmlFor="end_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      id="end_date"
+                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                      value={filters.end_date}
+                      onChange={(e) => updateFilter('end_date', e.target.value)}
+                    />
+                  </div>
+
+                  {/* Customer Name */}
+                  <div>
+                    <label htmlFor="customer_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                      Customer Name
+                    </label>
+                    <input
+                      type="text"
+                      id="customer_name"
+                      placeholder="Search by customer..."
+                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                      value={filters.customer_name}
+                      onChange={(e) => updateFilter('customer_name', e.target.value)}
+                    />
+                  </div>
+
+                  {/* Item Name */}
+                  <div>
+                    <label htmlFor="item_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                      Item Name
+                    </label>
+                    <input
+                      type="text"
+                      id="item_name"
+                      placeholder="Search by item..."
+                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                      value={filters.item_name}
+                      onChange={(e) => updateFilter('item_name', e.target.value)}
+                    />
+                  </div>
+
+                  {/* Min Total */}
+                  <div>
+                    <label htmlFor="min_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                      Min Total Amount
+                    </label>
+                    <input
+                      type="number"
+                      id="min_total"
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                      value={filters.min_total}
+                      onChange={(e) => updateFilter('min_total', e.target.value)}
+                    />
+                  </div>
+
+                  {/* Max Total */}
+                  <div>
+                    <label htmlFor="max_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                      Max Total Amount
+                    </label>
+                    <input
+                      type="number"
+                      id="max_total"
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                      value={filters.max_total}
+                      onChange={(e) => updateFilter('max_total', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Sort By */}
+                <div className="mt-4 max-w-sm">
+                  <label htmlFor="sort_by" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                    Sort By
+                  </label>
+                  <select
+                    id="sort_by"
+                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    value={filters.sort_by}
+                    onChange={(e) => updateFilter('sort_by', e.target.value)}
+                  >
+                    <option value={BillSortBy.DATE_NEWEST}>Date (Newest First)</option>
+                    <option value={BillSortBy.DATE_OLDEST}>Date (Oldest First)</option>
+                    <option value={BillSortBy.TOTAL_HIGH}>Total (High to Low)</option>
+                    <option value={BillSortBy.TOTAL_LOW}>Total (Low to High)</option>
+                    <option value={BillSortBy.CUSTOMER_NAME}>Customer Name (A-Z)</option>
+                  </select>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-5">
+                  <button
+                    className="rounded-[14px] px-5 py-2 text-[15px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer"
+                    onClick={resetFilters}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    className="border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
+                    style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
+                    onClick={applyFilters}
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {bills.length === 0 && (
@@ -168,6 +376,25 @@ export default function BillingHistoryPage() {
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-gray-300 dark:border-gray-600 font-bold text-gray-900 dark:text-white">
+                          <td className="py-2">Total</td>
+                          <td className="py-2 text-right">
+                            {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.quantity, 0)}
+                          </td>
+                          <td className="py-2 text-right">
+                            {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + (item.price * item.quantity), 0).toFixed(2)}
+                          </td>
+                          {!shouldIgnoreTax() && (
+                            <td className="py-2 text-right">
+                              {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + ((item.sgst + item.cgst) * item.price * item.quantity / 100), 0).toFixed(2)}
+                            </td>
+                          )}
+                          <td className="py-2 text-right">
+                            {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.total, 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
 
                     {/* Bill summary */}
@@ -195,7 +422,7 @@ export default function BillingHistoryPage() {
               <button
                 className="px-4 py-2 text-sm font-medium rounded-xl border-2 border-[#f0e6dd] dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 disabled={!pagination.has_prev_page}
-                onClick={() => fetchBills(pagination.current_page - 1)}
+                onClick={() => fetchBills(pagination.current_page - 1, appliedFilters)}
               >
                 Previous
               </button>
@@ -205,7 +432,7 @@ export default function BillingHistoryPage() {
               <button
                 className="px-4 py-2 text-sm font-medium rounded-xl border-2 border-[#f0e6dd] dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 disabled={!pagination.has_next_page}
-                onClick={() => fetchBills(pagination.current_page + 1)}
+                onClick={() => fetchBills(pagination.current_page + 1, appliedFilters)}
               >
                 Next
               </button>

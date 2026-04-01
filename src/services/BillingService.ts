@@ -1,6 +1,8 @@
 import {SupabaseService} from "@/services/SupabaseService.server";
 import {
   Bill as TypeBill,
+  BillFilters as TypeBillFilters,
+  BillSortBy,
   BillWithCustomer as TypeBillWithCustomer,
   Customer as TypeCustomer,
   OverallStats as TypeOverallStats,
@@ -84,13 +86,54 @@ export const BillingService = {
     return bill;
   },
 
-  getBills: async (page: number = 1, perPage: number = 10): Promise<{bills: TypeBillWithCustomer[], pagination: TypePagination}> => {
+  getBills: async (page: number = 1, perPage: number = 10, filters?: Partial<TypeBillFilters>): Promise<{bills: TypeBillWithCustomer[], pagination: TypePagination}> => {
     const supabase = await SupabaseService.getServerClient();
 
-    // Get total count
-    const {count, error: countError} = await supabase
+    // Build base query for count
+    let countQuery = supabase
       .from('thlush_bills')
-      .select('*', {count: 'exact', head: true});
+      .select('*, thlush_customers!left(name), thlush_bill_items!left(name)', {count: 'exact', head: true});
+
+    // Build base query for data
+    let dataQuery = supabase
+      .from('thlush_bills')
+      .select('*, thlush_customers(*), thlush_bill_items(*)');
+
+    // Apply filters to both queries
+    if (filters?.start_date) {
+      const startDate: string = new Date(filters.start_date).toISOString();
+      countQuery = countQuery.gte('created_at', startDate);
+      dataQuery = dataQuery.gte('created_at', startDate);
+    }
+
+    if (filters?.end_date) {
+      const endDate: string = new Date(filters.end_date + 'T23:59:59.999').toISOString();
+      countQuery = countQuery.lte('created_at', endDate);
+      dataQuery = dataQuery.lte('created_at', endDate);
+    }
+
+    if (filters?.customer_name) {
+      countQuery = countQuery.ilike('thlush_customers.name', `%${filters.customer_name}%`);
+      dataQuery = dataQuery.ilike('thlush_customers.name', `%${filters.customer_name}%`);
+    }
+
+    if (filters?.item_name) {
+      countQuery = countQuery.ilike('thlush_bill_items.name', `%${filters.item_name}%`);
+      dataQuery = dataQuery.ilike('thlush_bill_items.name', `%${filters.item_name}%`);
+    }
+
+    if (filters?.min_total) {
+      countQuery = countQuery.gte('total_amount', parseFloat(filters.min_total));
+      dataQuery = dataQuery.gte('total_amount', parseFloat(filters.min_total));
+    }
+
+    if (filters?.max_total) {
+      countQuery = countQuery.lte('total_amount', parseFloat(filters.max_total));
+      dataQuery = dataQuery.lte('total_amount', parseFloat(filters.max_total));
+    }
+
+    // Get total count
+    const {count, error: countError} = await countQuery;
 
     if (countError) {
       console.error('Error counting bills:', countError);
@@ -102,12 +145,29 @@ export const BillingService = {
     const from: number = (page - 1) * perPage;
     const to: number = from + perPage - 1;
 
-    // Fetch bills with customer and bill items
-    const {data: bills, error} = await supabase
-      .from('thlush_bills')
-      .select('*, thlush_customers(*), thlush_bill_items(*)')
-      .order('created_at', {ascending: false})
-      .range(from, to);
+    // Apply sorting
+    const sortBy: BillSortBy = filters?.sort_by ?? BillSortBy.DATE_NEWEST;
+    switch (sortBy) {
+      case BillSortBy.DATE_OLDEST:
+        dataQuery = dataQuery.order('created_at', {ascending: true});
+        break;
+      case BillSortBy.TOTAL_HIGH:
+        dataQuery = dataQuery.order('total_amount', {ascending: false});
+        break;
+      case BillSortBy.TOTAL_LOW:
+        dataQuery = dataQuery.order('total_amount', {ascending: true});
+        break;
+      case BillSortBy.CUSTOMER_NAME:
+        dataQuery = dataQuery.order('name', {referencedTable: 'thlush_customers', ascending: true});
+        break;
+      case BillSortBy.DATE_NEWEST:
+      default:
+        dataQuery = dataQuery.order('created_at', {ascending: false});
+        break;
+    }
+
+    // Fetch bills
+    const {data: bills, error} = await dataQuery.range(from, to);
 
     if (error) {
       console.error('Error fetching bills:', error);
