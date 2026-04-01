@@ -27,7 +27,7 @@ export default function InputField({id, title, placeholder, disabled, value, onc
       {clearButton && (
         <button
           type="button"
-          className="absolute right-0 top-7 py-3 px-4 text-[#1f1f1f] dark:text-gray-300 cursor-pointer hover:text-orange-300"
+          className="absolute right-0 top-7 py-2.75 px-4 text-[#1f1f1f] dark:text-gray-300 cursor-pointer hover:text-orange-300"
           onClick={() => onchange(id, "")}
         >
           <svg width="25px" height="25px" viewBox="0 0 24 24" fill="#888" xmlns="http://www.w3.org/2000/svg">
