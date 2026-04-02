@@ -8,14 +8,15 @@ interface BillingSummaryProps {
   customerName: string;
   billingItems: TypeBillingItem[];
   isSaving: boolean;
+  isPrinting: boolean;
   onSave: () => void;
   onClear: () => void;
   onPrint: () => void;
 }
 
-export default function BillingSummary({customerName, billingItems, isSaving, onSave, onClear, onPrint}: BillingSummaryProps) {
+export default function BillingSummary({customerName, billingItems, isSaving, isPrinting, onSave, onClear, onPrint}: BillingSummaryProps) {
   const hasItems: boolean = billingItems.length > 0;
-  const canSave: boolean = hasItems && !isSaving && !!customerName.trim();
+  const canSave: boolean = hasItems && !isSaving && !isPrinting && !!customerName.trim();
 
   const totals = useMemo(() => {
     const subtotal: number = billingItems.reduce(
@@ -99,14 +100,15 @@ export default function BillingSummary({customerName, billingItems, isSaving, on
             {isSaving ? 'Saving...' : 'Save Invoice'}
           </button>
           <button
-            className="flex gap-2 justify-center flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
+            className="flex gap-2 justify-center flex-1 min-w-45 border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
             onClick={onPrint}
+            disabled={!canSave}
           >
             <svg width="23px" height="23px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 15H16V18M16 18V21H8V18H4V9H8M16 18H20V9H8M8 9V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Print Invoice
+            {isSaving ? 'Saving Invoice...' : (isPrinting ? 'Printing Invoice...' : 'Print Invoice')}
           </button>
         </div>
       </div>

@@ -10,11 +10,13 @@ import {calculateTotalValue} from "@/helpers";
 import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
 import CategoryBillingItem from "@/components/CategoryBillingItem";
 import BillingSummary from "@/components/BillingSummary";
+import {buildReceiptHtml} from "@/components/ThermalReceipt";
 import toast from "react-hot-toast";
 
 export default function BillingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [customerName, setCustomerName] = useState<string>('');
   const [filterValue, setFilterValue] = useState<string>('');
   const [billingItems, setBillingItems] = useState<TypeBillingItem[]>([]);
@@ -71,15 +73,13 @@ export default function BillingPage() {
     }
   };
 
-  // Save invoice
-  const saveInvoice = async () => {
-    if (billingItems.length === 0) return;
+  // Save invoice (returns bill on success, null on failure)
+  const doSaveInvoice = async (): Promise<TypeBill | null> => {
+    if (billingItems.length === 0) return null;
     if (!customerName.trim()) {
       toast.error('Please enter a customer name.');
-      return;
+      return null;
     }
-
-    setIsSaving(true);
 
     const invoiceDto: TypeSaveInvoiceDto = {
       customer_name: customerName,
@@ -103,15 +103,73 @@ export default function BillingPage() {
       const data: TypeApiResponse<TypeBill> = await response.json();
       if (!data.success) {
         toast.error('Failed to save invoice: ' + data.error);
-        return;
+        return null;
       }
+      return data.data;
+    } catch {
+      toast.error('Failed to save invoice. Please try again.');
+      return null;
+    }
+  };
+
+  const saveInvoice = async () => {
+    setIsSaving(true);
+    const bill = await doSaveInvoice();
+    setIsSaving(false);
+    if (bill) {
       toast.success('Invoice saved successfully!');
       setBillingItems([]);
       setCustomerName('');
-    } catch {
-      toast.error('Failed to save invoice. Please try again.');
-    } finally {
+    }
+  };
+
+  const saveAndPrint = async () => {
+    setIsSaving(true);
+    const bill: TypeBill | null = await doSaveInvoice();
+    if (!bill) {
       setIsSaving(false);
+      setIsPrinting(false);
+      return;
+    }
+
+    toast.success('Invoice saved successfully!');
+
+    setIsSaving(false);
+    setIsPrinting(true);
+
+    const now: string = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+
+    const html: string = buildReceiptHtml(bill.id, customerName, billingItems, now);
+
+    // Print via hidden iframe
+    const iframe: HTMLIFrameElement = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.width = '80mm';
+    iframe.style.height = '0';
+    document.body.appendChild(iframe);
+
+    const doc: Document | undefined = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      iframe.onload = () => {
+        iframe.contentWindow?.print();
+        setTimeout((): void => {
+          document.body.removeChild(iframe);
+          setIsPrinting(false);
+          setBillingItems([]);
+          setCustomerName('');
+        }, 500);
+      };
+    } else {
+      document.body.removeChild(iframe);
+      setIsPrinting(false);
     }
   };
 
@@ -188,12 +246,14 @@ export default function BillingPage() {
             customerName={customerName}
             billingItems={billingItems}
             isSaving={isSaving}
+            isPrinting={isPrinting}
             onSave={saveInvoice}
             onClear={clearBilling}
-            onPrint={() => {}}
+            onPrint={saveAndPrint}
           />
         </div>
       </div>
+
     </div>
   );
 }
