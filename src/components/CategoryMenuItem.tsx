@@ -13,7 +13,7 @@ interface CategoryWithMenuItemProps {
 export default function CategoryMenuItem(
   {categoryWithMenuItem, menuItemEditAction, refreshMenuItems}: CategoryWithMenuItemProps
 ) {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(categoryWithMenuItem.menu_items.length > 0);
 
   const toggleMenuItems = () => {
     setIsExpanded(!isExpanded);
