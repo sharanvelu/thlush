@@ -5,6 +5,7 @@ import {BillFilters as TypeBillFilters, BillSortBy, BillWithCustomer as TypeBill
 import {Pagination as TypePagination, PaginatedResponse as TypePaginatedResponse, ErrorResponse as TypeErrorResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {shouldIgnoreTax} from "@/helpers";
 import toast from "react-hot-toast";
+import {printBillReceipt} from "@/components/ThermalReceipt";
 import SelectField from "@/components/Inputs/Select";
 
 export default function BillingHistoryPage() {
@@ -29,6 +30,7 @@ export default function BillingHistoryPage() {
   const [appliedFilters, setAppliedFilters] = useState<TypeBillFilters>({...defaultFilters});
   const [showFilters, setShowFilters] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [printingBillId, setPrintingBillId] = useState<number | null>(null);
 
   const updateFilter = (key: keyof TypeBillFilters, value: string) => {
     setFilters((prev: TypeBillFilters) => ({...prev, [key]: value}));
@@ -486,7 +488,30 @@ export default function BillingHistoryPage() {
                         </table>
 
                         {/* Bill summary */}
-                        <div className="flex justify-end mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <button
+                            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold border-none -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{boxShadow: "0 8px 16px rgba(255,122,24,.2)"}}
+                            disabled={printingBillId === bill.id}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setPrintingBillId(bill.id);
+                              await printBillReceipt(bill);
+                              setPrintingBillId(null);
+                            }}
+                          >
+                            {printingBillId === bill.id ? (
+                              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 15H16V18M16 18V21H8V18H4V9H8M16 18H20V9H8M8 9V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                            {printingBillId === bill.id ? 'Printing...' : 'Print Invoice'}
+                          </button>
                           <div className="text-right text-sm space-y-1">
                             {!shouldIgnoreTax() && (
                               <div className="text-gray-500 dark:text-gray-400">
