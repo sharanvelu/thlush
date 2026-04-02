@@ -242,10 +242,10 @@ export default function DashboardPage() {
                         #{bill.id} &middot; {formatDate(bill.created_at)}
                       </span>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {bill.thlush_customers?.name || 'Walk-in Customer'}
+                        {bill.customers?.name || 'Walk-in Customer'}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {bill.thlush_bill_items?.length ?? 0} item{(bill.thlush_bill_items?.length ?? 0) !== 1 ? 's' : ''}
+                        {bill.bill_items?.length ?? 0} item{(bill.bill_items?.length ?? 0) !== 1 ? 's' : ''}
                       </span>
                     </div>
                     <span className="text-base font-bold text-gray-900 dark:text-white">

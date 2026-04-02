@@ -2,9 +2,21 @@ import {NextResponse} from 'next/server';
 import {BillingService} from '@/services/BillingService';
 import {Bill as TypeBill, SaveInvoiceDto as TypeSaveInvoiceDto} from "@/types/billing";
 import {ApiResponse as TypeApiResponse} from "@/types/global";
+import {User} from "@supabase/auth-js";
+import {SupabaseService} from "@/services/SupabaseService.server";
 
 export async function POST(request: Request): Promise<NextResponse<TypeApiResponse<TypeBill>>> {
   try {
+    // Check authentication
+    const authUser: User | null = await SupabaseService.authUser();
+
+    if (!authUser) {
+      return NextResponse.json(
+        {success: false, error: 'Authentication required'},
+        {status: 401}
+      );
+    }
+
     const invoiceDto: TypeSaveInvoiceDto = await request.json();
 
     if (!invoiceDto.items || invoiceDto.items.length === 0) {
@@ -14,7 +26,7 @@ export async function POST(request: Request): Promise<NextResponse<TypeApiRespon
       );
     }
 
-    const bill: TypeBill = await BillingService.saveInvoice(invoiceDto);
+    const bill: TypeBill = await BillingService.saveInvoice(invoiceDto, authUser.id);
 
     return NextResponse.json({
       success: true,

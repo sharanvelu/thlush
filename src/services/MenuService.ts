@@ -38,13 +38,12 @@ export const MenuService = {
     return menuItem;
   },
 
-  createMenuItem: async (menuItemDto: TypeMenuItemDto): Promise<TypeMenuItem> => {
-    console.log({menuItemDto});
+  createMenuItem: async (menuItemDto: TypeMenuItemDto, userId: string): Promise<TypeMenuItem> => {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: menuItem, error} = await supabase
       .from('thlush_menu_items')
-      .insert([menuItemDto])
+      .insert([{...menuItemDto, created_user_id: userId}])
       .select()
       .single();
 

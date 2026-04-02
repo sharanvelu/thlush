@@ -357,7 +357,7 @@ export default function BillingHistoryPage() {
                           #{bill.id} &middot; {formatDate(bill.created_at)}
                         </span>
                         <span className="text-base font-semibold text-gray-900 dark:text-white">
-                          {bill.thlush_customers?.name || 'Walk-in Customer'}
+                          {bill.customers?.name || 'Walk-in Customer'}
                         </span>
                       </div>
                       <div className="flex items-center gap-4">
@@ -389,7 +389,7 @@ export default function BillingHistoryPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {bill.thlush_bill_items.map((item: TypeBillItem) => (
+                            {bill.bill_items.map((item: TypeBillItem) => (
                               <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800">
                                 <td className="py-2 text-gray-900 dark:text-white">{item.name}</td>
                                 <td className="py-2 text-right text-gray-600 dark:text-gray-300">{item.quantity}</td>
@@ -407,18 +407,18 @@ export default function BillingHistoryPage() {
                             <tr className="border-t-2 border-gray-300 dark:border-gray-600 font-bold text-gray-900 dark:text-white">
                               <td className="py-2">Total</td>
                               <td className="py-2 text-right">
-                                {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.quantity, 0)}
+                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.quantity, 0)}
                               </td>
                               <td className="py-2 text-right">
-                                {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + (item.price * item.quantity), 0).toFixed(2)}
+                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + (item.price * item.quantity), 0).toFixed(2)}
                               </td>
                               {!shouldIgnoreTax() && (
                                 <td className="py-2 text-right">
-                                  {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + ((item.sgst + item.cgst) * item.price * item.quantity / 100), 0).toFixed(2)}
+                                  {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + ((item.sgst + item.cgst) * item.price * item.quantity / 100), 0).toFixed(2)}
                                 </td>
                               )}
                               <td className="py-2 text-right">
-                                {bill.thlush_bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.total, 0).toFixed(2)}
+                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.total, 0).toFixed(2)}
                               </td>
                             </tr>
                           </tfoot>

@@ -16,4 +16,5 @@ export interface MenuItemDto {
 
 export interface MenuItem extends MenuItemDto {
   id: number;
+  created_user_id?: string;
 }

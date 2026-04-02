@@ -14,7 +14,7 @@ import {Pagination as TypePagination} from "@/types/global";
 import {calculateTotalTaxPriceValue, calculateTotalValue} from "@/helpers";
 
 export const BillingService = {
-  saveInvoice: async (invoiceDto: TypeSaveInvoiceDto): Promise<TypeBill> => {
+  saveInvoice: async (invoiceDto: TypeSaveInvoiceDto, userId: string): Promise<TypeBill> => {
     const supabase = await SupabaseService.getServerClient();
 
     // 1. Create or find customer
@@ -53,6 +53,7 @@ export const BillingService = {
         total_tax: parseFloat(totalTax.toFixed(2)),
         currency: 'INR',
         status: 'completed',
+        created_user_id: userId,
       }])
       .select()
       .single<TypeBill>();
@@ -97,7 +98,7 @@ export const BillingService = {
     // Build base query for data
     let dataQuery = supabase
       .from('thlush_bills')
-      .select('*, thlush_customers(*), thlush_bill_items(*)');
+      .select('*, customers:thlush_customers(*), bill_items:thlush_bill_items(*)');
 
     // Apply filters to both queries
     if (filters?.start_date) {

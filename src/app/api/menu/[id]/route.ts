@@ -11,7 +11,7 @@ export async function PUT(
 ): Promise<NextResponse<TypeApiResponse<TypeMenuItem>>> {
   // Check authentication
   if (!await SupabaseService.authUser()) {
-    NextResponse.json(
+    return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}
     );
@@ -43,7 +43,7 @@ export async function DELETE(
 ): Promise<NextResponse<TypeApiDeleteResponse>> {
   // Check authentication
   if (!await SupabaseService.checkAuth()) {
-    NextResponse.json(
+    return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}
     );
