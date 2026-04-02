@@ -161,6 +161,45 @@ export default function BillingHistoryPage() {
   return (
     <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+          {isStatsLoading ? (
+            Array.from({length: 5}).map((_, i) => (
+              <div key={i} className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4 animate-pulse">
+                <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+                <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today&apos;s Bills</div>
+                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{todayStats?.total_bills ?? '-'}</div>
+              </div>
+              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today&apos;s Revenue</div>
+                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {todayStats ? `₹${todayStats.total_revenue.toFixed(2)}` : '-'}
+                </div>
+              </div>
+              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Avg Order Value</div>
+                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {todayStats ? `₹${todayStats.avg_order_value.toFixed(2)}` : '-'}
+                </div>
+              </div>
+              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Items Sold Today</div>
+                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{todayStats?.total_items ?? '-'}</div>
+              </div>
+              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Overall Bills</div>
+                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{overallStats?.total_bills ?? '-'}</div>
+              </div>
+            </>
+          )}
+        </div>
+
         <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <h1 className="m-0 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
@@ -183,45 +222,6 @@ export default function BillingHistoryPage() {
               )}
               {isExporting ? 'Exporting...' : 'Export CSV'}
             </button>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-            {isStatsLoading ? (
-              Array.from({length: 5}).map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4 animate-pulse">
-                  <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
-                  <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-              ))
-            ) : (
-              <>
-                <div className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today&apos;s Bills</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{todayStats?.total_bills ?? '-'}</div>
-                </div>
-                <div className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today&apos;s Revenue</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                    {todayStats ? `₹${todayStats.total_revenue.toFixed(2)}` : '-'}
-                  </div>
-                </div>
-                <div className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Avg Order Value</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                    {todayStats ? `₹${todayStats.avg_order_value.toFixed(2)}` : '-'}
-                  </div>
-                </div>
-                <div className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Items Sold Today</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{todayStats?.total_items ?? '-'}</div>
-                </div>
-                <div className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Overall Bills</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{overallStats?.total_bills ?? '-'}</div>
-                </div>
-              </>
-            )}
           </div>
 
           {/* Filters Section */}
