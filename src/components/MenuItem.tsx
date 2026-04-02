@@ -3,6 +3,7 @@ import {calculateTotalValue} from "@/helpers";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import {useState} from "react";
 import MenuItemStatusTag from "@/components/Tags/MenuItemStatusTag";
+import toast from "react-hot-toast";
 
 interface MenuItemProps {
   menu: TypeMenuItem;
@@ -24,9 +25,11 @@ export default function MenuItem({menu, editAction, refreshMenuItems}: MenuItemP
 
     if (!data.success) {
       setIsDeleting(false);
-      throw new Error(data.error || 'Failed to delete menu item');
+      toast.error(data.error || 'Failed to delete menu item');
+      return;
     }
 
+    toast.success('Menu item deleted successfully!');
     refreshMenuItems()
     setIsDeleting(false);
   }

@@ -4,6 +4,7 @@ import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
 import SelectField from "@/components/Inputs/Select";
 import {ApiResponse as TypeApiResponse} from "@/types/global";
+import toast from "react-hot-toast";
 
 interface CategoryAddProps {
   category?: Partial<TypeCategory | null>;
@@ -105,11 +106,13 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
         throw new Error(data.error || 'Failed to save Category');
       }
 
+      toast.success(isEditing ? 'Category updated successfully!' : 'Category created successfully!');
       refreshCategories()
       clearFormData()
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error saving Category:', error);
+      toast.error(error.message || 'An unexpected error occurred');
       setErrors([error.message || 'An unexpected error occurred']);
     } finally {
       setIsLoading(false);

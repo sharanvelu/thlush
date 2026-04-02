@@ -2,6 +2,7 @@ import {Category as TypeCategory} from "@/types/category";
 import {useState} from "react";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import CategoryStatusTag from "@/components/Tags/CategoryStatusTag";
+import toast from "react-hot-toast";
 
 interface CategoryProps {
   category: TypeCategory;
@@ -23,9 +24,11 @@ export default function Category({category, editAction, refreshCategories}: Cate
 
     if (!data.success) {
       setIsDeleting(false);
-      throw new Error(data.error || 'Failed to delete category');
+      toast.error(data.error || 'Failed to delete category');
+      return;
     }
 
+    toast.success('Category deleted successfully!');
     refreshCategories();
     setIsDeleting(false);
   }

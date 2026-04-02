@@ -7,6 +7,7 @@ import SelectField from "@/components/Inputs/Select";
 import NumberField from "@/components/Inputs/Number";
 import {calculateTotalTaxValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
 import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse} from "@/types/global";
+import toast from "react-hot-toast";
 
 interface MenuAddProps {
   menuItem?: Partial<TypeMenuItem | null>;
@@ -146,11 +147,13 @@ export default function MenuAdd({menuItem, isEditing, clearForm, refreshMenuItem
         throw new Error(data.error || 'Failed to save menu item');
       }
 
+      toast.success(isEditing ? 'Menu item updated successfully!' : 'Menu item created successfully!');
       refreshMenuItems()
       clearFormData()
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error saving menu Item:', error);
+      toast.error(error.message || 'An unexpected error occurred');
       setErrors([error.message || 'An unexpected error occurred']);
     } finally {
       setIsLoading(false);
