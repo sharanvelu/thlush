@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useRef, useState} from "react";
 
 interface Option {
   value: string | number;
@@ -17,6 +17,20 @@ interface SelectProps {
 
 export default function SelectField({id, title, placeholder, disabled, value, options, onchange}: SelectProps) {
   const [isDropDownOpen, setIsDropDownOpen] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isDropDownOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsDropDownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropDownOpen]);
 
   const toggleDropdown = () => {
     setIsDropDownOpen(!disabled && !isDropDownOpen);
@@ -43,7 +57,7 @@ export default function SelectField({id, title, placeholder, disabled, value, op
   }
 
   return (
-    <div className="mb-4 w-full relative">
+    <div className="mb-4 w-full relative" ref={containerRef}>
       {title && (
         <label
           htmlFor={id}
@@ -61,7 +75,7 @@ export default function SelectField({id, title, placeholder, disabled, value, op
       </div>
       {isDropDownOpen && !disabled && (
         <div
-          className="absolute z-20 p-2 flex flex-col gap-2 w-full top-20 border border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl">
+          className="absolute z-20 p-2 flex flex-col gap-2 w-full top-20 border border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl shadow-xl">
           {options.map((option) => (
             <div
               key={option.value}

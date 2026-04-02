@@ -59,7 +59,8 @@ export enum BillSortBy {
   DATE_OLDEST = 'date_oldest',
   TOTAL_HIGH = 'total_high',
   TOTAL_LOW = 'total_low',
-  CUSTOMER_NAME = 'customer_name',
+  CUSTOMER_NAME_A_Z = 'customer_name_asc',
+  CUSTOMER_NAME_Z_A = 'customer_name_desc',
 }
 
 // Stats types

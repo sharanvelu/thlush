@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { SupabaseService } from '@/services/SupabaseService.client';
@@ -8,7 +8,25 @@ import { SupabaseService } from '@/services/SupabaseService.client';
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node) &&
+        mobileMenuButtonRef.current && !mobileMenuButtonRef.current.contains(e.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mobileMenuOpen]);
   const router = useRouter();
 
   // Don't render Navbar on login page
@@ -109,6 +127,7 @@ export default function Navbar() {
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
+              ref={mobileMenuButtonRef}
               type="button"
               onClick={toggleMobileMenu}
               className="inline-flex items-center justify-center p-2 rounded-xl text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-150"
@@ -131,7 +150,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile menu, toggle based on menu state */}
-      <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden`} id="mobile-menu">
+      <div ref={mobileMenuRef} className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden`} id="mobile-menu">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-900 shadow-md rounded-b-2xl">
           <Link href="/billing" className={mobileLinkClass('/billing')}>
             Billing

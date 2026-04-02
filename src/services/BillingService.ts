@@ -158,8 +158,11 @@ export const BillingService = {
       case BillSortBy.TOTAL_LOW:
         dataQuery = dataQuery.order('total_amount', {ascending: true});
         break;
-      case BillSortBy.CUSTOMER_NAME:
+      case BillSortBy.CUSTOMER_NAME_A_Z:
         dataQuery = dataQuery.order('name', {referencedTable: 'thlush_customers', ascending: true});
+        break;
+      case BillSortBy.CUSTOMER_NAME_Z_A:
+        dataQuery = dataQuery.order('name', {referencedTable: 'thlush_customers', ascending: false});
         break;
       case BillSortBy.DATE_NEWEST:
       default:

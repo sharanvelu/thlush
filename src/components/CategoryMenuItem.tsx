@@ -13,7 +13,7 @@ interface CategoryWithMenuItemProps {
 export default function CategoryMenuItem(
   {categoryWithMenuItem, menuItemEditAction, refreshMenuItems}: CategoryWithMenuItemProps
 ) {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(categoryWithMenuItem.menu_items.length > 0);
 
   const toggleMenuItems = () => {
     setIsExpanded(!isExpanded);
@@ -33,16 +33,20 @@ export default function CategoryMenuItem(
       </div>
 
       <div className={`overflow-hidden transition-all duration-500 ${isExpanded ? 'h-fit' : 'h-0'}`}>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 px-5 pb-5">
-          {categoryWithMenuItem.menu_items.map((menuItem: TypeMenuItem) => (
-            <MenuItem
-              key={menuItem.id}
-              menu={menuItem}
-              editAction={menuItemEditAction}
-              refreshMenuItems={refreshMenuItems}
-            />
-          ))}
-        </div>
+        {categoryWithMenuItem.menu_items.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400 px-6 pb-5 m-0">No items in this category</p>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 px-5 pb-5">
+            {categoryWithMenuItem.menu_items.map((menuItem: TypeMenuItem) => (
+              <MenuItem
+                key={menuItem.id}
+                menu={menuItem}
+                editAction={menuItemEditAction}
+                refreshMenuItems={refreshMenuItems}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
