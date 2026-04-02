@@ -16,7 +16,7 @@ export const CategoryService = {
 
     // Get All Categories
     const {data: categories, error} = await supabase
-      .from(DatabaseService.prepare_table_name('categories'))
+      .from(DatabaseService.table_names.categories)
       .select('*')
       .order('created_at', {ascending: true});
 
@@ -33,7 +33,7 @@ export const CategoryService = {
 
     // Get All Categories
     const {data: categories, error} = await supabase
-      .from(DatabaseService.prepare_table_name('categories'))
+      .from(DatabaseService.table_names.categories)
       .select('*')
       .in('status', getAll ? [CategoryStatus.ACTIVE, CategoryStatus.DISABLE] : [CategoryStatus.ACTIVE])
       .order('created_at', {ascending: true});
@@ -80,7 +80,7 @@ export const CategoryService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: category, error} = await supabase
-      .from(DatabaseService.prepare_table_name('categories'))
+      .from(DatabaseService.table_names.categories)
       .insert([{...categoryDto, created_user_id: userId}])
       .select()
       .single();
@@ -97,7 +97,7 @@ export const CategoryService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: category, error} = await supabase
-      .from(DatabaseService.prepare_table_name('categories'))
+      .from(DatabaseService.table_names.categories)
       .update(categoryDto)
       .eq('id', id)
       .select()
@@ -115,7 +115,7 @@ export const CategoryService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {error} = await supabase
-      .from(DatabaseService.prepare_table_name('categories'))
+      .from(DatabaseService.table_names.categories)
       .delete()
       .eq('id', id);
 

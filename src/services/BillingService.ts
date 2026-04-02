@@ -22,7 +22,7 @@ export const BillingService = {
     let customerId: number | null = null;
     if (invoiceDto.customer_name.trim()) {
       const {data: customer, error: customerError} = await supabase
-        .from(DatabaseService.prepare_table_name('customers'))
+        .from(DatabaseService.table_names.customers)
         .insert([{name: invoiceDto.customer_name.trim()}])
         .select()
         .single<TypeCustomer>();
@@ -47,7 +47,7 @@ export const BillingService = {
 
     // 3. Create bill
     const {data: bill, error: billError} = await supabase
-      .from(DatabaseService.prepare_table_name('bills'))
+      .from(DatabaseService.table_names.bills)
       .insert([{
         customer_id: customerId,
         total_amount: parseFloat(totalAmount.toFixed(2)),
@@ -77,7 +77,7 @@ export const BillingService = {
     }));
 
     const {error: itemsError} = await supabase
-      .from(DatabaseService.prepare_table_name('bill_items'))
+      .from(DatabaseService.table_names.bill_items)
       .insert(billItems);
 
     if (itemsError) {
@@ -88,18 +88,26 @@ export const BillingService = {
     return bill;
   },
 
-  getBills: async (page: number = 1, perPage: number = 10, filters?: Partial<TypeBillFilters>): Promise<{bills: TypeBillWithCustomer[], pagination: TypePagination}> => {
+  getBills: async (page: number = 1, perPage: number = 10, filters?: Partial<TypeBillFilters>): Promise<{
+    bills: TypeBillWithCustomer[],
+    pagination: TypePagination
+  }> => {
     const supabase = await SupabaseService.getServerClient();
 
     // Build base query for count
-    let countQuery = supabase
-      .from(DatabaseService.prepare_table_name('bills'))
-      .select('*, thlush_customers!left(name), thlush_bill_items!left(name)', {count: 'exact', head: true});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let countQuery: any = supabase
+      .from(DatabaseService.table_names.bills)
+      .select(`*, ${DatabaseService.table_names.customers}!left(name), ${DatabaseService.table_names.bill_items}!left(name)`, {
+        count: 'exact',
+        head: true
+      });
 
     // Build base query for data
-    let dataQuery = supabase
-      .from(DatabaseService.prepare_table_name('bills'))
-      .select('*, customers:thlush_customers(*), bill_items:thlush_bill_items(*)');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let dataQuery: any = supabase
+      .from(DatabaseService.table_names.bills)
+      .select(`*, customers:${DatabaseService.table_names.customers}(*), bill_items:${DatabaseService.table_names.bill_items}(*)`);
 
     // Apply filters to both queries
     if (filters?.start_date) {
@@ -115,13 +123,13 @@ export const BillingService = {
     }
 
     if (filters?.customer_name) {
-      countQuery = countQuery.ilike('thlush_customers.name', `%${filters.customer_name}%`);
-      dataQuery = dataQuery.ilike('thlush_customers.name', `%${filters.customer_name}%`);
+      countQuery = countQuery.ilike(`${DatabaseService.table_names.customers}.name`, `%${filters.customer_name}%`);
+      dataQuery = dataQuery.ilike(`${DatabaseService.table_names.customers}.name`, `%${filters.customer_name}%`);
     }
 
     if (filters?.item_name) {
-      countQuery = countQuery.ilike('thlush_bill_items.name', `%${filters.item_name}%`);
-      dataQuery = dataQuery.ilike('thlush_bill_items.name', `%${filters.item_name}%`);
+      countQuery = countQuery.ilike(`${DatabaseService.table_names.bill_items}.name`, `%${filters.item_name}%`);
+      dataQuery = dataQuery.ilike(`${DatabaseService.table_names.bill_items}.name`, `%${filters.item_name}%`);
     }
 
     if (filters?.min_total) {
@@ -160,10 +168,10 @@ export const BillingService = {
         dataQuery = dataQuery.order('total_amount', {ascending: true});
         break;
       case BillSortBy.CUSTOMER_NAME_A_Z:
-        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.prepare_table_name('customers'), ascending: true});
+        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.table_names.customers, ascending: true});
         break;
       case BillSortBy.CUSTOMER_NAME_Z_A:
-        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.prepare_table_name('customers'), ascending: false});
+        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.table_names.customers, ascending: false});
         break;
       case BillSortBy.DATE_NEWEST:
       default:
@@ -198,7 +206,7 @@ export const BillingService = {
 
     // Fetch today's bills
     const {data: bills, error: billsError} = await supabase
-      .from(DatabaseService.prepare_table_name('bills'))
+      .from(DatabaseService.table_names.bills)
       .select('total_amount')
       .gte('created_at', todayStart);
 
@@ -208,10 +216,11 @@ export const BillingService = {
     }
 
     // Fetch today's total items
-    const {data: billItems, error: itemsError} = await supabase
-      .from(DatabaseService.prepare_table_name('bill_items'))
-      .select('quantity, bill_id, thlush_bills!inner(created_at)')
-      .gte('thlush_bills.created_at', todayStart);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const {data: billItems, error: itemsError}: { data: any[] | null, error: any } = await supabase
+      .from(DatabaseService.table_names.bill_items)
+      .select(`quantity, bill_id, ${DatabaseService.table_names.bills}!inner(created_at)`)
+      .gte(`${DatabaseService.table_names.bills}.created_at`, todayStart);
 
     if (itemsError) {
       console.error('Error fetching today bill items:', itemsError);
@@ -221,7 +230,7 @@ export const BillingService = {
     const totalBills: number = bills.length;
     const totalRevenue: number = bills.reduce((sum: number, b) => sum + (b.total_amount ?? 0), 0);
     const avgOrderValue: number = totalBills > 0 ? totalRevenue / totalBills : 0;
-    const totalItems: number = billItems.reduce((sum: number, item) => sum + (item.quantity ?? 0), 0);
+    const totalItems: number = (billItems ?? []).reduce((sum: number, item) => sum + (item.quantity ?? 0), 0);
 
     return {
       total_bills: totalBills,
@@ -235,10 +244,10 @@ export const BillingService = {
     const supabase = await SupabaseService.getServerClient();
 
     const [billsResult, revenueResult, menuResult, categoryResult] = await Promise.all([
-      supabase.from(DatabaseService.prepare_table_name('bills')).select('*', {count: 'exact', head: true}),
-      supabase.from(DatabaseService.prepare_table_name('bills')).select('total_amount'),
-      supabase.from(DatabaseService.prepare_table_name('menu_items')).select('*', {count: 'exact', head: true}),
-      supabase.from(DatabaseService.prepare_table_name('categories')).select('*', {count: 'exact', head: true}),
+      supabase.from(DatabaseService.table_names.bills).select('*', {count: 'exact', head: true}),
+      supabase.from(DatabaseService.table_names.bills).select('total_amount'),
+      supabase.from(DatabaseService.table_names.menu_items).select('*', {count: 'exact', head: true}),
+      supabase.from(DatabaseService.table_names.categories).select('*', {count: 'exact', head: true}),
     ]);
 
     if (billsResult.error || revenueResult.error || menuResult.error || categoryResult.error) {

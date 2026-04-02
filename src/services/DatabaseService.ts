@@ -14,4 +14,21 @@ export const DatabaseService = {
 
     return dbTableNamePrefix + '_' + table_name;
   },
+
+  table_names: {
+    customers: '',
+    bills: '',
+    bill_items: '',
+    menu_items: '',
+    categories: '',
+  },
 }
+
+// Initialize table_names after DatabaseService is defined
+DatabaseService.table_names = {
+  customers: DatabaseService.prepare_table_name('customers'),
+  bills: DatabaseService.prepare_table_name('bills'),
+  bill_items: DatabaseService.prepare_table_name('bill_items'),
+  menu_items: DatabaseService.prepare_table_name('menu_items'),
+  categories: DatabaseService.prepare_table_name('categories'),
+};
