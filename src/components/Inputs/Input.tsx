@@ -22,7 +22,7 @@ export default function InputField({id, title, placeholder, disabled, value, onc
         disabled={disabled}
         placeholder={placeholder}
         value={value ?? ''}
-        onChange={e => onchange(id, e.target.value.trim())}
+        onChange={e => onchange(id, e.target.value.trimStart())}
       />
       {clearButton && ((value + '').trim() !== '') && (
         <button
