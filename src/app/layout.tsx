@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type {Metadata} from "next";
+import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import {Toaster} from "react-hot-toast";
@@ -19,20 +19,14 @@ export const metadata: Metadata = {
   description: "Billing system for Thlush",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({children}: Readonly<{ children: React.ReactNode; }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-      <Toaster position="top-right" toastOptions={{duration: 3500}} />
-      <Navbar/>
-        {children}
-      </body>
+    <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <Toaster position="top-right" toastOptions={{duration: 3500}}/>
+    <Navbar/>
+    {children}
+    </body>
     </html>
   );
 }
