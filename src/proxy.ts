@@ -20,11 +20,18 @@ const publicRoutes: string[] = [
   '/login',
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const {pathname} = request.nextUrl;
 
-  // Skip public routes
+  // Public routes — redirect to dashboard if already authenticated
   if (publicRoutes.some((route: string) => pathname === route)) {
+    const supabase = createMiddlewareClient(request);
+    const {data: {user}} = await supabase.auth.getUser();
+
+    if (user) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+
     return await updateSession(request);
   }
 
