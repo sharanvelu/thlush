@@ -10,7 +10,7 @@ import {calculateTotalValue} from "@/helpers";
 import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
 import CategoryBillingItem from "@/components/CategoryBillingItem";
 import BillingSummary from "@/components/BillingSummary";
-import {buildReceiptHtml} from "@/components/ThermalReceipt";
+import {buildReceiptHtml, printReceipt} from "@/components/ThermalReceipt";
 import toast from "react-hot-toast";
 
 export default function BillingPage() {
@@ -143,34 +143,10 @@ export default function BillingPage() {
 
     const html: string = buildReceiptHtml(bill.id, customerName, billingItems, now);
 
-    // Print via hidden iframe
-    const iframe: HTMLIFrameElement = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.left = '-9999px';
-    iframe.style.top = '0';
-    iframe.style.width = '80mm';
-    iframe.style.height = '0';
-    document.body.appendChild(iframe);
-
-    const doc: Document | undefined = iframe.contentDocument || iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(html);
-      doc.close();
-
-      iframe.onload = () => {
-        iframe.contentWindow?.print();
-        setTimeout((): void => {
-          document.body.removeChild(iframe);
-          setIsPrinting(false);
-          setBillingItems([]);
-          setCustomerName('');
-        }, 500);
-      };
-    } else {
-      document.body.removeChild(iframe);
-      setIsPrinting(false);
-    }
+    await printReceipt(html);
+    setIsPrinting(false);
+    setBillingItems([]);
+    setCustomerName('');
   };
 
   return (

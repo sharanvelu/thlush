@@ -1,4 +1,5 @@
-import {BillingItem as TypeBillingItem} from "@/types/billing";
+import {BillingItem as TypeBillingItem, BillItem as TypeBillItem, BillWithCustomer as TypeBillWithCustomer} from "@/types/billing";
+import {MenuItemStatus} from "@/types/menu";
 import {calculateTotalTaxPriceValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
 
 function escapeHtml(text: string): string {
@@ -183,4 +184,57 @@ export function buildReceiptHtml(
   </div>
 </body>
 </html>`;
+}
+
+export function printReceipt(html: string): Promise<void> {
+  return new Promise((resolve) => {
+    const iframe: HTMLIFrameElement = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.width = '80mm';
+    iframe.style.height = '0';
+    document.body.appendChild(iframe);
+
+    const doc: Document | undefined = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      iframe.onload = () => {
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          resolve();
+        }, 500);
+      };
+    } else {
+      document.body.removeChild(iframe);
+      resolve();
+    }
+  });
+}
+
+export function printBillReceipt(bill: TypeBillWithCustomer): Promise<void> {
+  const date = new Date(bill.created_at).toLocaleDateString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+
+  const billingItems: TypeBillingItem[] = bill.bill_items.map((item: TypeBillItem) => ({
+    id: item.menu_item_id ?? item.id,
+    name: item.name,
+    description: null,
+    category_id: null,
+    price: item.price,
+    sgst: item.sgst,
+    cgst: item.cgst,
+    currency: bill.currency,
+    status: MenuItemStatus.ACTIVE,
+    quantity: item.quantity,
+  }));
+
+  const customerName = bill.customers?.name || 'Walk-in Customer';
+  const html = buildReceiptHtml(bill.id, customerName, billingItems, date);
+  return printReceipt(html);
 }
