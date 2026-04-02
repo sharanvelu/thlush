@@ -5,6 +5,7 @@ import {BillFilters as TypeBillFilters, BillSortBy, BillWithCustomer as TypeBill
 import {Pagination as TypePagination, PaginatedResponse as TypePaginatedResponse, ErrorResponse as TypeErrorResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {shouldIgnoreTax} from "@/helpers";
 import toast from "react-hot-toast";
+import SelectField from "@/components/Inputs/Select";
 
 export default function BillingHistoryPage() {
   const defaultFilters: TypeBillFilters = {
@@ -224,7 +225,7 @@ export default function BillingHistoryPage() {
           </div>
 
           {/* Filters Section */}
-          <div className="mb-6 bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl overflow-hidden">
+          <div className="mb-6 bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl">
             <button
               className="w-full flex items-center justify-between p-4 cursor-pointer bg-transparent border-none text-left"
               onClick={() => setShowFilters(!showFilters)}
@@ -343,21 +344,21 @@ export default function BillingHistoryPage() {
 
                 {/* Sort By */}
                 <div className="mt-4 max-w-sm">
-                  <label htmlFor="sort_by" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                    Sort By
-                  </label>
-                  <select
+                  <SelectField
                     id="sort_by"
-                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    title="Sort By"
+                    placeholder="Select Status"
                     value={filters.sort_by}
-                    onChange={(e) => updateFilter('sort_by', e.target.value)}
-                  >
-                    <option value={BillSortBy.DATE_NEWEST}>Date (Newest First)</option>
-                    <option value={BillSortBy.DATE_OLDEST}>Date (Oldest First)</option>
-                    <option value={BillSortBy.TOTAL_HIGH}>Total (High to Low)</option>
-                    <option value={BillSortBy.TOTAL_LOW}>Total (Low to High)</option>
-                    <option value={BillSortBy.CUSTOMER_NAME}>Customer Name (A-Z)</option>
-                  </select>
+                    onchange={(name: string, value: string | number) => updateFilter('sort_by', value.toString())}
+                    options={[
+                      {value: BillSortBy.DATE_NEWEST, text: "Date (Newest First)"},
+                      {value: BillSortBy.DATE_OLDEST, text: "Date (Oldest First)"},
+                      {value: BillSortBy.TOTAL_HIGH, text: "Total (High to Low)"},
+                      {value: BillSortBy.TOTAL_LOW, text: "Total (Low to High)"},
+                      {value: BillSortBy.CUSTOMER_NAME_A_Z, text: "Customer Name (A-Z)"},
+                      {value: BillSortBy.CUSTOMER_NAME_Z_A, text: "Customer Name (Z-A)"},
+                    ]}
+                  />
                 </div>
 
                 {/* Action Buttons */}
