@@ -4,13 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { SupabaseService } from '@/services/SupabaseService.client';
+import {Config} from "@/config";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
-  const pathname = usePathname();
+  const pathname: string = usePathname();
+  const applicationName: string = Config.app_name;
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -63,7 +65,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           <div className="shrink-0 flex items-center">
             <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white">
-              Food Order Billing
+              {applicationName}
             </Link>
           </div>
 

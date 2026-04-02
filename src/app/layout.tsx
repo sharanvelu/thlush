@@ -3,6 +3,9 @@ import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import {Toaster} from "react-hot-toast";
+import {Config} from "@/config";
+
+const applicationName: string = Config.app_name;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Thlush Billing",
-  description: "Billing system for Thlush",
+  title: `${applicationName} Billing`,
+  description: `Billing system for ${applicationName}`,
 };
 
 export default function RootLayout({children}: Readonly<{ children: React.ReactNode; }>) {

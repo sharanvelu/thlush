@@ -3,6 +3,7 @@
 import {Suspense, useState} from "react";
 import {useRouter, useSearchParams} from "next/navigation";
 import {SupabaseService} from "@/services/SupabaseService.client";
+import {Config} from "@/config";
 
 export default function LoginPage() {
   return (
@@ -13,6 +14,8 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
+  const applicationName: string = Config.app_name;
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect: string = searchParams.get('redirect') || '/';
@@ -57,7 +60,7 @@ function LoginForm() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white m-0">
-              Thlush Billing
+              {applicationName} Billing
             </h1>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Sign in to your account

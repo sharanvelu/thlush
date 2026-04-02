@@ -1,3 +1,4 @@
+import {DatabaseService} from "@/services/DatabaseService";
 import {SupabaseService} from "@/services/SupabaseService.server";
 import {
   Bill as TypeBill,
@@ -21,7 +22,7 @@ export const BillingService = {
     let customerId: number | null = null;
     if (invoiceDto.customer_name.trim()) {
       const {data: customer, error: customerError} = await supabase
-        .from('thlush_customers')
+        .from(DatabaseService.prepare_table_name('customers'))
         .insert([{name: invoiceDto.customer_name.trim()}])
         .select()
         .single<TypeCustomer>();
@@ -46,7 +47,7 @@ export const BillingService = {
 
     // 3. Create bill
     const {data: bill, error: billError} = await supabase
-      .from('thlush_bills')
+      .from(DatabaseService.prepare_table_name('bills'))
       .insert([{
         customer_id: customerId,
         total_amount: parseFloat(totalAmount.toFixed(2)),
@@ -76,7 +77,7 @@ export const BillingService = {
     }));
 
     const {error: itemsError} = await supabase
-      .from('thlush_bill_items')
+      .from(DatabaseService.prepare_table_name('bill_items'))
       .insert(billItems);
 
     if (itemsError) {
@@ -92,12 +93,12 @@ export const BillingService = {
 
     // Build base query for count
     let countQuery = supabase
-      .from('thlush_bills')
+      .from(DatabaseService.prepare_table_name('bills'))
       .select('*, thlush_customers!left(name), thlush_bill_items!left(name)', {count: 'exact', head: true});
 
     // Build base query for data
     let dataQuery = supabase
-      .from('thlush_bills')
+      .from(DatabaseService.prepare_table_name('bills'))
       .select('*, customers:thlush_customers(*), bill_items:thlush_bill_items(*)');
 
     // Apply filters to both queries
@@ -159,10 +160,10 @@ export const BillingService = {
         dataQuery = dataQuery.order('total_amount', {ascending: true});
         break;
       case BillSortBy.CUSTOMER_NAME_A_Z:
-        dataQuery = dataQuery.order('name', {referencedTable: 'thlush_customers', ascending: true});
+        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.prepare_table_name('customers'), ascending: true});
         break;
       case BillSortBy.CUSTOMER_NAME_Z_A:
-        dataQuery = dataQuery.order('name', {referencedTable: 'thlush_customers', ascending: false});
+        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.prepare_table_name('customers'), ascending: false});
         break;
       case BillSortBy.DATE_NEWEST:
       default:
@@ -197,7 +198,7 @@ export const BillingService = {
 
     // Fetch today's bills
     const {data: bills, error: billsError} = await supabase
-      .from('thlush_bills')
+      .from(DatabaseService.prepare_table_name('bills'))
       .select('total_amount')
       .gte('created_at', todayStart);
 
@@ -208,7 +209,7 @@ export const BillingService = {
 
     // Fetch today's total items
     const {data: billItems, error: itemsError} = await supabase
-      .from('thlush_bill_items')
+      .from(DatabaseService.prepare_table_name('bill_items'))
       .select('quantity, bill_id, thlush_bills!inner(created_at)')
       .gte('thlush_bills.created_at', todayStart);
 
@@ -234,10 +235,10 @@ export const BillingService = {
     const supabase = await SupabaseService.getServerClient();
 
     const [billsResult, revenueResult, menuResult, categoryResult] = await Promise.all([
-      supabase.from('thlush_bills').select('*', {count: 'exact', head: true}),
-      supabase.from('thlush_bills').select('total_amount'),
-      supabase.from('thlush_menu_items').select('*', {count: 'exact', head: true}),
-      supabase.from('thlush_categories').select('*', {count: 'exact', head: true}),
+      supabase.from(DatabaseService.prepare_table_name('bills')).select('*', {count: 'exact', head: true}),
+      supabase.from(DatabaseService.prepare_table_name('bills')).select('total_amount'),
+      supabase.from(DatabaseService.prepare_table_name('menu_items')).select('*', {count: 'exact', head: true}),
+      supabase.from(DatabaseService.prepare_table_name('categories')).select('*', {count: 'exact', head: true}),
     ]);
 
     if (billsResult.error || revenueResult.error || menuResult.error || categoryResult.error) {

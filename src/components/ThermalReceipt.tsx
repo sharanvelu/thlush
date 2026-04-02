@@ -1,6 +1,7 @@
 import {BillingItem as TypeBillingItem, BillItem as TypeBillItem, BillWithCustomer as TypeBillWithCustomer} from "@/types/billing";
 import {MenuItemStatus} from "@/types/menu";
 import {calculateTotalTaxPriceValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
+import {Config} from "@/config";
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -12,6 +13,8 @@ export function buildReceiptHtml(
   billingItems: TypeBillingItem[],
   date: string,
 ): string {
+  const applicationName: string = Config.app_name;
+
   const subtotal = billingItems.reduce(
     (sum: number, item: TypeBillingItem): number => sum + (item.price * item.quantity), 0
   );
@@ -124,7 +127,7 @@ export function buildReceiptHtml(
 </head>
 <body>
   <div class="header">
-    <h2>Thlush</h2>
+    <h2>${applicationName}</h2>
     <p>Thank you for your order!</p>
   </div>
 

@@ -4,8 +4,11 @@ import {useEffect, useState} from "react";
 import {TodayStats as TypeTodayStats, OverallStats as TypeOverallStats, BillWithCustomer as TypeBillWithCustomer} from "@/types/billing";
 import {ApiResponse as TypeApiResponse, PaginatedResponse as TypePaginatedResponse, ErrorResponse as TypeErrorResponse} from "@/types/global";
 import Link from "next/link";
+import {Config} from "@/config";
 
 export default function DashboardPage() {
+  const applicationName: string = Config.app_name;
+
   const [todayStats, setTodayStats] = useState<TypeTodayStats | null>(null);
   const [overallStats, setOverallStats] = useState<TypeOverallStats | null>(null);
   const [recentBills, setRecentBills] = useState<TypeBillWithCustomer[]>([]);
@@ -65,7 +68,7 @@ export default function DashboardPage() {
           <h1 className="m-0 text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
             Dashboard
           </h1>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">Welcome to Thlush Billing</p>
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Welcome to {applicationName} Billing</p>
         </div>
 
         {/* Today's Stats */}

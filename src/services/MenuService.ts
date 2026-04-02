@@ -1,3 +1,4 @@
+import {DatabaseService} from "@/services/DatabaseService";
 import {SupabaseService} from "@/services/SupabaseService.server";
 import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto, MenuItemStatus} from "@/types/menu";
 
@@ -7,7 +8,7 @@ export const MenuService = {
 
     // Get All Menu Items
     const {data: menuItems, error} = await supabase
-      .from('thlush_menu_items')
+      .from(DatabaseService.prepare_table_name('menu_items'))
       .select('*')
       .in('status', getAll ? [MenuItemStatus.ACTIVE, MenuItemStatus.DISABLE] : [MenuItemStatus.ACTIVE])
       .order('created_at', {ascending: true});
@@ -42,7 +43,7 @@ export const MenuService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: menuItem, error} = await supabase
-      .from('thlush_menu_items')
+      .from(DatabaseService.prepare_table_name('menu_items'))
       .insert([{...menuItemDto, created_user_id: userId}])
       .select()
       .single();
@@ -59,7 +60,7 @@ export const MenuService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: menuItem, error} = await supabase
-      .from('thlush_menu_items')
+      .from(DatabaseService.prepare_table_name('menu_items'))
       .update(menuItemDto)
       .eq('id', id)
       .select()
@@ -77,7 +78,7 @@ export const MenuService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {error} = await supabase
-      .from('thlush_menu_items')
+      .from(DatabaseService.prepare_table_name('menu_items'))
       .delete()
       .eq('id', id);
 

@@ -1,3 +1,4 @@
+import {DatabaseService} from "@/services/DatabaseService";
 import {SupabaseService} from "@/services/SupabaseService.server";
 import {
   Category as TypeCategory,
@@ -15,7 +16,7 @@ export const CategoryService = {
 
     // Get All Categories
     const {data: categories, error} = await supabase
-      .from('thlush_categories')
+      .from(DatabaseService.prepare_table_name('categories'))
       .select('*')
       .order('created_at', {ascending: true});
 
@@ -32,7 +33,7 @@ export const CategoryService = {
 
     // Get All Categories
     const {data: categories, error} = await supabase
-      .from('thlush_categories')
+      .from(DatabaseService.prepare_table_name('categories'))
       .select('*')
       .in('status', getAll ? [CategoryStatus.ACTIVE, CategoryStatus.DISABLE] : [CategoryStatus.ACTIVE])
       .order('created_at', {ascending: true});
@@ -79,7 +80,7 @@ export const CategoryService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: category, error} = await supabase
-      .from('thlush_categories')
+      .from(DatabaseService.prepare_table_name('categories'))
       .insert([{...categoryDto, created_user_id: userId}])
       .select()
       .single();
@@ -96,7 +97,7 @@ export const CategoryService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: category, error} = await supabase
-      .from('thlush_categories')
+      .from(DatabaseService.prepare_table_name('categories'))
       .update(categoryDto)
       .eq('id', id)
       .select()
@@ -114,7 +115,7 @@ export const CategoryService = {
     const supabase = await SupabaseService.getServerClient();
 
     const {error} = await supabase
-      .from('thlush_categories')
+      .from(DatabaseService.prepare_table_name('categories'))
       .delete()
       .eq('id', id);
 
