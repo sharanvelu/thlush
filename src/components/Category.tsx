@@ -2,6 +2,7 @@ import {Category as TypeCategory} from "@/types/category";
 import {useState} from "react";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import CategoryStatusTag from "@/components/Tags/CategoryStatusTag";
+import toast from "react-hot-toast";
 
 interface CategoryProps {
   category: TypeCategory;
@@ -23,9 +24,11 @@ export default function Category({category, editAction, refreshCategories}: Cate
 
     if (!data.success) {
       setIsDeleting(false);
-      throw new Error(data.error || 'Failed to delete category');
+      toast.error(data.error || 'Failed to delete category');
+      return;
     }
 
+    toast.success('Category deleted successfully!');
     refreshCategories();
     setIsDeleting(false);
   }
@@ -43,14 +46,14 @@ export default function Category({category, editAction, refreshCategories}: Cate
 
       <div className="flex gap-4">
         <button
-          className={`from-[#008559] via-[#006ce0] to-[#6842ff] text-[#dc3545] dark:text-white border-2 border-[#dc3545] rounded-xl px-5 py-2.5 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105 active:scale-95 hover:bg-linear-to-br hover:text-white'}`}
+          className={`from-[#008559] via-[#006ce0] to-[#6842ff] text-[#dc3545] dark:text-white border-2 border-[#dc3545] rounded-xl px-5 py-2 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105 active:scale-95 hover:bg-linear-to-br hover:text-white'}`}
           style={{transition: "transform 0.15s"}}
           onClick={() => editAction(category)}
           disabled={isDeleting}
         >Edit
         </button>
         <button
-          className={`flex items-center bg-[#dc3545] text-white border-none rounded-xl px-5 py-2.5 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed': 'cursor-pointer hover:scale-105 active:scale-95'}`}
+          className={`flex items-center bg-[#dc3545] text-white border-none rounded-xl px-5 py-2 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed': 'cursor-pointer hover:scale-105 active:scale-95'}`}
           style={{transition: "transform 0.15s"}}
           onClick={() => removeCategory()}
           disabled={isDeleting}

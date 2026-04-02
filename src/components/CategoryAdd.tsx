@@ -4,6 +4,7 @@ import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
 import SelectField from "@/components/Inputs/Select";
 import {ApiResponse as TypeApiResponse} from "@/types/global";
+import toast from "react-hot-toast";
 
 interface CategoryAddProps {
   category?: Partial<TypeCategory | null>;
@@ -105,11 +106,13 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
         throw new Error(data.error || 'Failed to save Category');
       }
 
+      toast.success(isEditing ? 'Category updated successfully!' : 'Category created successfully!');
       refreshCategories()
       clearFormData()
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error saving Category:', error);
+      toast.error(error.message || 'An unexpected error occurred');
       setErrors([error.message || 'An unexpected error occurred']);
     } finally {
       setIsLoading(false);
@@ -157,11 +160,20 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
         onchange={handleChange}
       />
 
-      <div className="flex justify-between">
+      <div className="flex justify-end gap-4 py-4">
+        <button
+          type="button"
+          disabled={isLoading}
+          className="inline-flex items-center bg-red-400 text-white border-none rounded-xl py-2 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
+          onClick={clearFormData}
+        >
+          Clear Form
+        </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="inline-flex items-center bg-linear-120 from-[#28a745] to-[#20c997] text-white border-none rounded-xl py-3 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center bg-linear-120 from-[#28a745] to-[#20c997] text-white border-none rounded-xl py-2 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
         >
           {isLoading ? (
@@ -178,15 +190,6 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
           ) : (
             <>{isEditing ? 'Update' : 'Create'} Category</>
           )}
-        </button>
-        <button
-          type="button"
-          disabled={isLoading}
-          className="inline-flex items-center bg-red-400 text-white border-none rounded-xl py-3 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
-          onClick={clearFormData}
-        >
-          Clear Form
         </button>
       </div>
     </form>

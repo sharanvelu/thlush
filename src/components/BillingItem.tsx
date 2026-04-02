@@ -47,10 +47,12 @@ export default function BillingItem({menu, billingQuantity, updateItem}: Billing
 
   return (
     <div
-      className="flex flex-col gap-1.5 min-h-45 border-2 border-[#f0e6dd] dark:border-gray-700 bg-[#fffbf6] dark:bg-gray-950 text-[#1f1f1f] p-4.5 rounded-2xl">
-      <h3 className="m-0 text-[18px] text-[#1f1f1f]] dark:text-gray-300 font-bold">{menu.name}</h3>
-      <p className="mt-[1em] mb-[1em] text-[#1f1f1f]] dark:text-gray-300">{menu.description || ''}</p>
-      <span className="text-[#f0673a] font-semibold">{menu.currency}{calculateTotalValue(menu.price, menu.cgst, menu.sgst)}</span>
+      className="flex flex-col gap-2 min-h-30 border-2 border-[#f0e6dd] dark:border-gray-700 bg-[#fffbf6] dark:bg-gray-950 text-[#1f1f1f] p-4.5 rounded-2xl">
+      <h3 className="flex justify-between m-0 text-[18px] text-[#1f1f1f]] dark:text-gray-300 font-bold">
+        <span>{menu.name}</span>
+        <span className="text-[#f0673a] font-semibold">{menu.currency}{calculateTotalValue(menu.price, menu.cgst, menu.sgst)}</span>
+      </h3>
+      <p className="text-gray-500 dark:text-gray-400">{menu.description || ''}</p>
 
       <div className="controls mt-auto flex items-center justify-between gap-3">
         <button

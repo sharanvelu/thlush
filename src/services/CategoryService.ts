@@ -75,12 +75,12 @@ export const CategoryService = {
     return category;
   },
 
-  createCategory: async (categoryDto: TypeCategoryDto): Promise<TypeCategory> => {
+  createCategory: async (categoryDto: TypeCategoryDto, userId: string): Promise<TypeCategory> => {
     const supabase = await SupabaseService.getServerClient();
 
     const {data: category, error} = await supabase
       .from('thlush_categories')
-      .insert([categoryDto])
+      .insert([{...categoryDto, created_user_id: userId}])
       .select()
       .single();
 

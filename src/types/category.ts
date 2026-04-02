@@ -13,6 +13,7 @@ export interface CategoryDto {
 
 export interface Category extends CategoryDto {
   id: number;
+  created_user_id?: string;
 }
 
 

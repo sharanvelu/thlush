@@ -35,11 +35,12 @@ export interface Bill {
   currency: string;
   status: string;
   created_at: string;
+  created_user_id?: string;
 }
 
 export interface BillWithCustomer extends Bill {
-  thlush_customers: Customer | null;
-  thlush_bill_items: BillItem[];
+  customers: Customer | null;
+  bill_items: BillItem[];
 }
 
 // Filter types

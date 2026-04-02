@@ -10,6 +10,7 @@ import {calculateTotalValue} from "@/helpers";
 import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
 import CategoryBillingItem from "@/components/CategoryBillingItem";
 import BillingSummary from "@/components/BillingSummary";
+import toast from "react-hot-toast";
 
 export default function BillingPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +75,7 @@ export default function BillingPage() {
   const saveInvoice = async () => {
     if (billingItems.length === 0) return;
     if (!customerName.trim()) {
-      alert('Please enter a customer name.');
+      toast.error('Please enter a customer name.');
       return;
     }
 
@@ -101,14 +102,14 @@ export default function BillingPage() {
       });
       const data: TypeApiResponse<TypeBill> = await response.json();
       if (!data.success) {
-        alert('Failed to save invoice: ' + data.error);
+        toast.error('Failed to save invoice: ' + data.error);
         return;
       }
-      alert('Invoice saved successfully!');
+      toast.success('Invoice saved successfully!');
       setBillingItems([]);
       setCustomerName('');
     } catch {
-      alert('Failed to save invoice. Please try again.');
+      toast.error('Failed to save invoice. Please try again.');
     } finally {
       setIsSaving(false);
     }

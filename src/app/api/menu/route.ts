@@ -19,7 +19,7 @@ export async function POST(request: Request): Promise<NextResponse<TypeApiRespon
   const authUser: User | null = await SupabaseService.authUser();
 
   if (!authUser) {
-    NextResponse.json(
+    return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}
     );
@@ -27,7 +27,7 @@ export async function POST(request: Request): Promise<NextResponse<TypeApiRespon
 
   const menuItemDto: TypeMenuItemDto = await request.json();
 
-  const menuItem: TypeMenuItem = await MenuService.createMenuItem(menuItemDto);
+  const menuItem: TypeMenuItem = await MenuService.createMenuItem(menuItemDto, authUser.id);
 
   return NextResponse.json({
     success: true,
