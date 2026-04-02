@@ -200,7 +200,164 @@ export default function BillingHistoryPage() {
           )}
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
+        {/* Filters Section */}
+        <div className="mb-6 bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl">
+          <button
+            className="w-full flex items-center justify-between p-4 cursor-pointer bg-transparent border-none text-left"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+              <span className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
+                Filters & Sort
+                {activeFilterCount > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold text-white -bg-linear-120 from-[#ff7a18] to-[#ffb347] rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </span>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+
+          {showFilters && (
+            <div className="border-t-2 border-[#f0e6dd] dark:border-gray-700 p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Start Date */}
+                <div>
+                  <label htmlFor="start_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    id="start_date"
+                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    value={filters.start_date}
+                    onChange={(e) => updateFilter('start_date', e.target.value)}
+                  />
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <label htmlFor="end_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    id="end_date"
+                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    value={filters.end_date}
+                    onChange={(e) => updateFilter('end_date', e.target.value)}
+                  />
+                </div>
+
+                {/* Customer Name */}
+                <div>
+                  <label htmlFor="customer_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                    Customer Name
+                  </label>
+                  <input
+                    type="text"
+                    id="customer_name"
+                    placeholder="Search by customer..."
+                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    value={filters.customer_name}
+                    onChange={(e) => updateFilter('customer_name', e.target.value)}
+                  />
+                </div>
+
+                {/* Item Name */}
+                <div>
+                  <label htmlFor="item_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                    Item Name
+                  </label>
+                  <input
+                    type="text"
+                    id="item_name"
+                    placeholder="Search by item..."
+                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    value={filters.item_name}
+                    onChange={(e) => updateFilter('item_name', e.target.value)}
+                  />
+                </div>
+
+                {/* Min Total */}
+                <div>
+                  <label htmlFor="min_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                    Min Total Amount
+                  </label>
+                  <input
+                    type="number"
+                    id="min_total"
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    value={filters.min_total}
+                    onChange={(e) => updateFilter('min_total', e.target.value)}
+                  />
+                </div>
+
+                {/* Max Total */}
+                <div>
+                  <label htmlFor="max_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                    Max Total Amount
+                  </label>
+                  <input
+                    type="number"
+                    id="max_total"
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                    value={filters.max_total}
+                    onChange={(e) => updateFilter('max_total', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Sort By */}
+              <div className="mt-4 max-w-sm">
+                <SelectField
+                  id="sort_by"
+                  title="Sort By"
+                  placeholder="Select Status"
+                  value={filters.sort_by}
+                  onchange={(name: string, value: string | number) => updateFilter('sort_by', value.toString())}
+                  options={[
+                    {value: BillSortBy.DATE_NEWEST, text: "Date (Newest First)"},
+                    {value: BillSortBy.DATE_OLDEST, text: "Date (Oldest First)"},
+                    {value: BillSortBy.TOTAL_HIGH, text: "Total (High to Low)"},
+                    {value: BillSortBy.TOTAL_LOW, text: "Total (Low to High)"},
+                    {value: BillSortBy.CUSTOMER_NAME_A_Z, text: "Customer Name (A-Z)"},
+                    {value: BillSortBy.CUSTOMER_NAME_Z_A, text: "Customer Name (Z-A)"},
+                  ]}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-5">
+                <button
+                  className="rounded-[14px] px-5 py-2 text-[15px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer"
+                  onClick={resetFilters}
+                >
+                  Reset
+                </button>
+                <button
+                  className="border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
+                  style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
+                  onClick={applyFilters}
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <h1 className="m-0 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               Billing History
@@ -222,163 +379,6 @@ export default function BillingHistoryPage() {
               )}
               {isExporting ? 'Exporting...' : 'Export CSV'}
             </button>
-          </div>
-
-          {/* Filters Section */}
-          <div className="mb-6 bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl">
-            <button
-              className="w-full flex items-center justify-between p-4 cursor-pointer bg-transparent border-none text-left"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <span className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
-                Filters & Sort
-                {activeFilterCount > 0 && (
-                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold text-white -bg-linear-120 from-[#ff7a18] to-[#ffb347] rounded-full">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </span>
-              <svg
-                className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? 'rotate-180' : ''}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-
-            {showFilters && (
-              <div className="border-t-2 border-[#f0e6dd] dark:border-gray-700 p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Start Date */}
-                  <div>
-                    <label htmlFor="start_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      id="start_date"
-                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                      value={filters.start_date}
-                      onChange={(e) => updateFilter('start_date', e.target.value)}
-                    />
-                  </div>
-
-                  {/* End Date */}
-                  <div>
-                    <label htmlFor="end_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      id="end_date"
-                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                      value={filters.end_date}
-                      onChange={(e) => updateFilter('end_date', e.target.value)}
-                    />
-                  </div>
-
-                  {/* Customer Name */}
-                  <div>
-                    <label htmlFor="customer_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                      Customer Name
-                    </label>
-                    <input
-                      type="text"
-                      id="customer_name"
-                      placeholder="Search by customer..."
-                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                      value={filters.customer_name}
-                      onChange={(e) => updateFilter('customer_name', e.target.value)}
-                    />
-                  </div>
-
-                  {/* Item Name */}
-                  <div>
-                    <label htmlFor="item_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                      Item Name
-                    </label>
-                    <input
-                      type="text"
-                      id="item_name"
-                      placeholder="Search by item..."
-                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                      value={filters.item_name}
-                      onChange={(e) => updateFilter('item_name', e.target.value)}
-                    />
-                  </div>
-
-                  {/* Min Total */}
-                  <div>
-                    <label htmlFor="min_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                      Min Total Amount
-                    </label>
-                    <input
-                      type="number"
-                      id="min_total"
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                      value={filters.min_total}
-                      onChange={(e) => updateFilter('min_total', e.target.value)}
-                    />
-                  </div>
-
-                  {/* Max Total */}
-                  <div>
-                    <label htmlFor="max_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                      Max Total Amount
-                    </label>
-                    <input
-                      type="number"
-                      id="max_total"
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                      className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                      value={filters.max_total}
-                      onChange={(e) => updateFilter('max_total', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Sort By */}
-                <div className="mt-4 max-w-sm">
-                  <SelectField
-                    id="sort_by"
-                    title="Sort By"
-                    placeholder="Select Status"
-                    value={filters.sort_by}
-                    onchange={(name: string, value: string | number) => updateFilter('sort_by', value.toString())}
-                    options={[
-                      {value: BillSortBy.DATE_NEWEST, text: "Date (Newest First)"},
-                      {value: BillSortBy.DATE_OLDEST, text: "Date (Oldest First)"},
-                      {value: BillSortBy.TOTAL_HIGH, text: "Total (High to Low)"},
-                      {value: BillSortBy.TOTAL_LOW, text: "Total (Low to High)"},
-                      {value: BillSortBy.CUSTOMER_NAME_A_Z, text: "Customer Name (A-Z)"},
-                      {value: BillSortBy.CUSTOMER_NAME_Z_A, text: "Customer Name (Z-A)"},
-                    ]}
-                  />
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 mt-5">
-                  <button
-                    className="rounded-[14px] px-5 py-2 text-[15px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer"
-                    onClick={resetFilters}
-                  >
-                    Reset
-                  </button>
-                  <button
-                    className="border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
-                    style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
-                    onClick={applyFilters}
-                  >
-                    Apply Filters
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Bills List */}
