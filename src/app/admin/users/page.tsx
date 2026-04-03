@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from "react";
-import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UpdateUserDto as TypeUpdateUserDto} from "@/types/user";
+import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UpdateUserDto as TypeUpdateUserDto, UserRole, UserRoleLabels} from "@/types/user";
 import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse, ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import toast from "react-hot-toast";
 
@@ -14,6 +14,7 @@ export default function AdminUsersPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>(UserRole.BILLING);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
@@ -36,6 +37,7 @@ export default function AdminUsersPage() {
     setName('');
     setEmail('');
     setPassword('');
+    setRole(UserRole.BILLING);
     setEditingUser(null);
   };
 
@@ -44,6 +46,7 @@ export default function AdminUsersPage() {
     setName(user.name);
     setEmail(user.email);
     setPassword('');
+    setRole(user.role);
     window.scrollTo(0, 0);
   };
 
@@ -58,8 +61,9 @@ export default function AdminUsersPage() {
         if (name !== editingUser.name) dto.name = name;
         if (email !== editingUser.email) dto.email = email;
         if (password) dto.password = password;
+        if (role !== editingUser.role) dto.role = role;
 
-        if (!dto.name && !dto.email && !dto.password) {
+        if (!dto.name && !dto.email && !dto.password && !dto.role) {
           toast.error('No changes to save');
           setIsSubmitting(false);
           return;
@@ -86,7 +90,7 @@ export default function AdminUsersPage() {
           return;
         }
 
-        const dto: TypeCreateUserDto = {name, email, password};
+        const dto: TypeCreateUserDto = {name, email, password, role};
 
         const response: Response = await fetch('/api/admin/users', {
           method: 'POST',
@@ -155,7 +159,7 @@ export default function AdminUsersPage() {
             {editingUser ? 'Edit User' : 'Add New User'}
           </h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
                 Name
@@ -198,6 +202,21 @@ export default function AdminUsersPage() {
                 required={!editingUser}
                 minLength={6}
               />
+            </div>
+            <div>
+              <label htmlFor="role" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                Role
+              </label>
+              <select
+                id="role"
+                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18] cursor-pointer"
+                value={role}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+              >
+                {Object.values(UserRole).map((r) => (
+                  <option key={r} value={r}>{UserRoleLabels[r]}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -269,7 +288,16 @@ export default function AdminUsersPage() {
                     className="shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex flex-wrap justify-between items-center gap-4"
                   >
                     <div className="flex flex-col gap-1">
-                      <h4 className="m-0 text-lg text-gray-900 dark:text-white">{user.name || user.email}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="m-0 text-lg text-gray-900 dark:text-white">{user.name || user.email}</h4>
+                        <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
+                          user.role === UserRole.SUPER_ADMIN
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {UserRoleLabels[user.role]}
+                        </span>
+                      </div>
                       {user.name && (
                         <span className="text-sm text-gray-600 dark:text-gray-300">{user.email}</span>
                       )}

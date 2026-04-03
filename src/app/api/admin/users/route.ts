@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {UserService} from '@/services/UserService';
-import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto} from "@/types/user";
+import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UserRole} from "@/types/user";
 import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {SupabaseService} from "@/services/SupabaseService.server";
 
@@ -29,8 +29,12 @@ export async function POST(request: Request): Promise<NextResponse<TypeApiRespon
 
     const dto: TypeCreateUserDto = await request.json();
 
-    if (!dto.name || !dto.email || !dto.password) {
-      return NextResponse.json({success: false, error: 'Name, email and password are required'}, {status: 400});
+    if (!dto.name || !dto.email || !dto.password || !dto.role) {
+      return NextResponse.json({success: false, error: 'Name, email, password and role are required'}, {status: 400});
+    }
+
+    if (!Object.values(UserRole).includes(dto.role)) {
+      return NextResponse.json({success: false, error: 'Invalid role'}, {status: 400});
     }
 
     if (dto.password.length < 6) {

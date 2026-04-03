@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {UserService} from '@/services/UserService';
-import {AdminUser as TypeAdminUser, UpdateUserDto as TypeUpdateUserDto} from "@/types/user";
+import {AdminUser as TypeAdminUser, UpdateUserDto as TypeUpdateUserDto, UserRole} from "@/types/user";
 import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {SupabaseService} from "@/services/SupabaseService.server";
 
@@ -18,8 +18,12 @@ export async function PUT(
 
     const dto: TypeUpdateUserDto = await request.json();
 
-    if (!dto.name && !dto.email && !dto.password) {
-      return NextResponse.json({success: false, error: 'At least name, email or password is required'}, {status: 400});
+    if (!dto.name && !dto.email && !dto.password && !dto.role) {
+      return NextResponse.json({success: false, error: 'At least one field is required'}, {status: 400});
+    }
+
+    if (dto.role && !Object.values(UserRole).includes(dto.role)) {
+      return NextResponse.json({success: false, error: 'Invalid role'}, {status: 400});
     }
 
     if (dto.password && dto.password.length < 6) {

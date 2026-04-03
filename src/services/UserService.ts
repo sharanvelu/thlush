@@ -1,5 +1,5 @@
 import {createClient} from '@supabase/supabase-js';
-import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UpdateUserDto as TypeUpdateUserDto} from "@/types/user";
+import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UpdateUserDto as TypeUpdateUserDto, UserRole} from "@/types/user";
 
 function getAdminClient() {
   return createClient(
@@ -24,6 +24,7 @@ export const UserService = {
       id: user.id,
       name: (user.user_metadata?.name as string) ?? '',
       email: user.email ?? '',
+      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at ?? null,
     }));
@@ -37,6 +38,7 @@ export const UserService = {
       password: dto.password,
       email_confirm: true,
       user_metadata: {name: dto.name},
+      app_metadata: {role: dto.role},
     });
 
     if (error) {
@@ -52,6 +54,7 @@ export const UserService = {
       id: user.id,
       name: (user.user_metadata?.name as string) ?? '',
       email: user.email ?? '',
+      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at ?? null,
     };
@@ -65,6 +68,7 @@ export const UserService = {
     if (dto.email) updateData.email = dto.email;
     if (dto.password) updateData.password = dto.password;
     if (dto.name !== undefined) updateData.user_metadata = {name: dto.name};
+    if (dto.role) updateData.app_metadata = {role: dto.role};
 
     const {data: {user}, error} = await supabase.auth.admin.updateUserById(id, updateData);
 
@@ -81,6 +85,7 @@ export const UserService = {
       id: user.id,
       name: (user.user_metadata?.name as string) ?? '',
       email: user.email ?? '',
+      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at ?? null,
     };

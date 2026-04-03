@@ -4,6 +4,7 @@ import {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 import {SupabaseService} from "@/services/SupabaseService.client";
 import {User} from "@supabase/auth-js";
+import {UserRole, UserRoleLabels} from "@/types/user";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -178,6 +179,16 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Email</span>
                 <span className="text-sm text-gray-900 dark:text-white">{user?.email ?? '-'}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Role</span>
+                <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
+                  (user?.app_metadata?.role as UserRole) === UserRole.SUPER_ADMIN
+                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                }`}>
+                  {UserRoleLabels[(user?.app_metadata?.role as UserRole) ?? UserRole.BILLING]}
+                </span>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Member Since</span>
