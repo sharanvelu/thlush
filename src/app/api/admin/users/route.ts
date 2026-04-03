@@ -10,6 +10,9 @@ export async function GET(): Promise<NextResponse<TypeApiListResponse<TypeAdminU
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
     }
+    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+      return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
+    }
 
     const users: TypeAdminUser[] = await UserService.listUsers();
 
@@ -25,6 +28,9 @@ export async function POST(request: Request): Promise<NextResponse<TypeApiRespon
     const authUser = await SupabaseService.authUser();
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
+    }
+    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+      return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
     }
 
     const dto: TypeCreateUserDto = await request.json();

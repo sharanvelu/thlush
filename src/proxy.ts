@@ -13,6 +13,10 @@ const protectedRoutes: string[] = [
   '/admin/users',
 ];
 
+// Routes that require super_admin role
+const adminRoutePrefix: string = '/admin';
+const adminApiPrefix: string = '/api/admin';
+
 // API routes that require authentication
 const protectedApiPrefix: string = '/api/';
 
@@ -59,6 +63,25 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Check super_admin role for admin routes
+  const isAdminPage: boolean = pathname.startsWith(adminRoutePrefix);
+  const isAdminApi: boolean = pathname.startsWith(adminApiPrefix);
+
+  if (isAdminPage || isAdminApi) {
+    const role = user.app_metadata?.role;
+
+    if (role !== 'super_admin') {
+      if (isAdminApi) {
+        return NextResponse.json(
+          {success: false, error: 'Access denied. Super Admin role required.'},
+          {status: 403}
+        );
+      }
+
+      return NextResponse.redirect(new URL('/', request.url));
+    }
   }
 
   return await updateSession(request);

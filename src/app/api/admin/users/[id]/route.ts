@@ -13,6 +13,9 @@ export async function PUT(
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
     }
+    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+      return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
+    }
 
     const {id} = await context.params;
 
@@ -48,6 +51,9 @@ export async function DELETE(
     const authUser = await SupabaseService.authUser();
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
+    }
+    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+      return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
     }
 
     const {id} = await context.params;
