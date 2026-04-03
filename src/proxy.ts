@@ -10,6 +10,7 @@ const protectedRoutes: string[] = [
   '/menu',
   '/categories',
   '/profile',
+  '/admin/users',
 ];
 
 // API routes that require authentication

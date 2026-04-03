@@ -10,6 +10,13 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Name edit
+  const [name, setName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [nameError, setNameError] = useState('');
+  const [nameSuccess, setNameSuccess] = useState('');
+
   // Password change
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,9 +27,41 @@ export default function ProfilePage() {
   useEffect(() => {
     SupabaseService.authUser().then((user: User | null) => {
       setUser(user);
+      setName((user?.user_metadata?.name as string) ?? '');
       setIsLoading(false);
     });
   }, []);
+
+  const handleNameSave = async () => {
+    setNameError('');
+    setNameSuccess('');
+
+    if (!name.trim()) {
+      setNameError('Name cannot be empty.');
+      return;
+    }
+
+    setIsUpdatingName(true);
+
+    try {
+      const {error} = await SupabaseService.updateUserName(name.trim());
+
+      if (error) {
+        setNameError(error.message);
+        return;
+      }
+
+      setNameSuccess('Name updated successfully.');
+      setIsEditingName(false);
+      // Refresh user data
+      const updatedUser = await SupabaseService.authUser();
+      setUser(updatedUser);
+    } catch {
+      setNameError('An unexpected error occurred.');
+    } finally {
+      setIsUpdatingName(false);
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +128,53 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Name</span>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <input
+                      type="text"
+                      className="flex-1 p-2 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-sm focus:outline-none focus:border-[#ff7a18]"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={isUpdatingName}
+                    />
+                    <button
+                      onClick={handleNameSave}
+                      disabled={isUpdatingName}
+                      className="text-sm font-semibold text-white bg-[#28a745] border-none rounded-xl px-4 py-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdatingName ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => { setIsEditingName(false); setName((user?.user_metadata?.name as string) ?? ''); setNameError(''); setNameSuccess(''); }}
+                      className="text-sm font-semibold text-gray-600 dark:text-gray-300 bg-transparent border-2 border-solid border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-900 dark:text-white">{(user?.user_metadata?.name as string) || '-'}</span>
+                    <button
+                      onClick={() => setIsEditingName(true)}
+                      className="text-xs text-[#ff7a18] bg-transparent border-none cursor-pointer font-medium hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+              {nameError && (
+                <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-2 rounded">
+                  <p className="text-sm text-red-700 dark:text-red-300 m-0">{nameError}</p>
+                </div>
+              )}
+              {nameSuccess && (
+                <div className="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-2 rounded">
+                  <p className="text-sm text-green-700 dark:text-green-300 m-0">{nameSuccess}</p>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Email</span>
                 <span className="text-sm text-gray-900 dark:text-white">{user?.email ?? '-'}</span>

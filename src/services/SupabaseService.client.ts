@@ -15,6 +15,11 @@ export const SupabaseService = {
     return supabase.auth.updateUser({password});
   },
 
+  updateUserName: async (name: string) => {
+    const supabase = SupabaseService.getBrowserClient();
+    return supabase.auth.updateUser({data: {name}});
+  },
+
   signInWithPassword: async (email: string, password: string) => {
     const supabase = SupabaseService.getBrowserClient();
     return supabase.auth.signInWithPassword({email, password});
