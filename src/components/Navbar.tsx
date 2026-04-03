@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { SupabaseService } from '@/services/SupabaseService.client';
@@ -64,7 +65,8 @@ export default function Navbar() {
       <div className="md:px-[2%] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="shrink-0 flex items-center">
-            <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white">
+            <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-gray-800 dark:text-white">
+              <Image src="/icon-192x192.png" alt={applicationName} width={32} height={32} className="rounded-lg" />
               {applicationName}
             </Link>
           </div>
