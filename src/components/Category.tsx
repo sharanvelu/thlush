@@ -1,4 +1,4 @@
-import {Category as TypeCategory} from "@/types/category";
+import {Category as TypeCategory, CategoryStatus} from "@/types/category";
 import {useState} from "react";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import toast from "react-hot-toast";
@@ -37,7 +37,14 @@ export default function Category({category, editAction, refreshCategories}: Cate
       className="relative shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center">
 
       <div className="flex flex-col gap-2">
-        <h4 className="m-0 mb-1.5 text-lg">{category.name}</h4>
+        <div className="flex items-center gap-2">
+          <h4 className="m-0 text-lg">{category.name}</h4>
+          {category.status === CategoryStatus.DISABLE && (
+            <span className="inline-block px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+              Disabled
+            </span>
+          )}
+        </div>
         <p className="m-0 mb-1 text-sm">{category.description || 'No description'}</p>
       </div>
 

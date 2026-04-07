@@ -1,4 +1,4 @@
-import {MenuItem as TypeMenuItem} from "@/types/menu";
+import {MenuItem as TypeMenuItem, MenuItemStatus} from "@/types/menu";
 import {calculateTotalValue} from "@/helpers";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import {useState} from "react";
@@ -37,7 +37,14 @@ export default function MenuItem({menu, editAction, refreshMenuItems}: MenuItemP
     <div
       className="relative shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center">
       <div className="flex flex-col gap-2">
-        <h4 className="m-0 mb-1.5 text-lg">{menu.name}</h4>
+        <div className="flex items-center gap-2">
+          <h4 className="m-0 text-lg">{menu.name}</h4>
+          {menu.status === MenuItemStatus.DISABLE && (
+            <span className="inline-block px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+              Disabled
+            </span>
+          )}
+        </div>
         <p className="m-0 mb-1 text-sm">{menu.description || 'No description'}</p>
         <span className="text-[#f0673a] font-semibold text-[16px]">{menu.currency}{calculateTotalValue(menu.price, menu.cgst, menu.sgst)}</span>
       </div>
