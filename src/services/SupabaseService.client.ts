@@ -37,6 +37,14 @@ export const SupabaseService = {
     return subscription;
   },
 
+  signInWithOAuth: async (provider: string, redirectTo: string) => {
+    const supabase = SupabaseService.getBrowserClient();
+    return supabase.auth.signInWithOAuth({
+      provider: provider as 'google',
+      options: {redirectTo},
+    });
+  },
+
   signOut: async () => {
     const supabase = SupabaseService.getBrowserClient();
     await supabase.auth.signOut();

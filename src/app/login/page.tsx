@@ -25,6 +25,24 @@ function LoginForm() {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const handleOAuthLogin = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`;
+      const {error: authError} = await SupabaseService.signInWithOAuth('custom:sentrix-auth', redirectTo);
+
+      if (authError) {
+        setError(authError.message);
+        setIsLoading(false);
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -125,6 +143,23 @@ function LoginForm() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+            <span className="text-sm text-gray-400 dark:text-gray-500">or</span>
+            <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+          </div>
+
+          {/* OAuth */}
+          <button
+            type="button"
+            onClick={handleOAuthLogin}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 rounded-2xl px-5 py-3 text-[16px] font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-950 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Sign in with Sentrix
+          </button>
         </div>
       </div>
     </div>

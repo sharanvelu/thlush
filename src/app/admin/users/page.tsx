@@ -1,14 +1,26 @@
 'use client';
 
 import {useEffect, useState} from "react";
-import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UpdateUserDto as TypeUpdateUserDto, UserRole, UserRoleLabels} from "@/types/user";
-import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse, ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
+import {
+  AdminUser as TypeAdminUser,
+  CreateUserDto as TypeCreateUserDto,
+  UpdateUserDto as TypeUpdateUserDto,
+  UserRole,
+  UserRoleLabels
+} from "@/types/user";
+import {
+  ApiListResponse as TypeApiListResponse,
+  ApiResponse as TypeApiResponse,
+  ApiDeleteResponse as TypeApiDeleteResponse
+} from "@/types/global";
+import {SupabaseService} from "@/services/SupabaseService.client";
 import toast from "react-hot-toast";
 
 export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<TypeAdminUser[]>([]);
   const [editingUser, setEditingUser] = useState<TypeAdminUser | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState('');
@@ -17,6 +29,8 @@ export default function AdminUsersPage() {
   const [role, setRole] = useState<UserRole>(UserRole.BILLING);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+
+  const isEditingSelf = editingUser?.id === currentUserId;
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -30,7 +44,11 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers().then();
+
+    SupabaseService.authUser().then((user) => {
+      if (user) setCurrentUserId(user.id);
+    });
   }, []);
 
   const clearForm = () => {
@@ -61,7 +79,7 @@ export default function AdminUsersPage() {
         if (name !== editingUser.name) dto.name = name;
         if (email !== editingUser.email) dto.email = email;
         if (password) dto.password = password;
-        if (role !== editingUser.role) dto.role = role;
+        if (role !== editingUser.role && !isEditingSelf) dto.role = role;
 
         if (!dto.name && !dto.email && !dto.password && !dto.role) {
           toast.error('No changes to save');
@@ -206,12 +224,16 @@ export default function AdminUsersPage() {
             <div>
               <label htmlFor="role" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
                 Role
+                {isEditingSelf && (
+                  <span className="px-2 text-xs text-amber-600 dark:text-amber-400 mt-1 mb-0">(You cannot change your own role.)</span>
+                )}
               </label>
               <select
                 id="role"
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18] cursor-pointer"
+                className={`w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18] ${isEditingSelf ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRole)}
+                disabled={isEditingSelf}
               >
                 {Object.values(UserRole).map((r) => (
                   <option key={r} value={r}>{UserRoleLabels[r]}</option>
@@ -297,6 +319,11 @@ export default function AdminUsersPage() {
                         }`}>
                           {UserRoleLabels[user.role]}
                         </span>
+                        {user.id === currentUserId && (
+                          <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                            You
+                          </span>
+                        )}
                       </div>
                       {user.name && (
                         <span className="text-sm text-gray-600 dark:text-gray-300">{user.email}</span>
