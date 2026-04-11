@@ -11,6 +11,7 @@ import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category
 import CategoryBillingItem from "@/components/CategoryBillingItem";
 import BillingSummary from "@/components/BillingSummary";
 import {buildReceiptHtml, printReceipt} from "@/components/ThermalReceipt";
+import ConfirmModal from "@/components/ConfirmModal";
 import toast from "react-hot-toast";
 
 export default function BillingPage() {
@@ -21,6 +22,7 @@ export default function BillingPage() {
   const [filterValue, setFilterValue] = useState<string>('');
   const [billingItems, setBillingItems] = useState<TypeBillingItem[]>([]);
   const [categoryWithMenuItems, setCategoryWithMenuItems] = useState<TypeCategoryWithMenuItem[]>([]);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Data fetching
   useEffect(() => {
@@ -67,11 +69,7 @@ export default function BillingPage() {
     });
   };
 
-  const clearBilling = () => {
-    if (window.confirm('Do you really want to clear the items?')) {
-      setBillingItems([]);
-    }
-  };
+  const clearBilling = () => setShowClearConfirm(true);
 
   // Save invoice (returns bill on success, null on failure)
   const doSaveInvoice = async (): Promise<TypeBill | null> => {
@@ -230,6 +228,18 @@ export default function BillingPage() {
         </div>
       </div>
 
+      <ConfirmModal
+        open={showClearConfirm}
+        title="Clear All Items"
+        message="Do you really want to clear the items?"
+        variant="alert"
+        confirmLabel="Clear All"
+        onConfirm={() => {
+          setBillingItems([]);
+          setShowClearConfirm(false);
+        }}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </div>
   );
 }

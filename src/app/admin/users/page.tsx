@@ -14,6 +14,7 @@ import {
   ApiDeleteResponse as TypeApiDeleteResponse
 } from "@/types/global";
 import {SupabaseService} from "@/services/SupabaseService.client";
+import ConfirmModal from "@/components/ConfirmModal";
 import toast from "react-hot-toast";
 
 export default function AdminUsersPage() {
@@ -29,6 +30,7 @@ export default function AdminUsersPage() {
   const [role, setRole] = useState<UserRole>(UserRole.BILLING);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<TypeAdminUser | null>(null);
 
   const isEditingSelf = editingUser?.id === currentUserId;
 
@@ -134,9 +136,10 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleDelete = async (user: TypeAdminUser) => {
-    if (!window.confirm(`Are you sure you want to delete ${user.email}?`)) return;
-
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    const user = userToDelete;
+    setUserToDelete(null);
     setDeletingUserId(user.id);
 
     try {
@@ -344,10 +347,10 @@ export default function AdminUsersPage() {
                         Edit
                       </button>
                       <button
-                        className={`flex items-center bg-[#dc3545] text-white border-none rounded-xl px-5 py-2 text-sm font-semibold ${deletingUserId === user.id ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
+                        className={`flex items-center bg-[#dc3545] text-white border-none rounded-xl px-5 py-2 text-sm font-semibold ${(deletingUserId === user.id || user.id === currentUserId) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
                         style={{transition: "transform 0.15s"}}
-                        onClick={() => handleDelete(user)}
-                        disabled={deletingUserId === user.id}
+                        onClick={() => setUserToDelete(user)}
+                        disabled={deletingUserId === user.id || user.id === currentUserId}
                       >
                         {deletingUserId === user.id ? (
                           <>
@@ -369,6 +372,16 @@ export default function AdminUsersPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!userToDelete}
+        title="Remove User"
+        message={`Are you sure you want to delete ${userToDelete?.email}?`}
+        variant="alert"
+        confirmLabel="Remove"
+        onConfirm={confirmDelete}
+        onCancel={() => setUserToDelete(null)}
+      />
     </div>
   );
 }
