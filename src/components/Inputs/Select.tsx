@@ -13,9 +13,10 @@ interface SelectProps {
   value: string | number | null;
   options: Option[];
   onchange: (name: string, value: string | number) => void;
+  titleHelperText?: string;
 }
 
-export default function SelectField({id, title, placeholder, disabled, value, options, onchange}: SelectProps) {
+export default function SelectField({id, title, placeholder, disabled, value, options, onchange, titleHelperText}: SelectProps) {
   const [isDropDownOpen, setIsDropDownOpen] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -65,10 +66,15 @@ export default function SelectField({id, title, placeholder, disabled, value, op
           onClick={toggleDropdown}
         >
           {title}
+          {(titleHelperText ?? '').trim() !== '' && (
+            <span className="px-2 text-xs text-amber-600 dark:text-amber-400 mt-1 mb-0">
+              {titleHelperText}
+            </span>
+          )}
         </label>
       )}
       <div
-        className={`flex items-center justify-between w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18] ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+        className={`flex items-center justify-between w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18] ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         onClick={toggleDropdown}
       >
         {getDisplayValue()}

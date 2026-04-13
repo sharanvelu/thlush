@@ -17,6 +17,7 @@ import {SupabaseService} from "@/services/SupabaseService.client";
 import ConfirmModal from "@/components/ConfirmModal";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import SelectField from "@/components/Inputs/Select";
 
 export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -225,25 +226,18 @@ export default function AdminUsersPage() {
                 minLength={6}
               />
             </div>
-            <div>
-              <label htmlFor="role" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                Role
-                {isEditingSelf && (
-                  <span className="px-2 text-xs text-amber-600 dark:text-amber-400 mt-1 mb-0">(You cannot change your own role.)</span>
-                )}
-              </label>
-              <select
-                id="role"
-                className={`w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18] ${isEditingSelf ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                disabled={isEditingSelf}
-              >
-                {Object.values(UserRole).map((r) => (
-                  <option key={r} value={r}>{UserRoleLabels[r]}</option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              id="category_id"
+              title="Category"
+              disabled={isEditingSelf}
+              titleHelperText={isEditingSelf ? '(You cannot change your own role.)' : ''}
+              placeholder="Select Category"
+              value={role}
+              onchange={(name: string, value: string | number) => setRole(value as UserRole)}
+              options={Object.values(UserRole).map((role: UserRole) => {
+                return {value: role, text: UserRoleLabels[role]}
+              })}
+            />
           </div>
 
           <div className="flex justify-end gap-4 mt-5">

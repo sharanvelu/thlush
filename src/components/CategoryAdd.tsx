@@ -122,7 +122,7 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
   return (
     <form onSubmit={handleSubmit} className="container mx-auto bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
       <h1 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-        Add New Menu Item
+        {isEditing ? 'Edit' : 'Add New'} Category
       </h1>
 
       {errors.length > 0 && (
@@ -137,8 +137,8 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
       <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
         <InputField
           id="name"
-          title="Item Name"
-          placeholder="Enter Item Name"
+          title="Category Name"
+          placeholder="Enter Category Name"
           value={formData.name}
           onchange={handleChangeValue}
         />
@@ -154,8 +154,8 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
 
       <TextAreaField
         id="description"
-        title="Item Description"
-        placeholder="Enter Item Description"
+        title="Category Description"
+        placeholder="Enter Category Description"
         value={formData.description}
         onchange={handleChange}
       />
