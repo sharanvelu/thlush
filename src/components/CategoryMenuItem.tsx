@@ -29,7 +29,7 @@ export default function CategoryMenuItem(
             </span>
           )}
         </div>
-        <div className={isExpanded ? '' : 'rotate-180'}>
+        <div className={`transition-all duration-250 ${isExpanded ? '' : 'rotate-180'}`}>
           <svg width="40px" height="40px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 6V18M12 6L7 11M12 6L17 11" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>

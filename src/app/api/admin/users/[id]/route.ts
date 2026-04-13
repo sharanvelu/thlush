@@ -4,6 +4,30 @@ import {AdminUser as TypeAdminUser, UpdateUserDto as TypeUpdateUserDto, UserRole
 import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {SupabaseService} from "@/services/SupabaseService.server";
 
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ id: string }>; },
+): Promise<NextResponse<TypeApiResponse<TypeAdminUser>>> {
+  try {
+    const authUser = await SupabaseService.authUser();
+    if (!authUser) {
+      return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
+    }
+    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+      return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
+    }
+
+    const {id} = await context.params;
+    const user: TypeAdminUser = await UserService.getUser(id);
+
+    return NextResponse.json({success: true, data: user});
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch user';
+    console.error('Error fetching user:', error);
+    return NextResponse.json({success: false, error: message}, {status: 500});
+  }
+}
+
 export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string }>; },

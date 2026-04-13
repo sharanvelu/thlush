@@ -10,6 +10,30 @@ function getAdminClient() {
 }
 
 export const UserService = {
+  getUser: async (id: string): Promise<TypeAdminUser> => {
+    const supabase = getAdminClient();
+
+    const {data: {user}, error} = await supabase.auth.admin.getUserById(id);
+
+    if (error) {
+      console.error('Error fetching user:', error);
+      throw new Error(error.message || 'Failed to fetch user');
+    }
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return {
+      id: user.id,
+      name: (user.user_metadata?.name as string) ?? '',
+      email: user.email ?? '',
+      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at ?? null,
+    };
+  },
+
   listUsers: async (): Promise<TypeAdminUser[]> => {
     const supabase = getAdminClient();
 

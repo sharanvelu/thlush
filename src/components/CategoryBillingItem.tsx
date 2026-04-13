@@ -24,7 +24,7 @@ export default function CategoryBillingItem(
          className="bg-gray-50 dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl">
       <div className="flex items-center justify-between px-6 py-4 cursor-pointer" onClick={toggleMenuItems}>
         <div className="text-xl">{categoryWithMenuItem.name}</div>
-        <div className={isExpanded ? '' : 'rotate-180'}>
+        <div className={`transition-all duration-250 ${isExpanded ? '' : 'rotate-180'}`}>
           <svg width="40px" height="40px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 6V18M12 6L7 11M12 6L17 11" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
