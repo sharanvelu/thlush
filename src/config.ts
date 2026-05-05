@@ -11,6 +11,6 @@ export const Config: Configuration = {
   app_name: "Thlush",
   db_table_prefix: "thlush",
 
-  ignore_tax: false,
+  ignore_tax: true,
   // ignore_tax: false,
 };
