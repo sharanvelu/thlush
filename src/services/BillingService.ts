@@ -185,7 +185,19 @@ export const BillingService = {
 
     const bills: TypeBillWithCustomer[] = billRows.map((row: Record<string, unknown>) => ({
       ...row,
-      bill_items: billItemsMap[(row as unknown as TypeBill).id] || [],
+      total_amount: parseFloat(row.total_amount as string) || 0,
+      total_tax: parseFloat(row.total_tax as string) || 0,
+      bill_items: (billItemsMap[(row as unknown as TypeBill).id] || []).map((item: unknown) => {
+        const i = item as Record<string, unknown>;
+        return {
+          ...i,
+          price: parseFloat(i.price as string) || 0,
+          sgst: parseFloat(i.sgst as string) || 0,
+          cgst: parseFloat(i.cgst as string) || 0,
+          quantity: parseInt(i.quantity as string) || 0,
+          total: parseFloat(i.total as string) || 0,
+        };
+      }),
     })) as TypeBillWithCustomer[];
 
     const pagination: TypePagination = {
@@ -219,9 +231,9 @@ export const BillingService = {
     );
 
     const totalBills: number = billsResult.length;
-    const totalRevenue: number = billsResult.reduce((sum: number, b: Record<string, unknown>) => sum + ((b.total_amount as number) ?? 0), 0);
+    const totalRevenue: number = billsResult.reduce((sum: number, b: Record<string, unknown>) => sum + (parseFloat(b.total_amount as string) || 0), 0);
     const avgOrderValue: number = totalBills > 0 ? totalRevenue / totalBills : 0;
-    const totalItems: number = itemsResult.reduce((sum: number, item: Record<string, unknown>) => sum + ((item.quantity as number) ?? 0), 0);
+    const totalItems: number = itemsResult.reduce((sum: number, item: Record<string, unknown>) => sum + (parseInt(item.quantity as string) || 0), 0);
 
     return {
       total_bills: totalBills,
