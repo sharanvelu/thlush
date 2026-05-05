@@ -1,6 +1,7 @@
 import {auth} from "@/auth";
 import {NextResponse} from 'next/server';
 import type {NextRequest} from 'next/server';
+import {UserRole as TypeUserRole} from "@/types/user";
 
 // Routes that require authentication
 const protectedRoutes: string[] = [
@@ -69,7 +70,7 @@ export async function proxy(request: NextRequest) {
   const isAdminApi: boolean = pathname.startsWith(adminApiPrefix);
 
   if (isAdminPage || isAdminApi) {
-    const role = session.user.role;
+    const role: TypeUserRole = session.user.role;
 
     if (role !== 'super_admin') {
       if (isAdminApi) {
