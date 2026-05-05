@@ -2,7 +2,7 @@
 
 import {Suspense, useState} from "react";
 import {useRouter, useSearchParams} from "next/navigation";
-import {SupabaseService} from "@/services/SupabaseService.client";
+import {signIn} from "next-auth/react";
 import {Config} from "@/config";
 
 export default function LoginPage() {
@@ -30,13 +30,7 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`;
-      const {error: authError} = await SupabaseService.signInWithOAuth('custom:sentrix-auth', redirectTo);
-
-      if (authError) {
-        setError(authError.message);
-        setIsLoading(false);
-      }
+      await signIn('authentik', {callbackUrl: redirect});
     } catch {
       setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
@@ -55,10 +49,14 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const {error: authError} = await SupabaseService.signInWithPassword(email, password);
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
 
-      if (authError) {
-        setError(authError.message);
+      if (result?.error) {
+        setError('Invalid email or password.');
         return;
       }
 
@@ -92,73 +90,85 @@ function LoginForm() {
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div>
-              <label htmlFor="email" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                placeholder="Enter your email"
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+          {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <div>
+                <label htmlFor="email" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="Enter your email"
+                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="Enter your password"
+                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <button
+                type="submit"
                 disabled={isLoading}
-              />
+                className="w-full flex items-center justify-center gap-2 border-none rounded-2xl px-5 py-3 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </form>
+          )}
+
+          {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              <span className="text-sm text-gray-400 dark:text-gray-500">or</span>
+              <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
             </div>
+          )}
 
-            <div>
-              <label htmlFor="password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Enter your password"
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 border-none rounded-2xl px-5 py-3 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
-            <span className="text-sm text-gray-400 dark:text-gray-500">or</span>
-            <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
-          </div>
-
-          {/* OAuth */}
           <button
             type="button"
             onClick={handleOAuthLogin}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 rounded-2xl px-5 py-3 text-[16px] font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-950 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 border-none rounded-2xl px-5 py-3 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
           >
-            Sign in with Sentrix
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </>
+            ) : (
+              'Sign in with Sentrix'
+            )}
           </button>
         </div>
       </div>

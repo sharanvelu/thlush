@@ -1,128 +1,173 @@
-import {createClient} from '@supabase/supabase-js';
+import {NeonService} from "@/services/NeonService";
+import {DatabaseService} from "@/services/DatabaseService";
 import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UpdateUserDto as TypeUpdateUserDto, UserRole} from "@/types/user";
+import {NeonQueryFunction} from "@neondatabase/serverless";
+import bcrypt from 'bcryptjs';
 
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {auth: {autoRefreshToken: false, persistSession: false}}
-  );
+const table_name: string = DatabaseService.table_names.users;
+
+interface UserRow {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+function toAdminUser(row: UserRow): TypeAdminUser {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    created_at: row.created_at,
+    last_sign_in_at: row.last_login_at,
+  };
 }
 
 export const UserService = {
   getUser: async (id: string): Promise<TypeAdminUser> => {
-    const supabase = getAdminClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {data: {user}, error} = await supabase.auth.admin.getUserById(id);
-
-    if (error) {
-      console.error('Error fetching user:', error);
-      throw new Error(error.message || 'Failed to fetch user');
-    }
+    const [user] = await sql.query(
+      `SELECT * FROM ${table_name} WHERE id = $1`,
+      [id]
+    );
 
     if (!user) {
       throw new Error('User not found');
     }
 
-    return {
-      id: user.id,
-      name: (user.user_metadata?.name as string) ?? '',
-      email: user.email ?? '',
-      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at ?? null,
-    };
+    return toAdminUser(user as UserRow);
   },
 
   listUsers: async (): Promise<TypeAdminUser[]> => {
-    const supabase = getAdminClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {data: {users}, error} = await supabase.auth.admin.listUsers();
+    const users = await sql.query(
+      `SELECT * FROM ${table_name} ORDER BY created_at ASC`
+    );
 
-    if (error) {
-      console.error('Error listing users:', error);
-      throw new Error('Failed to list users');
-    }
-
-    return users.map((user) => ({
-      id: user.id,
-      name: (user.user_metadata?.name as string) ?? '',
-      email: user.email ?? '',
-      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at ?? null,
-    }));
+    return (users as UserRow[]).map(toAdminUser);
   },
 
   createUser: async (dto: TypeCreateUserDto): Promise<TypeAdminUser> => {
-    const supabase = getAdminClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {data: {user}, error} = await supabase.auth.admin.createUser({
-      email: dto.email,
-      password: dto.password,
-      email_confirm: true,
-      user_metadata: {name: dto.name},
-      app_metadata: {role: dto.role},
-    });
+    const existingUsers = await sql.query(
+      `SELECT id FROM ${table_name} WHERE email = $1`,
+      [dto.email]
+    );
 
-    if (error) {
-      console.error('Error creating user:', error);
-      throw new Error(error.message || 'Failed to create user');
+    if (existingUsers.length > 0) {
+      throw new Error('A user with this email already exists');
     }
 
-    if (!user) {
-      throw new Error('Failed to create user');
-    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    return {
-      id: user.id,
-      name: (user.user_metadata?.name as string) ?? '',
-      email: user.email ?? '',
-      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at ?? null,
-    };
+    const [user] = await sql.query(
+      `INSERT INTO ${table_name} (name, email, password, role)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [dto.name, dto.email, hashedPassword, dto.role]
+    );
+
+    return toAdminUser(user as UserRow);
   },
 
   updateUser: async (id: string, dto: TypeUpdateUserDto): Promise<TypeAdminUser> => {
-    const supabase = getAdminClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {};
-    if (dto.email) updateData.email = dto.email;
-    if (dto.password) updateData.password = dto.password;
-    if (dto.name !== undefined) updateData.user_metadata = {name: dto.name};
-    if (dto.role) updateData.app_metadata = {role: dto.role};
+    const setClauses: string[] = [];
+    const params: unknown[] = [];
+    let paramIndex = 1;
 
-    const {data: {user}, error} = await supabase.auth.admin.updateUserById(id, updateData);
-
-    if (error) {
-      console.error('Error updating user:', error);
-      throw new Error(error.message || 'Failed to update user');
+    if (dto.name !== undefined) {
+      setClauses.push(`name = $${paramIndex++}`);
+      params.push(dto.name);
     }
+
+    if (dto.email) {
+      const existingUsers = await sql.query(
+        `SELECT id FROM ${table_name} WHERE email = $1 AND id != $2`,
+        [dto.email, id]
+      );
+
+      if (existingUsers.length > 0) {
+        throw new Error('A user with this email already exists');
+      }
+
+      setClauses.push(`email = $${paramIndex++}`);
+      params.push(dto.email);
+    }
+
+    if (dto.password) {
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      setClauses.push(`password = $${paramIndex++}`);
+      params.push(hashedPassword);
+    }
+
+    if (dto.role) {
+      setClauses.push(`role = $${paramIndex++}`);
+      params.push(dto.role);
+    }
+
+    if (setClauses.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    params.push(id);
+
+    const [user] = await sql.query(
+      `UPDATE ${table_name} SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      params
+    );
 
     if (!user) {
-      throw new Error('Failed to update user');
+      throw new Error('User not found');
     }
 
-    return {
-      id: user.id,
-      name: (user.user_metadata?.name as string) ?? '',
-      email: user.email ?? '',
-      role: (user.app_metadata?.role as UserRole) ?? UserRole.BILLING,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at ?? null,
-    };
+    return toAdminUser(user as UserRow);
   },
 
   deleteUser: async (id: string): Promise<void> => {
-    const supabase = getAdminClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {error} = await supabase.auth.admin.deleteUser(id);
+    const result = await sql.query(
+      `DELETE FROM ${table_name} WHERE id = $1 RETURNING id`,
+      [id]
+    );
 
-    if (error) {
-      console.error('Error deleting user:', error);
-      throw new Error(error.message || 'Failed to delete user');
+    if (result.length === 0) {
+      throw new Error('User not found');
     }
+  },
+
+  authenticateUser: async (email: string, password: string): Promise<UserRow | null> => {
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
+
+    const [user] = await sql.query(
+      `SELECT * FROM ${table_name} WHERE email = $1`,
+      [email]
+    );
+
+    if (!user) {
+      return null;
+    }
+
+    const row = user as UserRow;
+    const isValid = await bcrypt.compare(password, row.password);
+
+    if (!isValid) {
+      return null;
+    }
+
+    await sql.query(
+      `UPDATE ${table_name} SET last_login_at = now() WHERE id = $1`,
+      [row.id]
+    );
+
+    return row;
   },
 };

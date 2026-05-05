@@ -1,128 +1,99 @@
-import {DatabaseService} from "@/services/DatabaseService";
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {NeonService} from "@/services/NeonService";
 import {
   Category as TypeCategory,
   CategoryDto as TypeCategoryDto,
   CategoryStatus,
-  CategoryWithMenuItem
+  CategoryWithMenuItem as TypeCategoryWithMenuItem
 } from "@/types/category";
 import {MenuItem as TypeMenuItem} from "@/types/menu";
-import {CategoryWithMenuItem as TypeCategoryWithMenuItem} from "@/types/category";
 import {MenuService} from "@/services/MenuService";
+import {DatabaseService} from "@/services/DatabaseService";
+import {NeonQueryFunction} from "@neondatabase/serverless";
+
+const table_name: string = DatabaseService.table_names.categories;
 
 export const CategoryService = {
   getAllCategories: async (): Promise<TypeCategory[]> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql = NeonService.getClient();
 
-    // Get All Categories
-    const {data: categories, error} = await supabase
-      .from(DatabaseService.table_names.categories)
-      .select('*')
-      .order('created_at', {ascending: true});
+    const categories = await sql.query(
+      `SELECT *
+       FROM ${table_name}
+       ORDER BY created_at ASC`
+    );
 
-    if (error) {
-      console.error('Error fetching categories from Supabase:', error);
-      throw error;
-    }
-
-    return await CategoryService.formatCategories(categories);
+    return categories as TypeCategory[];
   },
 
   getCategoryWithMenuItem: async (getAll: boolean = false): Promise<TypeCategoryWithMenuItem[]> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    // Get All Categories
-    const {data: categories, error} = await supabase
-      .from(DatabaseService.table_names.categories)
-      .select('*')
-      .in('status', getAll ? [CategoryStatus.ACTIVE, CategoryStatus.DISABLE] : [CategoryStatus.ACTIVE])
-      .order('created_at', {ascending: true});
+    const statuses: CategoryStatus[] = getAll
+      ? [CategoryStatus.ACTIVE, CategoryStatus.DISABLE]
+      : [CategoryStatus.ACTIVE];
 
-    if (error) {
-      console.error('Error fetching categories from Supabase:', error);
-      throw error;
-    }
+    const categories = await sql.query(
+      `SELECT *
+       FROM ${table_name}
+       WHERE status = ANY ($1)
+       ORDER BY created_at ASC`,
+      [statuses]
+    );
 
     const menuItems: TypeMenuItem[] = await MenuService.getAllMenuItems(getAll);
 
-    return (await CategoryService.formatCategories(categories))
+    return (categories as TypeCategory[])
       .map((category: TypeCategory): TypeCategoryWithMenuItem => {
-        const categoryWithMenuItems = category as CategoryWithMenuItem;
-
-        categoryWithMenuItems.menu_items = menuItems.filter(
-          (menuItem: TypeMenuItem) => menuItem.category_id === category.id
-        );
-
-        return categoryWithMenuItems;
+        return {
+          ...category,
+          menu_items: menuItems.filter(
+            (menuItem: TypeMenuItem) => menuItem.category_id === category.id
+          ),
+        };
       })
       .filter((category: TypeCategoryWithMenuItem) => getAll || (category.menu_items.length > 0));
   },
 
-  formatCategories: async (categories: TypeCategory[]): Promise<TypeCategory[]> => {
-    return await Promise.all(
-      categories.map(async (category: TypeCategory): Promise<TypeCategory> => {
-        return await CategoryService.formatCategory(category) as TypeCategory;
-      })
-    );
-  },
-
-  formatCategory: async (category: TypeCategory): Promise<TypeCategory> => {
-    // If Category cover_image is uploaded to S3, then generate a preSigned URL
-    // if (category?.cover_image?.startsWith('blogs/images')) {
-    //   category.cover_image_original = category.cover_image;
-    //   category.cover_image = await S3Service.generatePreSignedDownloadUrl(category.cover_image);
-    // }
-
-    return category;
-  },
-
   createCategory: async (categoryDto: TypeCategoryDto, userId: string): Promise<TypeCategory> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {data: category, error} = await supabase
-      .from(DatabaseService.table_names.categories)
-      .insert([{...categoryDto, created_user_id: userId}])
-      .select()
-      .single();
+    const [category] = await sql.query(
+      `INSERT INTO ${table_name} (name, description, status, created_user_id)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [categoryDto.name, categoryDto.description, categoryDto.status, userId]
+    );
 
-    if (error) {
-      console.error('Error creating Category:', error);
-      throw new Error('Failed to create Category');
-    }
-
-    return await CategoryService.formatCategory(category);
+    return category as TypeCategory;
   },
 
   updateCategory: async (id: number, categoryDto: TypeCategoryDto): Promise<TypeCategory> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {data: category, error} = await supabase
-      .from(DatabaseService.table_names.categories)
-      .update(categoryDto)
-      .eq('id', id)
-      .select()
-      .single();
+    const [category] = await sql.query(
+      `UPDATE ${table_name}
+       SET name        = $1,
+           description = $2,
+           status      = $3
+       WHERE id = $4 RETURNING *`,
+      [categoryDto.name, categoryDto.description, categoryDto.status, id]
+    );
 
-    if (error) {
-      console.error('Error updating Category:', error);
+    if (!category) {
       throw new Error('Failed to update Category');
     }
 
-    return await CategoryService.formatCategory(category);
+    return category as TypeCategory;
   },
 
   deleteCategory: async (id: number) => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {error} = await supabase
-      .from(DatabaseService.table_names.categories)
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting Category:', error);
-      throw new Error('Failed to delete Category');
-    }
+    await sql.query(
+      `DELETE
+       FROM ${table_name}
+       WHERE id = $1`,
+      [id]
+    );
 
     return true;
   },

@@ -1,5 +1,5 @@
+import {NeonService} from "@/services/NeonService";
 import {DatabaseService} from "@/services/DatabaseService";
-import {SupabaseService} from "@/services/SupabaseService.server";
 import {
   Bill as TypeBill,
   BillFilters as TypeBillFilters,
@@ -13,24 +13,22 @@ import {
 } from "@/types/billing";
 import {Pagination as TypePagination} from "@/types/global";
 import {calculateTotalTaxPriceValue, calculateTotalValue} from "@/helpers";
+import {NeonQueryFunction} from "@neondatabase/serverless";
+
+const tables = DatabaseService.table_names;
 
 export const BillingService = {
   saveInvoice: async (invoiceDto: TypeSaveInvoiceDto, userId: string): Promise<TypeBill> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
     // 1. Create or find customer
     let customerId: number | null = null;
     if (invoiceDto.customer_name.trim()) {
-      const {data: customer, error: customerError} = await supabase
-        .from(DatabaseService.table_names.customers)
-        .insert([{name: invoiceDto.customer_name.trim()}])
-        .select()
-        .single<TypeCustomer>();
+      const [customer] = await sql.query(
+        `INSERT INTO ${tables.customers} (name) VALUES ($1) RETURNING *`,
+        [invoiceDto.customer_name.trim()]
+      ) as TypeCustomer[];
 
-      if (customerError) {
-        console.error('Error creating customer:', customerError);
-        throw new Error('Failed to create customer');
-      }
       customerId = customer.id;
     }
 
@@ -46,23 +44,11 @@ export const BillingService = {
     );
 
     // 3. Create bill
-    const {data: bill, error: billError} = await supabase
-      .from(DatabaseService.table_names.bills)
-      .insert([{
-        customer_id: customerId,
-        total_amount: parseFloat(totalAmount.toFixed(2)),
-        total_tax: parseFloat(totalTax.toFixed(2)),
-        currency: 'INR',
-        status: 'completed',
-        created_user_id: userId,
-      }])
-      .select()
-      .single<TypeBill>();
-
-    if (billError) {
-      console.error('Error creating bill:', billError);
-      throw new Error('Failed to create bill');
-    }
+    const [bill] = await sql.query(
+      `INSERT INTO ${tables.bills} (customer_id, total_amount, total_tax, currency, status, created_user_id)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [customerId, parseFloat(totalAmount.toFixed(2)), parseFloat(totalTax.toFixed(2)), 'INR', 'completed', userId]
+    ) as TypeBill[];
 
     // 4. Create bill items
     const billItems = invoiceDto.items.map((item) => ({
@@ -76,13 +62,12 @@ export const BillingService = {
       total: parseFloat(calculateTotalValue(item.price, item.sgst, item.cgst, item.quantity).toFixed(2)),
     }));
 
-    const {error: itemsError} = await supabase
-      .from(DatabaseService.table_names.bill_items)
-      .insert(billItems);
-
-    if (itemsError) {
-      console.error('Error creating bill items:', itemsError);
-      throw new Error('Failed to create bill items');
+    for (const item of billItems) {
+      await sql.query(
+        `INSERT INTO ${tables.bill_items} (bill_id, menu_item_id, name, price, sgst, cgst, quantity, total)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [item.bill_id, item.menu_item_id, item.name, item.price, item.sgst, item.cgst, item.quantity, item.total]
+      );
     }
 
     return bill;
@@ -92,100 +77,128 @@ export const BillingService = {
     bills: TypeBillWithCustomer[],
     pagination: TypePagination
   }> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    // Build base query for count
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let countQuery: any = supabase
-      .from(DatabaseService.table_names.bills)
-      .select(`*, ${DatabaseService.table_names.customers}!left(name), ${DatabaseService.table_names.bill_items}!left(name)`, {
-        count: 'exact',
-        head: true
-      });
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let paramIndex = 1;
 
-    // Build base query for data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let dataQuery: any = supabase
-      .from(DatabaseService.table_names.bills)
-      .select(`*, customers:${DatabaseService.table_names.customers}(*), bill_items:${DatabaseService.table_names.bill_items}(*)`);
-
-    // Apply filters to both queries
     if (filters?.start_date) {
-      const startDate: string = new Date(filters.start_date).toISOString();
-      countQuery = countQuery.gte('created_at', startDate);
-      dataQuery = dataQuery.gte('created_at', startDate);
+      conditions.push(`b.created_at >= $${paramIndex++}`);
+      params.push(new Date(filters.start_date).toISOString());
     }
 
     if (filters?.end_date) {
-      const endDate: string = new Date(filters.end_date + 'T23:59:59.999').toISOString();
-      countQuery = countQuery.lte('created_at', endDate);
-      dataQuery = dataQuery.lte('created_at', endDate);
+      conditions.push(`b.created_at <= $${paramIndex++}`);
+      params.push(new Date(filters.end_date + 'T23:59:59.999').toISOString());
     }
 
     if (filters?.customer_name) {
-      countQuery = countQuery.ilike(`${DatabaseService.table_names.customers}.name`, `%${filters.customer_name}%`);
-      dataQuery = dataQuery.ilike(`${DatabaseService.table_names.customers}.name`, `%${filters.customer_name}%`);
+      conditions.push(`c.name ILIKE $${paramIndex++}`);
+      params.push(`%${filters.customer_name}%`);
     }
 
     if (filters?.item_name) {
-      countQuery = countQuery.ilike(`${DatabaseService.table_names.bill_items}.name`, `%${filters.item_name}%`);
-      dataQuery = dataQuery.ilike(`${DatabaseService.table_names.bill_items}.name`, `%${filters.item_name}%`);
+      conditions.push(`EXISTS (SELECT 1 FROM ${tables.bill_items} bi2 WHERE bi2.bill_id = b.id AND bi2.name ILIKE $${paramIndex++})`);
+      params.push(`%${filters.item_name}%`);
     }
 
     if (filters?.min_total) {
-      countQuery = countQuery.gte('total_amount', parseFloat(filters.min_total));
-      dataQuery = dataQuery.gte('total_amount', parseFloat(filters.min_total));
+      conditions.push(`b.total_amount >= $${paramIndex++}`);
+      params.push(parseFloat(filters.min_total));
     }
 
     if (filters?.max_total) {
-      countQuery = countQuery.lte('total_amount', parseFloat(filters.max_total));
-      dataQuery = dataQuery.lte('total_amount', parseFloat(filters.max_total));
+      conditions.push(`b.total_amount <= $${paramIndex++}`);
+      params.push(parseFloat(filters.max_total));
     }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Get total count
-    const {count, error: countError} = await countQuery;
+    const countResult = await sql.query(
+      `SELECT COUNT(DISTINCT b.id) as count
+       FROM ${tables.bills} b
+       LEFT JOIN ${tables.customers} c ON c.id = b.customer_id
+       ${whereClause}`,
+      params
+    );
 
-    if (countError) {
-      console.error('Error counting bills:', countError);
-      throw new Error('Failed to count bills');
-    }
-
-    const totalItems: number = count ?? 0;
+    const totalItems: number = parseInt(countResult[0].count as string) || 0;
     const totalPages: number = Math.ceil(totalItems / perPage);
-    const from: number = (page - 1) * perPage;
-    const to: number = from + perPage - 1;
+    const offset: number = (page - 1) * perPage;
 
-    // Apply sorting
+    // Determine sort
+    let orderClause: string;
     const sortBy: BillSortBy = filters?.sort_by ?? BillSortBy.DATE_NEWEST;
     switch (sortBy) {
       case BillSortBy.DATE_OLDEST:
-        dataQuery = dataQuery.order('created_at', {ascending: true});
+        orderClause = 'b.created_at ASC';
         break;
       case BillSortBy.TOTAL_HIGH:
-        dataQuery = dataQuery.order('total_amount', {ascending: false});
+        orderClause = 'b.total_amount DESC';
         break;
       case BillSortBy.TOTAL_LOW:
-        dataQuery = dataQuery.order('total_amount', {ascending: true});
+        orderClause = 'b.total_amount ASC';
         break;
       case BillSortBy.CUSTOMER_NAME_A_Z:
-        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.table_names.customers, ascending: true});
+        orderClause = 'c.name ASC NULLS LAST';
         break;
       case BillSortBy.CUSTOMER_NAME_Z_A:
-        dataQuery = dataQuery.order('name', {referencedTable: DatabaseService.table_names.customers, ascending: false});
+        orderClause = 'c.name DESC NULLS LAST';
         break;
       case BillSortBy.DATE_NEWEST:
       default:
-        dataQuery = dataQuery.order('created_at', {ascending: false});
+        orderClause = 'b.created_at DESC';
         break;
     }
 
-    // Fetch bills
-    const {data: bills, error} = await dataQuery.range(from, to);
+    // Fetch bills with customer
+    const billRows = await sql.query(
+      `SELECT b.*,
+              row_to_json(c) as customers
+       FROM ${tables.bills} b
+       LEFT JOIN ${tables.customers} c ON c.id = b.customer_id
+       ${whereClause}
+       ORDER BY ${orderClause}
+       LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+      [...params, perPage, offset]
+    );
 
-    if (error) {
-      console.error('Error fetching bills:', error);
-      throw new Error('Failed to fetch bills');
+    // Fetch bill items for these bills
+    const billIds = billRows.map((b: Record<string, unknown>) => (b as unknown as TypeBill).id);
+    let billItemsMap: Record<number, unknown[]> = {};
+
+    if (billIds.length > 0) {
+      const billItems = await sql.query(
+        `SELECT * FROM ${tables.bill_items} WHERE bill_id = ANY($1) ORDER BY id ASC`,
+        [billIds]
+      );
+
+      billItemsMap = billItems.reduce((acc: Record<number, unknown[]>, item: Record<string, unknown>) => {
+        const billId = item.bill_id as number;
+        if (!acc[billId]) acc[billId] = [];
+        acc[billId].push(item);
+        return acc;
+      }, {} as Record<number, unknown[]>);
     }
+
+    const bills: TypeBillWithCustomer[] = billRows.map((row: Record<string, unknown>) => ({
+      ...row,
+      total_amount: parseFloat(row.total_amount as string) || 0,
+      total_tax: parseFloat(row.total_tax as string) || 0,
+      bill_items: (billItemsMap[(row as unknown as TypeBill).id] || []).map((item: unknown) => {
+        const i = item as Record<string, unknown>;
+        return {
+          ...i,
+          price: parseFloat(i.price as string) || 0,
+          sgst: parseFloat(i.sgst as string) || 0,
+          cgst: parseFloat(i.cgst as string) || 0,
+          quantity: parseInt(i.quantity as string) || 0,
+          total: parseFloat(i.total as string) || 0,
+        };
+      }),
+    })) as TypeBillWithCustomer[];
 
     const pagination: TypePagination = {
       current_page: page,
@@ -196,41 +209,31 @@ export const BillingService = {
       has_prev_page: page > 1,
     };
 
-    return {bills: bills as TypeBillWithCustomer[], pagination};
+    return {bills, pagination};
   },
 
   getTodayStats: async (): Promise<TypeTodayStats> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
     const todayStart: string = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
 
-    // Fetch today's bills
-    const {data: bills, error: billsError} = await supabase
-      .from(DatabaseService.table_names.bills)
-      .select('total_amount')
-      .gte('created_at', todayStart);
+    const billsResult = await sql.query(
+      `SELECT total_amount FROM ${tables.bills} WHERE created_at >= $1`,
+      [todayStart]
+    );
 
-    if (billsError) {
-      console.error('Error fetching today bills:', billsError);
-      throw new Error('Failed to fetch today stats');
-    }
+    const itemsResult = await sql.query(
+      `SELECT bi.quantity
+       FROM ${tables.bill_items} bi
+       INNER JOIN ${tables.bills} b ON b.id = bi.bill_id
+       WHERE b.created_at >= $1`,
+      [todayStart]
+    );
 
-    // Fetch today's total items
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const {data: billItems, error: itemsError}: { data: any[] | null, error: any } = await supabase
-      .from(DatabaseService.table_names.bill_items)
-      .select(`quantity, bill_id, ${DatabaseService.table_names.bills}!inner(created_at)`)
-      .gte(`${DatabaseService.table_names.bills}.created_at`, todayStart);
-
-    if (itemsError) {
-      console.error('Error fetching today bill items:', itemsError);
-      throw new Error('Failed to fetch today item stats');
-    }
-
-    const totalBills: number = bills.length;
-    const totalRevenue: number = bills.reduce((sum: number, b) => sum + (b.total_amount ?? 0), 0);
+    const totalBills: number = billsResult.length;
+    const totalRevenue: number = billsResult.reduce((sum: number, b: Record<string, unknown>) => sum + (parseFloat(b.total_amount as string) || 0), 0);
     const avgOrderValue: number = totalBills > 0 ? totalRevenue / totalBills : 0;
-    const totalItems: number = (billItems ?? []).reduce((sum: number, item) => sum + (item.quantity ?? 0), 0);
+    const totalItems: number = itemsResult.reduce((sum: number, item: Record<string, unknown>) => sum + (parseInt(item.quantity as string) || 0), 0);
 
     return {
       total_bills: totalBills,
@@ -241,29 +244,20 @@ export const BillingService = {
   },
 
   getOverallStats: async (): Promise<TypeOverallStats> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const [billsResult, revenueResult, menuResult, categoryResult] = await Promise.all([
-      supabase.from(DatabaseService.table_names.bills).select('*', {count: 'exact', head: true}),
-      supabase.from(DatabaseService.table_names.bills).select('total_amount'),
-      supabase.from(DatabaseService.table_names.menu_items).select('*', {count: 'exact', head: true}),
-      supabase.from(DatabaseService.table_names.categories).select('*', {count: 'exact', head: true}),
+    const [billsCount, revenueResult, menuCount, categoryCount] = await Promise.all([
+      sql.query(`SELECT COUNT(*) as count FROM ${tables.bills}`),
+      sql.query(`SELECT COALESCE(SUM(total_amount), 0) as total FROM ${tables.bills}`),
+      sql.query(`SELECT COUNT(*) as count FROM ${tables.menu_items}`),
+      sql.query(`SELECT COUNT(*) as count FROM ${tables.categories}`),
     ]);
 
-    if (billsResult.error || revenueResult.error || menuResult.error || categoryResult.error) {
-      console.error('Error fetching overall stats');
-      throw new Error('Failed to fetch overall stats');
-    }
-
-    const totalRevenue: number = (revenueResult.data ?? []).reduce(
-      (sum: number, b) => sum + (b.total_amount ?? 0), 0
-    );
-
     return {
-      total_bills: billsResult.count ?? 0,
-      total_revenue: parseFloat(totalRevenue.toFixed(2)),
-      total_menu_items: menuResult.count ?? 0,
-      total_categories: categoryResult.count ?? 0,
+      total_bills: parseInt(billsCount[0].count as string) || 0,
+      total_revenue: parseFloat(parseFloat(revenueResult[0].total as string).toFixed(2)) || 0,
+      total_menu_items: parseInt(menuCount[0].count as string) || 0,
+      total_categories: parseInt(categoryCount[0].count as string) || 0,
     };
   },
 };

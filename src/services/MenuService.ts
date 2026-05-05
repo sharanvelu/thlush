@@ -1,91 +1,94 @@
+import {NeonService} from "@/services/NeonService";
 import {DatabaseService} from "@/services/DatabaseService";
-import {SupabaseService} from "@/services/SupabaseService.server";
 import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto, MenuItemStatus} from "@/types/menu";
+import {NeonQueryFunction} from "@neondatabase/serverless";
+
+const table_name: string = DatabaseService.table_names.menu_items;
 
 export const MenuService = {
   getAllMenuItems: async (getAll: boolean = false): Promise<TypeMenuItem[]> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    // Get All Menu Items
-    const {data: menuItems, error} = await supabase
-      .from(DatabaseService.table_names.menu_items)
-      .select('*')
-      .in('status', getAll ? [MenuItemStatus.ACTIVE, MenuItemStatus.DISABLE] : [MenuItemStatus.ACTIVE])
-      .order('created_at', {ascending: true});
+    const statuses: MenuItemStatus[] = getAll
+      ? [MenuItemStatus.ACTIVE, MenuItemStatus.DISABLE]
+      : [MenuItemStatus.ACTIVE];
 
-    if (error) {
-      console.error('Error fetching menu items from Supabase:', error);
-      throw error;
-    }
-
-    return await MenuService.formatMenuItems(menuItems);
-  },
-
-  formatMenuItems: async (menuItems: TypeMenuItem[]): Promise<TypeMenuItem[]> => {
-    return await Promise.all(
-      menuItems.map(async (menuItem: TypeMenuItem): Promise<TypeMenuItem> => {
-        return await MenuService.formatMenuItem(menuItem) as TypeMenuItem;
-      })
+    const menuItems = await sql.query(
+      `SELECT *
+       FROM ${table_name}
+       WHERE status = ANY ($1)
+       ORDER BY created_at ASC`,
+      [statuses]
     );
-  },
 
-  formatMenuItem: async (menuItem: TypeMenuItem): Promise<TypeMenuItem> => {
-    // If MenuItem cover_image is uploaded to S3, then generate a preSigned URL
-    // if (menuItem?.cover_image?.startsWith('blogs/images')) {
-    //   menuItem.cover_image_original = menuItem.cover_image;
-    //   menuItem.cover_image = await S3Service.generatePreSignedDownloadUrl(menuItem.cover_image);
-    // }
-
-    return menuItem;
+    return menuItems as TypeMenuItem[];
   },
 
   createMenuItem: async (menuItemDto: TypeMenuItemDto, userId: string): Promise<TypeMenuItem> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {data: menuItem, error} = await supabase
-      .from(DatabaseService.table_names.menu_items)
-      .insert([{...menuItemDto, created_user_id: userId}])
-      .select()
-      .single();
+    const [menuItem] = await sql.query(
+      `INSERT INTO ${table_name} (name, description, category_id, price, sgst, cgst, currency, status, created_user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [
+        menuItemDto.name,
+        menuItemDto.description,
+        menuItemDto.category_id,
+        menuItemDto.price,
+        menuItemDto.sgst ?? null,
+        menuItemDto.cgst ?? null,
+        menuItemDto.currency,
+        menuItemDto.status,
+        userId,
+      ]
+    );
 
-    if (error) {
-      console.error('Error creating Menu Item:', error);
-      throw new Error('Failed to create Menu Item');
-    }
-
-    return await MenuService.formatMenuItem(menuItem);
+    return menuItem as TypeMenuItem;
   },
 
   updateMenuItem: async (id: number, menuItemDto: TypeMenuItemDto): Promise<TypeMenuItem> => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {data: menuItem, error} = await supabase
-      .from(DatabaseService.table_names.menu_items)
-      .update(menuItemDto)
-      .eq('id', id)
-      .select()
-      .single();
+    const [menuItem] = await sql.query(
+      `UPDATE ${table_name}
+       SET name        = $1,
+           description = $2,
+           category_id = $3,
+           price       = $4,
+           sgst        = $5,
+           cgst        = $6,
+           currency    = $7,
+           status      = $8
+       WHERE id = $9 RETURNING *`,
+      [
+        menuItemDto.name,
+        menuItemDto.description,
+        menuItemDto.category_id,
+        menuItemDto.price,
+        menuItemDto.sgst ?? null,
+        menuItemDto.cgst ?? null,
+        menuItemDto.currency,
+        menuItemDto.status,
+        id,
+      ]
+    );
 
-    if (error) {
-      console.error('Error updating Menu item:', error);
+    if (!menuItem) {
       throw new Error('Failed to update Menu item');
     }
 
-    return await MenuService.formatMenuItem(menuItem);
+    return menuItem as TypeMenuItem;
   },
 
   deleteMenuItem: async (id: number) => {
-    const supabase = await SupabaseService.getServerClient();
+    const sql: NeonQueryFunction<false, false> = NeonService.getClient();
 
-    const {error} = await supabase
-      .from(DatabaseService.table_names.menu_items)
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting Menu Item:', error);
-      throw new Error('Failed to delete Menu Item');
-    }
+    await sql.query(
+      `DELETE
+       FROM ${table_name}
+       WHERE id = $1`,
+      [id]
+    );
 
     return true;
   },

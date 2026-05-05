@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {AuthService} from "@/services/AuthService";
 import {CategoryService} from '@/services/CategoryService';
 import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {Category as TypeCategory, CategoryDto as TypeCategoryDto} from "@/types/category";
@@ -10,7 +10,7 @@ export async function PUT(
   context: { params: Promise<{ id: string; }>; },
 ): Promise<NextResponse<TypeApiResponse<TypeCategory>>> {
   // Check authentication
-  if (!await SupabaseService.authUser()) {
+  if (!await AuthService.checkAuth()) {
     return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}
@@ -42,7 +42,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string; }>; }
 ): Promise<NextResponse<TypeApiDeleteResponse>> {
   // Check authentication
-  if (!await SupabaseService.checkAuth()) {
+  if (!await AuthService.checkAuth()) {
     return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}

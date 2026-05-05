@@ -2,15 +2,15 @@ import {NextResponse} from 'next/server';
 import {UserService} from '@/services/UserService';
 import {AdminUser as TypeAdminUser, CreateUserDto as TypeCreateUserDto, UserRole} from "@/types/user";
 import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse} from "@/types/global";
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {AuthService} from "@/services/AuthService";
 
 export async function GET(): Promise<NextResponse<TypeApiListResponse<TypeAdminUser>>> {
   try {
-    const authUser = await SupabaseService.authUser();
+    const authUser = await AuthService.getAuthUser();
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
     }
-    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+    if (authUser.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
     }
 
@@ -25,11 +25,11 @@ export async function GET(): Promise<NextResponse<TypeApiListResponse<TypeAdminU
 
 export async function POST(request: Request): Promise<NextResponse<TypeApiResponse<TypeAdminUser>>> {
   try {
-    const authUser = await SupabaseService.authUser();
+    const authUser = await AuthService.getAuthUser();
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
     }
-    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+    if (authUser.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
     }
 

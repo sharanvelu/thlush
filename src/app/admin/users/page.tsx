@@ -13,17 +13,18 @@ import {
   ApiResponse as TypeApiResponse,
   ApiDeleteResponse as TypeApiDeleteResponse
 } from "@/types/global";
-import {SupabaseService} from "@/services/SupabaseService.client";
+import {useSession} from "next-auth/react";
 import ConfirmModal from "@/components/ConfirmModal";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import SelectField from "@/components/Inputs/Select";
 
 export default function AdminUsersPage() {
+  const {data: session} = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<TypeAdminUser[]>([]);
   const [editingUser, setEditingUser] = useState<TypeAdminUser | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const currentUserId = session?.user?.id ?? null;
 
   // Form state
   const [name, setName] = useState('');
@@ -49,10 +50,6 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers().then();
-
-    SupabaseService.authUser().then((user) => {
-      if (user) setCurrentUserId(user.id);
-    });
   }, []);
 
   const clearForm = () => {

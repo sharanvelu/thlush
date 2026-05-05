@@ -1,6 +1,7 @@
-import {createServerClient} from '@supabase/ssr';
+import {auth} from "@/auth";
 import {NextResponse} from 'next/server';
 import type {NextRequest} from 'next/server';
+import {UserRole as TypeUserRole} from "@/types/user";
 
 // Routes that require authentication
 const protectedRoutes: string[] = [
@@ -11,6 +12,7 @@ const protectedRoutes: string[] = [
   '/categories',
   '/profile',
   '/admin/users',
+  '/admin/customers',
 ];
 
 // Routes that require super_admin role
@@ -21,23 +23,24 @@ const adminApiPrefix: string = '/api/admin';
 const protectedApiPrefix: string = '/api/';
 
 // Routes that should NOT require authentication
-const publicRoutes: string[] = [
-  '/login',
-];
+const publicRoutes: string[] = ['/login'];
 
 export async function proxy(request: NextRequest) {
   const {pathname} = request.nextUrl;
 
+  // Skip auth API routes — Auth.js handles these
+  if (pathname.startsWith('/api/auth/')) {
+    return NextResponse.next();
+  }
+
+  const session = await auth();
+
   // Public routes — redirect to dashboard if already authenticated
   if (publicRoutes.some((route: string) => pathname === route)) {
-    const supabase = createMiddlewareClient(request);
-    const {data: {user}} = await supabase.auth.getUser();
-
-    if (user) {
+    if (session?.user) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-
-    return await updateSession(request);
+    return NextResponse.next();
   }
 
   // Check if route is protected (page or API)
@@ -45,14 +48,11 @@ export async function proxy(request: NextRequest) {
   const isProtectedApi: boolean = pathname.startsWith(protectedApiPrefix);
 
   if (!isProtectedPage && !isProtectedApi) {
-    return await updateSession(request);
+    return NextResponse.next();
   }
 
   // Verify authentication
-  const supabase = createMiddlewareClient(request);
-  const {data: {user}} = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!session?.user) {
     if (isProtectedApi) {
       return NextResponse.json(
         {success: false, error: 'Authentication required'},
@@ -70,7 +70,7 @@ export async function proxy(request: NextRequest) {
   const isAdminApi: boolean = pathname.startsWith(adminApiPrefix);
 
   if (isAdminPage || isAdminApi) {
-    const role = user.app_metadata?.role;
+    const role: TypeUserRole = session.user.role;
 
     if (role !== 'super_admin') {
       if (isAdminApi) {
@@ -84,66 +84,11 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return await updateSession(request);
-}
-
-function createMiddlewareClient(request: NextRequest) {
-  let response = NextResponse.next({request});
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({name, value}) => request.cookies.set(name, value));
-          response = NextResponse.next({request});
-          cookiesToSet.forEach(({name, value, options}) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    },
-  );
-}
-
-async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({request});
-
-  createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({name, value}) => request.cookies.set(name, value));
-          response = NextResponse.next({request});
-          cookiesToSet.forEach(({name, value, options}) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    },
-  );
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico, sitemap.xml, robots.txt
-     * - public assets
-     */
     '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

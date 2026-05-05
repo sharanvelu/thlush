@@ -21,6 +21,7 @@ export const DatabaseService = {
     bill_items: '',
     menu_items: '',
     categories: '',
+    users: '',
   },
 }
 
@@ -31,4 +32,5 @@ DatabaseService.table_names = {
   bill_items: DatabaseService.prepare_table_name('bill_items'),
   menu_items: DatabaseService.prepare_table_name('menu_items'),
   categories: DatabaseService.prepare_table_name('categories'),
+  users: DatabaseService.prepare_table_name('users'),
 };
