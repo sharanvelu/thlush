@@ -2,13 +2,11 @@ import {NextResponse} from 'next/server';
 import {BillingService} from '@/services/BillingService';
 import {Bill as TypeBill, SaveInvoiceDto as TypeSaveInvoiceDto} from "@/types/billing";
 import {ApiResponse as TypeApiResponse} from "@/types/global";
-import {User} from "@supabase/auth-js";
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {AuthService, AuthUser} from "@/services/AuthService";
 
 export async function POST(request: Request): Promise<NextResponse<TypeApiResponse<TypeBill>>> {
   try {
-    // Check authentication
-    const authUser: User | null = await SupabaseService.authUser();
+    const authUser: AuthUser | null = await AuthService.getAuthUser();
 
     if (!authUser) {
       return NextResponse.json(

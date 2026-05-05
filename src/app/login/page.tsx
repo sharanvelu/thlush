@@ -2,7 +2,7 @@
 
 import {Suspense, useState} from "react";
 import {useRouter, useSearchParams} from "next/navigation";
-import {SupabaseService} from "@/services/SupabaseService.client";
+import {signIn} from "next-auth/react";
 import {Config} from "@/config";
 
 export default function LoginPage() {
@@ -30,13 +30,7 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`;
-      const {error: authError} = await SupabaseService.signInWithOAuth('custom:sentrix-auth', redirectTo);
-
-      if (authError) {
-        setError(authError.message);
-        setIsLoading(false);
-      }
+      await signIn('authentik', {callbackUrl: redirect});
     } catch {
       setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
@@ -55,10 +49,14 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const {error: authError} = await SupabaseService.signInWithPassword(email, password);
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
 
-      if (authError) {
-        setError(authError.message);
+      if (result?.error) {
+        setError('Invalid email or password.');
         return;
       }
 

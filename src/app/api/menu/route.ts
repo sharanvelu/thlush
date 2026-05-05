@@ -2,8 +2,7 @@ import {NextResponse} from 'next/server';
 import {MenuService} from '@/services/MenuService';
 import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
 import {ApiListResponse as TypeApiListResponse, ApiResponse as TypeApiResponse} from "@/types/global";
-import {User} from "@supabase/auth-js";
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {AuthService, AuthUser} from "@/services/AuthService";
 
 export async function GET(): Promise<NextResponse<TypeApiListResponse<TypeMenuItem>>> {
   const menuItems: TypeMenuItem[] = await MenuService.getAllMenuItems();
@@ -16,7 +15,7 @@ export async function GET(): Promise<NextResponse<TypeApiListResponse<TypeMenuIt
 
 export async function POST(request: Request): Promise<NextResponse<TypeApiResponse<TypeMenuItem>>> {
   // Check authentication
-  const authUser: User | null = await SupabaseService.authUser();
+  const authUser: AuthUser | null = await AuthService.getAuthUser();
 
   if (!authUser) {
     return NextResponse.json(

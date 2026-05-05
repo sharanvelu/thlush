@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {AuthService} from "@/services/AuthService";
 import {MenuService} from '@/services/MenuService';
 import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
 import {MenuItem as TypeMenuItem, MenuItemDto as TypeMenuItemDto} from "@/types/menu";
@@ -10,7 +10,7 @@ export async function PUT(
   context: { params: Promise<{ id: string; }>; },
 ): Promise<NextResponse<TypeApiResponse<TypeMenuItem>>> {
   // Check authentication
-  if (!await SupabaseService.authUser()) {
+  if (!await AuthService.checkAuth()) {
     return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}
@@ -42,7 +42,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string; }>; }
 ): Promise<NextResponse<TypeApiDeleteResponse>> {
   // Check authentication
-  if (!await SupabaseService.checkAuth()) {
+  if (!await AuthService.checkAuth()) {
     return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}

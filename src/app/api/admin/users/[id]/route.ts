@@ -2,18 +2,18 @@ import {NextResponse} from 'next/server';
 import {UserService} from '@/services/UserService';
 import {AdminUser as TypeAdminUser, UpdateUserDto as TypeUpdateUserDto, UserRole} from "@/types/user";
 import {ApiDeleteResponse as TypeApiDeleteResponse, ApiResponse as TypeApiResponse} from "@/types/global";
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {AuthService} from "@/services/AuthService";
 
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }>; },
 ): Promise<NextResponse<TypeApiResponse<TypeAdminUser>>> {
   try {
-    const authUser = await SupabaseService.authUser();
+    const authUser = await AuthService.getAuthUser();
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
     }
-    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+    if (authUser.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
     }
 
@@ -33,11 +33,11 @@ export async function PUT(
   context: { params: Promise<{ id: string }>; },
 ): Promise<NextResponse<TypeApiResponse<TypeAdminUser>>> {
   try {
-    const authUser = await SupabaseService.authUser();
+    const authUser = await AuthService.getAuthUser();
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
     }
-    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+    if (authUser.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
     }
 
@@ -72,11 +72,11 @@ export async function DELETE(
   context: { params: Promise<{ id: string }>; },
 ): Promise<NextResponse<TypeApiDeleteResponse>> {
   try {
-    const authUser = await SupabaseService.authUser();
+    const authUser = await AuthService.getAuthUser();
     if (!authUser) {
       return NextResponse.json({success: false, error: 'Authentication required'}, {status: 401});
     }
-    if (authUser.app_metadata?.role !== UserRole.SUPER_ADMIN) {
+    if (authUser.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json({success: false, error: 'Access denied. Super Admin role required.'}, {status: 403});
     }
 

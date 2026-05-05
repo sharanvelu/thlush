@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {SupabaseService} from "@/services/SupabaseService.server";
+import {AuthService} from "@/services/AuthService";
 import {CustomerService} from '@/services/CustomerService';
 import {ApiResponse as TypeApiResponse} from "@/types/global";
 import {Customer as TypeCustomer, BillWithCustomer as TypeBillWithCustomer} from "@/types/billing";
@@ -9,7 +9,7 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }>; },
 ): Promise<NextResponse<TypeApiResponse<{ customer: TypeCustomer; bills: TypeBillWithCustomer[] }>>> {
-  if (!await SupabaseService.authUser()) {
+  if (!await AuthService.checkAuth()) {
     return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}
@@ -46,7 +46,7 @@ export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string }>; },
 ): Promise<NextResponse<TypeApiResponse<TypeCustomer>>> {
-  if (!await SupabaseService.authUser()) {
+  if (!await AuthService.checkAuth()) {
     return NextResponse.json(
       {success: false, error: 'Authentication required'},
       {status: 401}

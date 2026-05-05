@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { SupabaseService } from '@/services/SupabaseService.client';
+import { usePathname } from 'next/navigation';
+import { signOut, useSession } from 'next-auth/react';
 import {Config} from "@/config";
 import {UserRole} from "@/types/user";
 
@@ -13,17 +13,12 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
   const [adminSubmenuOpen, setAdminSubmenuOpen] = useState<boolean>(false);
   const [mobileAdminSubmenuOpen, setMobileAdminSubmenuOpen] = useState<boolean>(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const pathname: string = usePathname();
   const applicationName: string = Config.app_name;
-
-  useEffect(() => {
-    SupabaseService.authUser().then((user) => {
-      setIsSuperAdmin(user?.app_metadata?.role === UserRole.SUPER_ADMIN);
-    });
-  }, []);
+  const {data: session} = useSession();
+  const isSuperAdmin: boolean = session?.user?.role === UserRole.SUPER_ADMIN;
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -40,7 +35,7 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [mobileMenuOpen]);
-  const router = useRouter();
+
 
   // Don't render Navbar on login page
   if (pathname === '/login') return null;
@@ -50,9 +45,7 @@ export default function Navbar() {
   };
 
   const handleSignOut = async () => {
-    await SupabaseService.signOut();
-    router.push('/login');
-    router.refresh();
+    await signOut({callbackUrl: '/login'});
   };
 
   const isActive = (href: string): boolean => {

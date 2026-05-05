@@ -2,6 +2,7 @@ import type {Metadata} from "next";
 import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Providers from "@/components/Providers";
 import {Toaster} from "react-hot-toast";
 import {Config} from "@/config";
 
@@ -26,9 +27,11 @@ export default function RootLayout({children}: Readonly<{ children: React.ReactN
   return (
     <html lang="en">
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-    <Toaster position="top-right" toastOptions={{duration: 3500}}/>
-    <Navbar/>
-    {children}
+    <Providers>
+      <Toaster position="top-right" toastOptions={{duration: 3500}}/>
+      <Navbar/>
+      {children}
+    </Providers>
     </body>
     </html>
   );

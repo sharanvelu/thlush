@@ -1,14 +1,12 @@
 'use client';
 
 import {useEffect, useState} from "react";
-import {useRouter} from "next/navigation";
-import {SupabaseService} from "@/services/SupabaseService.client";
-import {User} from "@supabase/auth-js";
-import {UserRole, UserRoleLabels} from "@/types/user";
+import {signOut} from "next-auth/react";
+import {AdminUser as TypeAdminUser, UserRole, UserRoleLabels} from "@/types/user";
+import {ApiResponse as TypeApiResponse} from "@/types/global";
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<TypeAdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Name edit
@@ -26,11 +24,15 @@ export default function ProfilePage() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    SupabaseService.authUser().then((user: User | null) => {
-      setUser(user);
-      setName((user?.user_metadata?.name as string) ?? '');
-      setIsLoading(false);
-    });
+    fetch('/api/profile')
+      .then(res => res.json())
+      .then((data: TypeApiResponse<TypeAdminUser>) => {
+        if (data.success && data.data) {
+          setUser(data.data);
+          setName(data.data.name);
+        }
+        setIsLoading(false);
+      });
   }, []);
 
   const handleNameSave = async () => {
@@ -45,18 +47,21 @@ export default function ProfilePage() {
     setIsUpdatingName(true);
 
     try {
-      const {error} = await SupabaseService.updateUserName(name.trim());
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: name.trim()}),
+      });
+      const data: TypeApiResponse<TypeAdminUser> = await response.json();
 
-      if (error) {
-        setNameError(error.message);
+      if (!data.success) {
+        setNameError(data.error || 'Failed to update name');
         return;
       }
 
       setNameSuccess('Name updated successfully.');
       setIsEditingName(false);
-      // Refresh user data
-      const updatedUser = await SupabaseService.authUser();
-      setUser(updatedUser);
+      setUser(data.data);
     } catch {
       setNameError('An unexpected error occurred.');
     } finally {
@@ -87,10 +92,15 @@ export default function ProfilePage() {
     setIsUpdating(true);
 
     try {
-      const {error} = await SupabaseService.updateUserPassword(newPassword);
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({password: newPassword}),
+      });
+      const data: TypeApiResponse<TypeAdminUser> = await response.json();
 
-      if (error) {
-        setPasswordError(error.message);
+      if (!data.success) {
+        setPasswordError(data.error || 'Failed to update password');
         return;
       }
 
@@ -105,9 +115,7 @@ export default function ProfilePage() {
   };
 
   const handleSignOut = async () => {
-    await SupabaseService.signOut();
-    router.push('/login');
-    router.refresh();
+    await signOut({callbackUrl: '/login'});
   };
 
   return (
@@ -148,7 +156,7 @@ export default function ProfilePage() {
                       {isUpdatingName ? 'Saving...' : 'Save'}
                     </button>
                     <button
-                      onClick={() => { setIsEditingName(false); setName((user?.user_metadata?.name as string) ?? ''); setNameError(''); setNameSuccess(''); }}
+                      onClick={() => { setIsEditingName(false); setName(user?.name ?? ''); setNameError(''); setNameSuccess(''); }}
                       className="text-sm font-semibold text-gray-600 dark:text-gray-300 bg-transparent border-2 border-solid border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 cursor-pointer"
                     >
                       Cancel
@@ -156,7 +164,7 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-900 dark:text-white">{(user?.user_metadata?.name as string) || '-'}</span>
+                    <span className="text-sm text-gray-900 dark:text-white">{user?.name || '-'}</span>
                     <button
                       onClick={() => setIsEditingName(true)}
                       className="text-xs text-[#ff7a18] bg-transparent border-none cursor-pointer font-medium hover:underline"
@@ -183,11 +191,11 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Role</span>
                 <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
-                  (user?.app_metadata?.role as UserRole) === UserRole.SUPER_ADMIN
+                  user?.role === UserRole.SUPER_ADMIN
                     ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
                     : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                 }`}>
-                  {UserRoleLabels[(user?.app_metadata?.role as UserRole) ?? UserRole.BILLING]}
+                  {UserRoleLabels[user?.role ?? UserRole.BILLING]}
                 </span>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
