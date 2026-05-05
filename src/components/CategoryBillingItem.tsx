@@ -32,7 +32,7 @@ export default function CategoryBillingItem(
       </div>
 
       <div className={`overflow-hidden transition-all duration-500 ${isExpanded ? 'h-fit' : 'h-0'}`}>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 px-5 pb-5">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 px-5 pb-5">
           {categoryWithMenuItem.menu_items.map((menuItem: TypeMenuItem) => (
             <BillingItem
               key={menuItem.id}
