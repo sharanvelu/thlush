@@ -1,5 +1,5 @@
 -- Add created_user_id to existing tables
--- References auth.users(id) from Supabase Auth
+-- References thlush_users(id)
 
 ALTER TABLE thlush_menu_items
   ADD COLUMN created_user_id UUID REFERENCES thlush_users(id) ON DELETE SET NULL;
