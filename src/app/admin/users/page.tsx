@@ -208,21 +208,24 @@ export default function AdminUsersPage() {
                 required={!editingUser}
               />
             </div>
-            <div>
-              <label htmlFor="password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                Password {editingUser && <span className="font-normal text-gray-400">(leave blank to keep unchanged)</span>}
-              </label>
-              <input
-                type="password"
-                id="password"
-                placeholder={editingUser ? 'Enter new password' : 'Enter password'}
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required={!editingUser}
-                minLength={6}
-              />
-            </div>
+            {/* Change Password - only visible on local env (staging/prod use SSO) */}
+            {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
+              <div>
+                <label htmlFor="password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                  Password {editingUser && <span className="font-normal text-gray-400">(leave blank to keep unchanged)</span>}
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder={editingUser ? 'Enter new password' : 'Enter password'}
+                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required={!editingUser}
+                  minLength={6}
+                />
+              </div>
+            )}
             <SelectField
               id="category_id"
               title="Category"

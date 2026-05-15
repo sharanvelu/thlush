@@ -52,12 +52,13 @@ export const {handlers, signIn, signOut, auth} = NextAuth({
     },
   ],
   callbacks: {
-    async signIn({user, account}) {
+    async signIn({user, account, profile}) {
       if (account?.provider === "authentik") {
         const {NeonService} = await import("@/services/NeonService");
         const {DatabaseService} = await import("@/services/DatabaseService");
         const sql = NeonService.getClient();
         const table = DatabaseService.table_names.users;
+        const oidcData = JSON.stringify(profile);
 
         const existing = await sql.query(
           `SELECT * FROM ${table} WHERE email = $1`,
@@ -66,17 +67,17 @@ export const {handlers, signIn, signOut, auth} = NextAuth({
 
         if (existing.length === 0) {
           await sql.query(
-            `INSERT INTO ${table} (id, name, email, password, role, last_login_at)
-             VALUES ($1, $2, $3, $4, $5, now())`,
-            [user.id, user.name, user.email, '', UserRole.BILLING]
+            `INSERT INTO ${table} (id, name, email, password, role, last_login_at, oidc_data)
+             VALUES ($1, $2, $3, $4, $5, now(), $6)`,
+            [user.id, user.name, user.email, '', UserRole.BILLING, oidcData]
           );
         } else {
           const dbUser = existing[0] as { id: string; role: string };
           user.id = dbUser.id;
           (user as Record<string, unknown>).role = dbUser.role;
           await sql.query(
-            `UPDATE ${table} SET last_login_at = now(), name = $1 WHERE id = $2`,
-            [user.name, dbUser.id]
+            `UPDATE ${table} SET last_login_at = now(), name = $1, oidc_data = $2 WHERE id = $3`,
+            [user.name, oidcData, dbUser.id]
           );
         }
       }

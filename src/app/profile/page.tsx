@@ -220,65 +220,67 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Change Password */}
-        <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-6">
-          <h2 className="m-0 mb-4 text-lg font-semibold text-gray-900 dark:text-white">Change Password</h2>
+        {/* Change Password - only visible on local env (staging/prod use SSO) */}
+        {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
+          <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-6">
+            <h2 className="m-0 mb-4 text-lg font-semibold text-gray-900 dark:text-white">Change Password</h2>
 
-          {passwordError && (
-            <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-3 mb-4 rounded">
-              <p className="text-sm text-red-700 dark:text-red-300 m-0">{passwordError}</p>
-            </div>
-          )}
+            {passwordError && (
+              <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-3 mb-4 rounded">
+                <p className="text-sm text-red-700 dark:text-red-300 m-0">{passwordError}</p>
+              </div>
+            )}
 
-          {passwordSuccess && (
-            <div className="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-3 mb-4 rounded">
-              <p className="text-sm text-green-700 dark:text-green-300 m-0">{passwordSuccess}</p>
-            </div>
-          )}
+            {passwordSuccess && (
+              <div className="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-3 mb-4 rounded">
+                <p className="text-sm text-green-700 dark:text-green-300 m-0">{passwordSuccess}</p>
+              </div>
+            )}
 
-          <form onSubmit={handlePasswordChange} className="flex flex-col gap-4">
-            <div>
-              <label htmlFor="new_password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                New Password
-              </label>
-              <input
-                type="password"
-                id="new_password"
-                placeholder="Enter new password"
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={isUpdating}
-              />
-            </div>
+            <form onSubmit={handlePasswordChange} className="flex flex-col gap-4">
+              <div>
+                <label htmlFor="new_password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  id="new_password"
+                  placeholder="Enter new password"
+                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isUpdating}
+                />
+              </div>
 
-            <div>
-              <label htmlFor="confirm_password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                id="confirm_password"
-                placeholder="Confirm new password"
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isUpdating}
-              />
-            </div>
+              <div>
+                <label htmlFor="confirm_password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  id="confirm_password"
+                  placeholder="Confirm new password"
+                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isUpdating}
+                />
+              </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isUpdating}
-                className="border-none rounded-2xl px-6 py-3 text-[15px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
-              >
-                {isUpdating ? 'Updating...' : 'Update Password'}
-              </button>
-            </div>
-          </form>
-        </div>
+              <div>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="border-none rounded-2xl px-6 py-3 text-[15px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
+                >
+                  {isUpdating ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Sign Out */}
         <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
