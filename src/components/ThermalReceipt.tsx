@@ -50,7 +50,7 @@ export function buildReceiptHtml(
   <style>
     @page {
       size: 58mm auto;
-      margin: 2mm;
+      margin: 0;
     }
     * {
       margin: 0;
