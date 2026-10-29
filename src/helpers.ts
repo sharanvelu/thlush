@@ -44,3 +44,29 @@ export const calculateTotalValue = (
   const itemTotal: number = calculateTotalTaxPriceValue(priceValue, sgst, cgst) + priceValue;
   return formatValue(itemTotal * quantityValue);
 }
+// Ends the app session and, for SSO users, the identity provider session in the background.
+export const LOGOUT_EVENT: string = 'thlush:logout';
+
+export const logout = async (): Promise<void> => {
+  // AppShell listens for this and shows a full-screen loader until we navigate away.
+  window.dispatchEvent(new Event(LOGOUT_EVENT));
+
+  try {
+    const response: Response = await fetch('/api/logout', {method: 'POST'});
+    const data: { success: boolean; data?: { idp_logout_url: string | null } } = await response.json();
+    const idpLogoutUrl: string | null | undefined = data.data?.idp_logout_url;
+
+    if (idpLogoutUrl) {
+      // Cross-site request carrying the IdP session cookie; the response is opaque and not needed.
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      await fetch(idpLogoutUrl, {mode: 'no-cors', credentials: 'include', signal: controller.signal})
+        .catch(() => undefined)
+        .finally(() => clearTimeout(timeout));
+    }
+  } catch {
+    // fall through to the login page
+  }
+
+  window.location.href = '/login';
+}

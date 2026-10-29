@@ -84,9 +84,12 @@ export const {handlers, signIn, signOut, auth} = NextAuth({
       return true;
     },
 
-    async jwt({token, user}) {
+    async jwt({token, user, account}) {
+      if (account) {
+        token.provider = account.provider;
+      }
       if (user) {
-        token.id = user.id;
+        token.id = user.id as string;
         token.role = (user as Record<string, unknown>).role as string;
       }
       return token;

@@ -3,7 +3,9 @@
 import {useEffect, useState} from "react";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
-import {signOut, useSession} from "next-auth/react";
+import {useSession} from "next-auth/react";
+import {LOGOUT_EVENT, logout} from "@/helpers";
+import Loader from "@/components/Loader";
 import {Config} from "@/config";
 import {UserRole} from "@/types/user";
 import Icon, {IconName} from "@/components/Icon";
@@ -45,6 +47,7 @@ export default function AppShell({children}: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<Theme>('light');
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   const isSuperAdmin: boolean = session?.user?.role === UserRole.SUPER_ADMIN;
   const userName: string = session?.user?.name || session?.user?.email || 'Account';
@@ -60,6 +63,12 @@ export default function AppShell({children}: { children: React.ReactNode }) {
     } catch {
     }
     /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  useEffect(() => {
+    const onLogout = () => setIsLoggingOut(true);
+    window.addEventListener(LOGOUT_EVENT, onLogout);
+    return () => window.removeEventListener(LOGOUT_EVENT, onLogout);
   }, []);
 
   const toggleTheme = () => {
@@ -182,7 +191,7 @@ export default function AppShell({children}: { children: React.ReactNode }) {
               className="btn btn-ghost btn-icon btn-sm"
               title="Sign out"
               aria-label="Sign out"
-              onClick={() => signOut({callbackUrl: '/login'})}
+              onClick={() => logout()}
             >
               <Icon name="logout" size={15}/>
             </button>
@@ -194,6 +203,8 @@ export default function AppShell({children}: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
+      {isLoggingOut && <Loader label="Signing out…"/>}
+
       {/* Desktop sidebar: same canvas as content, hairline divider */}
       <aside
         className="hidden lg:block fixed inset-y-0 left-0 z-30 border-r border-line bg-canvas transition-[width] duration-200"

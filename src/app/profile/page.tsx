@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from "react";
-import {signOut} from "next-auth/react";
+import {logout} from "@/helpers";
 import {AdminUser as TypeAdminUser, UserRole, UserRoleLabels} from "@/types/user";
 import {ApiResponse as TypeApiResponse} from "@/types/global";
 import PageHeader from "@/components/PageHeader";
@@ -117,7 +117,7 @@ export default function ProfilePage() {
   };
 
   const handleSignOut = async () => {
-    await signOut({callbackUrl: '/login'});
+    await logout();
   };
 
   const fmtDate = (d: string | null | undefined, withTime = false): string => {
