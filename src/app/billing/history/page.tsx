@@ -7,6 +7,8 @@ import {shouldIgnoreTax} from "@/helpers";
 import toast from "react-hot-toast";
 import {printBillReceipt} from "@/components/ThermalReceipt";
 import SelectField from "@/components/Inputs/Select";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 
 export default function BillingHistoryPage() {
   const defaultFilters: TypeBillFilters = {
@@ -160,401 +162,271 @@ export default function BillingHistoryPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-          {isStatsLoading ? (
-            Array.from({length: 5}).map((_, i) => (
-              <div key={i} className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4 animate-pulse">
-                <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
-                <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today&apos;s Bills</div>
-                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{todayStats?.total_bills ?? '-'}</div>
-              </div>
-              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today&apos;s Revenue</div>
-                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {todayStats ? `₹${todayStats.total_revenue.toFixed(2)}` : '-'}
-                </div>
-              </div>
-              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Avg Order Value</div>
-                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {todayStats ? `₹${todayStats.avg_order_value.toFixed(2)}` : '-'}
-                </div>
-              </div>
-              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Items Sold Today</div>
-                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{todayStats?.total_items ?? '-'}</div>
-              </div>
-              <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Overall Bills</div>
-                <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{overallStats?.total_bills ?? '-'}</div>
-              </div>
-            </>
-          )}
+  const money = (n: number): string => n.toFixed(2);
+
+  const renderDetail = (bill: TypeBillWithCustomer) => {
+    const taxOn: boolean = !shouldIgnoreTax();
+    const qty: number = bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.quantity, 0);
+    return (
+      <div className="pop mx-auto w-full max-w-md rounded-lg bg-raised px-4 py-4 shadow-ring num text-[12.5px] text-ink">
+        <div className="text-center">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.12em]">Bill #{bill.id}</div>
+          <div className="text-ink-3">{formatDate(bill.created_at)}</div>
+          <div className="text-ink-2">{bill.customers?.name || 'Walk-in Customer'}</div>
         </div>
-
-        {/* Filters Section */}
-        <div className="mb-6 bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl">
-          <button
-            className="w-full flex items-center justify-between p-4 cursor-pointer bg-transparent border-none text-left"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-              <span className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
-                Filters & Sort
-                {activeFilterCount > 0 && (
-                  <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-bold text-white -bg-linear-120 from-[#ff7a18] to-[#ffb347] rounded-full">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </span>
-            <svg
-              className={`w-5 h-5 text-gray-500 transition-transform ${showFilters ? 'rotate-180' : ''}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-            </svg>
-          </button>
-
-          {showFilters && (
-            <div className="border-t-2 border-[#f0e6dd] dark:border-gray-700 p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Start Date */}
-                <div>
-                  <label htmlFor="start_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    id="start_date"
-                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                    value={filters.start_date}
-                    onChange={(e) => updateFilter('start_date', e.target.value)}
-                  />
-                </div>
-
-                {/* End Date */}
-                <div>
-                  <label htmlFor="end_date" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    id="end_date"
-                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                    value={filters.end_date}
-                    onChange={(e) => updateFilter('end_date', e.target.value)}
-                  />
-                </div>
-
-                {/* Customer Name */}
-                <div>
-                  <label htmlFor="customer_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                    Customer Name
-                  </label>
-                  <input
-                    type="text"
-                    id="customer_name"
-                    placeholder="Search by customer..."
-                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                    value={filters.customer_name}
-                    onChange={(e) => updateFilter('customer_name', e.target.value)}
-                  />
-                </div>
-
-                {/* Item Name */}
-                <div>
-                  <label htmlFor="item_name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                    Item Name
-                  </label>
-                  <input
-                    type="text"
-                    id="item_name"
-                    placeholder="Search by item..."
-                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                    value={filters.item_name}
-                    onChange={(e) => updateFilter('item_name', e.target.value)}
-                  />
-                </div>
-
-                {/* Min Total */}
-                <div>
-                  <label htmlFor="min_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                    Min Total Amount
-                  </label>
-                  <input
-                    type="number"
-                    id="min_total"
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                    value={filters.min_total}
-                    onChange={(e) => updateFilter('min_total', e.target.value)}
-                  />
-                </div>
-
-                {/* Max Total */}
-                <div>
-                  <label htmlFor="max_total" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                    Max Total Amount
-                  </label>
-                  <input
-                    type="number"
-                    id="max_total"
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                    value={filters.max_total}
-                    onChange={(e) => updateFilter('max_total', e.target.value)}
-                  />
-                </div>
+        <hr className="rule-dash my-3"/>
+        <div className="flex flex-col gap-2">
+          {bill.bill_items.map((item: TypeBillItem) => (
+            <div key={item.id}>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 break-words">{item.name}</span>
+                <span>{money(item.total)}</span>
               </div>
-
-              {/* Sort By */}
-              <div className="mt-4 max-w-sm">
-                <SelectField
-                  id="sort_by"
-                  title="Sort By"
-                  placeholder="Select Status"
-                  value={filters.sort_by}
-                  onchange={(name: string, value: string | number) => updateFilter('sort_by', value.toString())}
-                  options={[
-                    {value: BillSortBy.DATE_NEWEST, text: "Date (Newest First)"},
-                    {value: BillSortBy.DATE_OLDEST, text: "Date (Oldest First)"},
-                    {value: BillSortBy.TOTAL_HIGH, text: "Total (High to Low)"},
-                    {value: BillSortBy.TOTAL_LOW, text: "Total (Low to High)"},
-                    {value: BillSortBy.CUSTOMER_NAME_A_Z, text: "Customer Name (A-Z)"},
-                    {value: BillSortBy.CUSTOMER_NAME_Z_A, text: "Customer Name (Z-A)"},
-                  ]}
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-5">
-                <button
-                  className="rounded-[14px] px-5 py-2 text-[15px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer"
-                  onClick={resetFilters}
-                >
-                  Reset
-                </button>
-                <button
-                  className="border-none rounded-2xl px-5 py-2 text-[16px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer"
-                  style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
-                  onClick={applyFilters}
-                >
-                  Apply Filters
-                </button>
+              <div className="text-ink-3">
+                {item.quantity} x {money(item.price)}
+                {taxOn && ` + tax ${money((item.sgst + item.cgst) * item.price * item.quantity / 100)}`}
               </div>
             </div>
-          )}
+          ))}
         </div>
-
-        <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-            <h1 className="m-0 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-              Billing History
-            </h1>
-            <button
-              className="flex items-center gap-2 rounded-[14px] px-4 py-2 text-[14px] font-semibold border-2 border-solid border-[#ffb347] text-[#ff7a18] bg-transparent cursor-pointer hover:bg-orange-50 dark:hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={exportCsv}
-              disabled={isExporting}
-            >
-              {isExporting ? (
-                <svg className="animate-spin h-4 w-4 text-[#ff7a18]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              )}
-              {isExporting ? 'Exporting...' : 'Export CSV'}
-            </button>
+        <hr className="rule-dash my-3"/>
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between text-ink-2"><span>Items</span><span>{qty}</span></div>
+          {taxOn && (
+            <div className="flex justify-between text-ink-2"><span>Tax</span><span>{bill.currency} {money(bill.total_tax)}</span></div>
+          )}
+          <div className="flex justify-between text-[14px] font-semibold">
+            <span>TOTAL</span><span>{bill.currency} {money(bill.total_amount)}</span>
           </div>
-
-          {/* Bills List */}
-          {isBillsLoading ? (
-            <div className="flex flex-col gap-4">
-              {Array.from({length: 4}).map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4 animate-pulse">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                      <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    </div>
-                    <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {bills.length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400">No bills found.</p>
-              )}
-
-              <div className="flex flex-col gap-4">
-                {bills.map((bill: TypeBillWithCustomer) => (
-                  <div
-                    key={bill.id}
-                    className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl overflow-hidden"
-                  >
-                    {/* Bill header - clickable */}
-                    <div
-                      className="flex flex-wrap items-center justify-between gap-3 p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                      onClick={() => toggleExpand(bill.id)}
-                    >
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          #{bill.id} &middot; {formatDate(bill.created_at)}
-                        </span>
-                        <span className="text-base font-semibold text-gray-900 dark:text-white">
-                          {bill.customers?.name || 'Walk-in Customer'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">
-                          {bill.currency} {bill.total_amount.toFixed(2)}
-                        </span>
-                        <svg
-                          className={`w-5 h-5 text-gray-500 transition-transform ${expandedBillId === bill.id ? 'rotate-180' : ''}`}
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Bill items - expandable */}
-                    {expandedBillId === bill.id && (
-                      <div className="border-t-2 border-[#f0e6dd] dark:border-gray-700 p-4">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                              <th className="pb-2 font-medium">Item</th>
-                              <th className="pb-2 font-medium text-right">Qty</th>
-                              <th className="pb-2 font-medium text-right">Price</th>
-                              {!shouldIgnoreTax() && (
-                                <th className="pb-2 font-medium text-right">Tax</th>
-                              )}
-                              <th className="pb-2 font-medium text-right">Total</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {bill.bill_items.map((item: TypeBillItem) => (
-                              <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800">
-                                <td className="py-2 text-gray-900 dark:text-white">{item.name}</td>
-                                <td className="py-2 text-right text-gray-600 dark:text-gray-300">{item.quantity}</td>
-                                <td className="py-2 text-right text-gray-600 dark:text-gray-300">{item.price.toFixed(2)}</td>
-                                {!shouldIgnoreTax() && (
-                                  <td className="py-2 text-right text-gray-600 dark:text-gray-300">
-                                    {((item.sgst + item.cgst) * item.price * item.quantity / 100).toFixed(2)}
-                                  </td>
-                                )}
-                                <td className="py-2 text-right font-medium text-gray-900 dark:text-white">{item.total.toFixed(2)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                          <tfoot>
-                            <tr className="border-t-2 border-gray-300 dark:border-gray-600 font-bold text-gray-900 dark:text-white">
-                              <td className="py-2">Total</td>
-                              <td className="py-2 text-right">
-                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.quantity, 0)}
-                              </td>
-                              <td className="py-2 text-right">
-                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + (item.price * item.quantity), 0).toFixed(2)}
-                              </td>
-                              {!shouldIgnoreTax() && (
-                                <td className="py-2 text-right">
-                                  {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + ((item.sgst + item.cgst) * item.price * item.quantity / 100), 0).toFixed(2)}
-                                </td>
-                              )}
-                              <td className="py-2 text-right">
-                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.total, 0).toFixed(2)}
-                              </td>
-                            </tr>
-                          </tfoot>
-                        </table>
-
-                        {/* Bill summary */}
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <button
-                            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold border-none -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{boxShadow: "0 8px 16px rgba(255,122,24,.2)"}}
-                            disabled={printingBillId === bill.id}
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              setPrintingBillId(bill.id);
-                              await printBillReceipt(bill);
-                              setPrintingBillId(null);
-                            }}
-                          >
-                            {printingBillId === bill.id ? (
-                              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            ) : (
-                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8 15H16V18M16 18V21H8V18H4V9H8M16 18H20V9H8M8 9V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            )}
-                            {printingBillId === bill.id ? 'Printing...' : 'Print Invoice'}
-                          </button>
-                          <div className="text-right text-sm space-y-1">
-                            {!shouldIgnoreTax() && (
-                              <div className="text-gray-500 dark:text-gray-400">
-                                Tax: {bill.currency} {bill.total_tax.toFixed(2)}
-                              </div>
-                            )}
-                            <div className="text-base font-bold text-gray-900 dark:text-white">
-                              Total: {bill.currency} {bill.total_amount.toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {pagination && pagination.total_pages > 1 && (
-                <div className="flex items-center justify-center gap-3 mt-6">
-                  <button
-                    className="px-4 py-2 text-sm font-medium rounded-xl border-2 border-[#f0e6dd] dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                    disabled={!pagination.has_prev_page}
-                    onClick={() => fetchBills(pagination.current_page - 1, appliedFilters)}
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Page {pagination.current_page} of {pagination.total_pages}
-                  </span>
-                  <button
-                    className="px-4 py-2 text-sm font-medium rounded-xl border-2 border-[#f0e6dd] dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                    disabled={!pagination.has_next_page}
-                    onClick={() => fetchBills(pagination.current_page + 1, appliedFilters)}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+        </div>
+        <hr className="rule-dash my-3"/>
+        <div className="flex justify-center">
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={printingBillId === bill.id}
+            onClick={async (e) => {
+              e.stopPropagation();
+              setPrintingBillId(bill.id);
+              await printBillReceipt(bill);
+              setPrintingBillId(null);
+            }}
+          >
+            <Icon name="print" size={14}/>
+            {printingBillId === bill.id ? 'Printing...' : 'Print Invoice'}
+          </button>
         </div>
       </div>
+    );
+  };
+
+  const statItems: {label: string; value: string; accent?: boolean}[] = [
+    {label: "Today's Bills", value: String(todayStats?.total_bills ?? '-')},
+    {label: "Today's Revenue", value: todayStats ? `₹${money(todayStats.total_revenue)}` : '-', accent: true},
+    {label: 'Avg Order Value', value: todayStats ? `₹${money(todayStats.avg_order_value)}` : '-'},
+    {label: 'Items Sold Today', value: String(todayStats?.total_items ?? '-')},
+    {label: 'Overall Bills', value: String(overallStats?.total_bills ?? '-')},
+  ];
+
+  const inputs: {id: keyof TypeBillFilters; label: string; type: string; placeholder?: string}[] = [
+    {id: 'start_date', label: 'Start Date', type: 'date'},
+    {id: 'end_date', label: 'End Date', type: 'date'},
+    {id: 'customer_name', label: 'Customer Name', type: 'text', placeholder: 'Search by customer...'},
+    {id: 'item_name', label: 'Item Name', type: 'text', placeholder: 'Search by item...'},
+    {id: 'min_total', label: 'Min Total Amount', type: 'number', placeholder: '0.00'},
+    {id: 'max_total', label: 'Max Total Amount', type: 'number', placeholder: '0.00'},
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        title="Billing History"
+        description="Browse, filter and reprint past bills."
+        actions={
+          <>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowFilters(!showFilters)}
+              aria-expanded={showFilters}
+            >
+              <Icon name="filter" size={15}/>
+              Filters
+              {activeFilterCount > 0 && <span className="badge badge-accent num">{activeFilterCount}</span>}
+            </button>
+            <button className="btn btn-secondary" onClick={exportCsv} disabled={isExporting}>
+              <Icon name="download" size={15}/>
+              {isExporting ? 'Exporting...' : 'Export CSV'}
+            </button>
+          </>
+        }
+      />
+
+      {/* Stats strip */}
+      <div className="card mb-5 grid grid-cols-2 md:grid-cols-5">
+        {statItems.map((st, i) => (
+          <div key={st.label} className={`px-4 py-3 ${i > 0 ? 'md:border-l md:border-line' : ''} ${i % 2 === 1 ? 'border-l border-line md:border-l-0' : ''} ${i >= 2 ? 'border-t border-line md:border-t-0' : ''} ${i === statItems.length - 1 && statItems.length % 2 === 1 ? 'col-span-2 md:col-span-1' : ''}`}>
+            <div className="eyebrow">{st.label}</div>
+            {isStatsLoading ? (
+              <div className="skeleton mt-2 h-6 w-16"></div>
+            ) : (
+              <div className={`num mt-1 text-xl font-semibold ${st.accent ? 'text-accent' : 'text-ink'}`}>{st.value}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      {showFilters && (
+        <div className="card card-pad rise mb-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {inputs.map((inp) => (
+              <div key={inp.id}>
+                <label htmlFor={inp.id} className="field-label">{inp.label}</label>
+                <input
+                  type={inp.type}
+                  id={inp.id}
+                  placeholder={inp.placeholder}
+                  {...(inp.type === 'number' ? {min: '0', step: '0.01'} : {})}
+                  className={`field ${inp.type === 'number' ? 'num' : ''}`}
+                  value={filters[inp.id]}
+                  onChange={(e) => updateFilter(inp.id, e.target.value)}
+                />
+              </div>
+            ))}
+            <div>
+              <SelectField
+                id="sort_by"
+                title="Sort By"
+                placeholder="Select Status"
+                value={filters.sort_by}
+                onchange={(name: string, value: string | number) => updateFilter('sort_by', value.toString())}
+                options={[
+                  {value: BillSortBy.DATE_NEWEST, text: "Date (Newest First)"},
+                  {value: BillSortBy.DATE_OLDEST, text: "Date (Oldest First)"},
+                  {value: BillSortBy.TOTAL_HIGH, text: "Total (High to Low)"},
+                  {value: BillSortBy.TOTAL_LOW, text: "Total (Low to High)"},
+                  {value: BillSortBy.CUSTOMER_NAME_A_Z, text: "Customer Name (A-Z)"},
+                  {value: BillSortBy.CUSTOMER_NAME_Z_A, text: "Customer Name (Z-A)"},
+                ]}
+              />
+            </div>
+          </div>
+          <div className="mt-5 flex gap-2">
+            <button className="btn btn-primary" onClick={applyFilters}>Apply Filters</button>
+            <button className="btn btn-secondary" onClick={resetFilters}>Reset</button>
+          </div>
+        </div>
+      )}
+
+      {/* Bills */}
+      {isBillsLoading ? (
+        <div className="card overflow-hidden">
+          {Array.from({length: 5}).map((_, i) => (
+            <div key={i} className="flex items-center justify-between gap-4 border-b border-line px-4 py-4 last:border-b-0">
+              <div className="flex flex-col gap-2">
+                <div className="skeleton h-3 w-32"></div>
+                <div className="skeleton h-4 w-40"></div>
+              </div>
+              <div className="skeleton h-5 w-20"></div>
+            </div>
+          ))}
+        </div>
+      ) : bills.length === 0 ? (
+        <div className="card empty">
+          <Icon name="receipt" size={28}/>
+          <p className="text-ink-2 font-medium">No bills found.</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="card hidden overflow-hidden md:block">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Bill</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th className="r">Items</th>
+                  <th className="r">Total</th>
+                  <th className="w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {bills.map((bill: TypeBillWithCustomer) => {
+                  const open: boolean = expandedBillId === bill.id;
+                  return [
+                    <tr key={bill.id} className="cursor-pointer" onClick={() => toggleExpand(bill.id)}>
+                      <td className="num font-medium">#{bill.id}</td>
+                      <td className="num text-ink-2">{formatDate(bill.created_at)}</td>
+                      <td className="font-medium">{bill.customers?.name || <span className="text-ink-3 font-normal">Walk-in Customer</span>}</td>
+                      <td className="r num text-ink-2">{bill.bill_items.length}</td>
+                      <td className="r num font-semibold">{bill.currency} {money(bill.total_amount)}</td>
+                      <td className="text-ink-3">
+                        <Icon name="chevronDown" size={16} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}/>
+                      </td>
+                    </tr>,
+                    open && (
+                      <tr key={`${bill.id}-d`} className="bg-sunken hover:bg-sunken">
+                        <td colSpan={6} className="py-5">{renderDetail(bill)}</td>
+                      </tr>
+                    ),
+                  ];
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile stacked rows */}
+          <div className="card overflow-hidden md:hidden">
+            {bills.map((bill: TypeBillWithCustomer) => {
+              const open: boolean = expandedBillId === bill.id;
+              return (
+                <div key={bill.id} className="border-b border-line last:border-b-0">
+                  <button
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-sunken"
+                    onClick={() => toggleExpand(bill.id)}
+                    aria-expanded={open}
+                  >
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="num text-xs text-ink-3">#{bill.id} · {formatDate(bill.created_at)}</span>
+                      <span className="truncate font-medium text-ink">{bill.customers?.name || 'Walk-in Customer'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="num font-semibold text-ink">{bill.currency} {money(bill.total_amount)}</span>
+                      <Icon name="chevronDown" size={16} className={`text-ink-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}/>
+                    </div>
+                  </button>
+                  {open && <div className="bg-sunken px-3 py-4">{renderDetail(bill)}</div>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination */}
+          {pagination && pagination.total_pages > 1 && (
+            <div className="mt-5 flex items-center justify-center gap-3">
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={!pagination.has_prev_page}
+                onClick={() => fetchBills(pagination.current_page - 1, appliedFilters)}
+              >
+                <Icon name="chevronLeft" size={14}/>
+                Previous
+              </button>
+              <span className="num text-xs text-ink-2">
+                Page {pagination.current_page} of {pagination.total_pages}
+              </span>
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={!pagination.has_next_page}
+                onClick={() => fetchBills(pagination.current_page + 1, appliedFilters)}
+              >
+                Next
+                <Icon name="chevronRight" size={14}/>
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

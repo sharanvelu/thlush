@@ -1,6 +1,7 @@
 'use client';
 
 import {useEffect, useRef} from "react";
+import Icon from "@/components/Icon";
 
 type ConfirmModalVariant = 'alert' | 'info';
 
@@ -15,19 +16,6 @@ interface ConfirmModalProps {
   onCancel: () => void;
 }
 
-const variantStyles: Record<ConfirmModalVariant, { icon: string; confirmClass: string; iconBg: string }> = {
-  alert: {
-    icon: '!',
-    iconBg: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
-    confirmClass: 'bg-[#dc3545] hover:bg-[#c82333] text-white',
-  },
-  info: {
-    icon: '?',
-    iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-    confirmClass: '-bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white',
-  },
-};
-
 export default function ConfirmModal({
   open,
   title,
@@ -39,7 +27,6 @@ export default function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const styles = variantStyles[variant];
 
   useEffect(() => {
     if (open) cancelRef.current?.focus();
@@ -58,41 +45,23 @@ export default function ConfirmModal({
 
   if (!open) return null;
 
+  const alert: boolean = variant === 'alert';
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-      onClick={onCancel}
-    >
-      <div
-        className="w-full max-w-md bg-white dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start gap-4">
-          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${styles.iconBg}`}>
-            {styles.icon}
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 px-4" onClick={onCancel} role="dialog" aria-modal="true" aria-label={title}>
+      <div className="pop w-full max-w-[400px] rounded-2xl bg-raised p-5 shadow-pop" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start gap-3.5">
+          <div className={`grid size-9 shrink-0 place-items-center rounded-full ${alert ? 'bg-bad-soft text-bad' : 'bg-accent-soft text-accent'}`}>
+            <Icon name={alert ? 'alert' : 'sparkles'} size={17}/>
           </div>
-          <div className="flex-1">
-            <h3 className="m-0 text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
-            <p className="mt-2 mb-0 text-sm text-gray-600 dark:text-gray-400">{message}</p>
+          <div className="flex-1 pt-0.5">
+            <h3 className="text-[15px] font-semibold tracking-[-0.01em]">{title}</h3>
+            <p className="mt-1 text-[13px] text-ink-2">{message}</p>
           </div>
         </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            ref={cancelRef}
-            type="button"
-            className="border-2 border-solid border-[#e0d7cf] dark:border-gray-600 rounded-xl px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-            onClick={onCancel}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className={`border-none rounded-xl px-5 py-2 text-sm font-semibold cursor-pointer ${styles.confirmClass}`}
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </button>
+        <div className="mt-5 flex justify-end gap-2">
+          <button ref={cancelRef} type="button" className="btn btn-secondary" onClick={onCancel}>{cancelLabel}</button>
+          <button type="button" className={`btn ${alert ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>{confirmLabel}</button>
         </div>
       </div>
     </div>

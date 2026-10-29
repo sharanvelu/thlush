@@ -5,6 +5,7 @@ import {useParams, useRouter} from "next/navigation";
 import {AdminUser as TypeAdminUser, UserRole, UserRoleLabels} from "@/types/user";
 import {ApiResponse as TypeApiResponse} from "@/types/global";
 import Link from "next/link";
+import Icon from "@/components/Icon";
 
 export default function AdminUserViewPage() {
   const params = useParams();
@@ -44,107 +45,68 @@ export default function AdminUserViewPage() {
     });
   };
 
+  const rows: {label: string; value: string}[] = user ? [
+    {label: 'Name', value: user.name || '-'},
+    {label: 'Email', value: user.email},
+    {label: 'Role', value: UserRoleLabels[user.role]},
+    {label: 'Created at', value: formatDate(user.created_at)},
+    {label: 'Last login', value: formatDate(user.last_sign_in_at)},
+  ] : [];
+
   return (
-    <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl">
+    <div className="mx-auto max-w-2xl">
+      <Link href="/admin/users" className="mb-4 inline-flex items-center gap-1 text-[13px] font-medium text-ink-3 hover:text-ink">
+        <Icon name="chevronLeft" size={15}/>
+        Back to users
+      </Link>
 
-        {/* Back link */}
-        <Link
-          href="/admin/users"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 no-underline"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-          </svg>
-          Back to Users
-        </Link>
-
-        {isLoading ? (
-          <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 animate-pulse">
-            <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
-            <div className="flex flex-col gap-5">
-              {Array.from({length: 5}).map((_, i) => (
-                <div key={i}>
-                  <div className="h-3.5 w-20 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-                  <div className="h-5 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-              ))}
+      {isLoading ? (
+        <div className="card card-pad">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="skeleton size-12 !rounded-full"></div>
+            <div className="skeleton h-6 w-48"></div>
+          </div>
+          <div className="flex flex-col gap-5">
+            {Array.from({length: 5}).map((_, i) => (
+              <div key={i}>
+                <div className="skeleton mb-2 h-3 w-20"></div>
+                <div className="skeleton h-4 w-64 max-w-full"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : error ? (
+        <div className="card empty">
+          <Icon name="alert" size={26} className="text-bad"/>
+          <p className="mb-2 font-medium text-bad">{error}</p>
+          <button onClick={() => router.push('/admin/users')} className="btn btn-secondary">
+            Go back
+          </button>
+        </div>
+      ) : user && (
+        <div className="card rise overflow-hidden">
+          <div className="flex items-center gap-3.5 border-b border-line p-5">
+            <div className="grid size-12 shrink-0 place-items-center rounded-full bg-accent-soft text-lg font-semibold text-accent">
+              {(user.name || user.email || '?').trim().charAt(0).toUpperCase()}
             </div>
-          </div>
-        ) : error ? (
-          <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 text-center">
-            <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
-            <button
-              onClick={() => router.push('/admin/users')}
-              className="inline-flex items-center bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-none rounded-xl py-2 px-5 font-semibold cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600"
-            >
-              Go Back
-            </button>
-          </div>
-        ) : user && (
-          <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <h1 className="m-0 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                {user.name || user.email}
-              </h1>
-              <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
-                user.role === UserRole.SUPER_ADMIN
-                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-              }`}>
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold tracking-[-0.02em]">{user.name || user.email}</h1>
+              <span className={`badge mt-1 ${user.role === UserRole.SUPER_ADMIN ? 'badge-accent' : 'badge-info'}`}>
                 {UserRoleLabels[user.role]}
               </span>
             </div>
-
-            <div className="flex flex-col gap-5">
-              <div>
-                <span className="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
-                  Name
-                </span>
-                <span className="text-base text-gray-900 dark:text-white">
-                  {user.name || '-'}
-                </span>
-              </div>
-
-              <div>
-                <span className="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
-                  Email
-                </span>
-                <span className="text-base text-gray-900 dark:text-white">
-                  {user.email}
-                </span>
-              </div>
-
-              <div>
-                <span className="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
-                  Role
-                </span>
-                <span className="text-base text-gray-900 dark:text-white">
-                  {UserRoleLabels[user.role]}
-                </span>
-              </div>
-
-              <div>
-                <span className="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
-                  Created At
-                </span>
-                <span className="text-base text-gray-900 dark:text-white">
-                  {formatDate(user.created_at)}
-                </span>
-              </div>
-
-              <div>
-                <span className="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
-                  Last Login
-                </span>
-                <span className="text-base text-gray-900 dark:text-white">
-                  {formatDate(user.last_sign_in_at)}
-                </span>
-              </div>
-            </div>
           </div>
-        )}
-      </div>
+
+          <dl className="m-0 divide-y divide-line">
+            {rows.map((row) => (
+              <div key={row.label} className="flex flex-col gap-0.5 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+                <dt className="eyebrow sm:w-32 sm:shrink-0">{row.label}</dt>
+                <dd className="m-0 min-w-0 break-words text-sm text-ink">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
     </div>
   );
 }

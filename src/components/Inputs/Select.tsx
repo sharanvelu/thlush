@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from "react";
+import Icon from "@/components/Icon";
 
 interface Option {
   value: string | number;
@@ -60,42 +61,42 @@ export default function SelectField({id, title, placeholder, disabled, value, op
   return (
     <div className="mb-4 w-full relative" ref={containerRef}>
       {title && (
-        <label
-          htmlFor={id}
-          className="block mb-1.5 font-semibold text-[#1f1f1f]] dark:text-gray-300 text-sm"
-          onClick={toggleDropdown}
-        >
+        <label htmlFor={id} className="field-label" onClick={toggleDropdown}>
           {title}
           {(titleHelperText ?? '').trim() !== '' && (
-            <span className="px-2 text-xs text-amber-600 dark:text-amber-400 mt-1 mb-0">
-              {titleHelperText}
-            </span>
+            <span className="ml-2 text-[11px] font-normal text-warn">{titleHelperText}</span>
           )}
         </label>
       )}
-      <div
-        className={`flex items-center justify-between w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18] ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      <button
+        type="button"
+        id={id}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={isDropDownOpen}
+        className="field flex items-center justify-between text-left cursor-pointer"
         onClick={toggleDropdown}
       >
-        {getDisplayValue()}
-        <span className={`transition-all duration-250 ${isDropDownOpen ? '' : 'rotate-180'}`}>
-          <svg width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18.2929 15.2893C18.6834 14.8988 18.6834 14.2656 18.2929 13.8751L13.4007 8.98766C12.6195 8.20726 11.3537 8.20757 10.5729 8.98835L5.68257 13.8787C5.29205 14.2692 5.29205 14.9024 5.68257 15.2929C6.0731 15.6835 6.70626 15.6835 7.09679 15.2929L11.2824 11.1073C11.673 10.7168 12.3061 10.7168 12.6966 11.1073L16.8787 15.2893C17.2692 15.6798 17.9024 15.6798 18.2929 15.2893Z" fill="#888888"/>
-          </svg>
-        </span>
-      </div>
+        <span className={value ? 'truncate' : 'truncate text-ink-4'}>{getDisplayValue()}</span>
+        <Icon name="chevronDown" size={15} className={`shrink-0 text-ink-3 transition-transform duration-150 ${isDropDownOpen ? 'rotate-180' : ''}`}/>
+      </button>
       {isDropDownOpen && !disabled && (
-        <div
-          className="absolute z-20 p-2 flex flex-col gap-2 w-full top-20 border border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl shadow-xl">
-          {options.map((option) => (
-            <div
-              key={option.value}
-              className={`py-1 px-4 cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-900 rounded-xl ${option.value == value ? 'bg-gray-400 dark:bg-gray-900' : 'bg-gray-300 dark:bg-gray-800'}`}
-              onClick={() => selectOption(option.value)}
-            >
-              {option.text}
-            </div>
-          ))}
+        <div role="listbox" className="pop absolute left-0 right-0 top-full z-20 mt-1.5 max-h-64 overflow-y-auto rounded-xl bg-raised p-1 shadow-pop" style={{transformOrigin: 'top'}}>
+          {options.map((option) => {
+            const selected: boolean = option.value == value;
+            return (
+              <div
+                key={option.value}
+                role="option"
+                aria-selected={selected}
+                className={`flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-[13px] ${selected ? 'bg-accent-soft text-accent font-medium' : 'text-ink hover:bg-sunken'}`}
+                onClick={() => selectOption(option.value)}
+              >
+                {option.text}
+                {selected && <Icon name="check" size={14}/>}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

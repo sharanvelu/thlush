@@ -8,6 +8,8 @@ import {shouldIgnoreTax} from "@/helpers";
 import {printBillReceipt} from "@/components/ThermalReceipt";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -46,23 +48,30 @@ export default function CustomerDetailPage() {
   const toggleExpand = (billId: number) => {
     setExpandedBillId(expandedBillId === billId ? null : billId);
   };
+  const backLink = (
+    <Link href="/admin/customers" className="mb-4 inline-flex items-center gap-1 text-[13px] font-medium text-ink-3 hover:text-ink">
+      <Icon name="chevronLeft" size={15}/>
+      Back to customers
+    </Link>
+  );
 
   if (isLoading) {
     return (
-      <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 animate-pulse">
-            <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-8"></div>
-            {Array.from({length: 3}).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div>
+        {backLink}
+        <div className="skeleton mb-2 h-7 w-48"></div>
+        <div className="skeleton mb-6 h-4 w-32"></div>
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          <div className="skeleton h-20 !rounded-[14px]"></div>
+          <div className="skeleton h-20 !rounded-[14px]"></div>
+        </div>
+        <div className="card overflow-hidden">
+          {Array.from({length: 3}).map((_, i) => (
+            <div key={i} className="flex items-center justify-between border-b border-line p-4 last:border-b-0">
+              <div className="skeleton h-4 w-40"></div>
+              <div className="skeleton h-4 w-24"></div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -70,151 +79,131 @@ export default function CustomerDetailPage() {
 
   if (!customer) {
     return (
-      <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-gray-500 dark:text-gray-400">Customer not found.</p>
+      <div>
+        {backLink}
+        <div className="card empty">
+          <Icon name="alert" size={26} className="text-ink-4"/>
+          <p className="font-medium text-ink-2">Customer not found</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back link */}
-        <Link
-          href="/admin/customers"
-          className="inline-flex items-center gap-1 text-sm font-medium text-[#ff7a18] hover:underline mb-4"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-          </svg>
-          Back to Customers
-        </Link>
+  const totalSpent: number = bills.reduce((sum, b) => sum + b.total_amount, 0);
 
-        {/* Customer Info */}
-        <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="m-0 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                {customer.name}
-              </h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Customer since {formatDate(customer.created_at)}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{bills.length}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Orders</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  ₹{bills.reduce((sum, b) => sum + b.total_amount, 0).toFixed(2)}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Spent</div>
-              </div>
-            </div>
-          </div>
+  return (
+    <div>
+      {backLink}
+
+      <PageHeader title={customer.name} description={`Customer since ${formatDate(customer.created_at)}`}/>
+
+      {/* Stat strip */}
+      <div className="mb-6 grid grid-cols-2 gap-3 rise">
+        <div className="card card-pad">
+          <div className="eyebrow">Orders</div>
+          <div className="num mt-1 text-2xl font-semibold text-ink">{bills.length}</div>
+        </div>
+        <div className="card card-pad">
+          <div className="eyebrow">Total spent</div>
+          <div className="num mt-1 truncate text-2xl font-semibold text-ink">₹{totalSpent.toFixed(2)}</div>
+        </div>
+      </div>
+
+      {/* Bills */}
+      <div className="card overflow-hidden">
+        <div className="card-head">
+          <h2 className="card-title">Order history</h2>
+          <span className="num text-xs text-ink-3">{bills.length}</span>
         </div>
 
-        {/* Bills */}
-        <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
-          <h2 className="m-0 mb-5 text-xl font-bold text-gray-900 dark:text-white">
-            Order History
-          </h2>
-
-          {bills.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400">No orders found for this customer.</p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {bills.map((bill: TypeBillWithCustomer) => (
-                <div
-                  key={bill.id}
-                  className="bg-white dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-xl overflow-hidden"
-                >
+        {bills.length === 0 ? (
+          <div className="empty">
+            <Icon name="receipt" size={28} className="text-ink-4"/>
+            <p className="font-medium text-ink-2">No orders yet</p>
+            <p className="text-[13px]">No orders found for this customer.</p>
+          </div>
+        ) : (
+          <div>
+            {bills.map((bill: TypeBillWithCustomer) => {
+              const expanded: boolean = expandedBillId === bill.id;
+              return (
+                <div key={bill.id} className="border-b border-line last:border-b-0">
                   {/* Bill header */}
                   <div
-                    className="flex flex-wrap items-center justify-between gap-3 p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                    className="flex cursor-pointer flex-wrap items-center justify-between gap-3 px-5 py-3.5 transition-colors hover:bg-sunken"
                     onClick={() => toggleExpand(bill.id)}
                   >
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        #{bill.id} &middot; {formatDate(bill.created_at)}
-                      </span>
-                      <span className="text-base font-semibold text-gray-900 dark:text-white">
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-[13px] font-medium text-ink">
                         {bill.bill_items.length} item{bill.bill_items.length !== 1 ? 's' : ''}
                       </span>
+                      <span className="text-xs text-ink-3">
+                        <span className="num">#{bill.id}</span> &middot; {formatDate(bill.created_at)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-3">
+                      <span className="num text-sm font-semibold text-ink">
                         {bill.currency} {bill.total_amount.toFixed(2)}
                       </span>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform ${expandedBillId === bill.id ? 'rotate-180' : ''}`}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-                      </svg>
+                      <Icon name="chevronDown" size={16} className={`text-ink-3 transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`}/>
                     </div>
                   </div>
 
                   {/* Bill items - expandable */}
-                  {expandedBillId === bill.id && (
-                    <div className="border-t-2 border-[#f0e6dd] dark:border-gray-700 p-4">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                            <th className="pb-2 font-medium">Item</th>
-                            <th className="pb-2 font-medium text-right">Qty</th>
-                            <th className="pb-2 font-medium text-right">Price</th>
-                            {!shouldIgnoreTax() && (
-                              <th className="pb-2 font-medium text-right">Tax</th>
-                            )}
-                            <th className="pb-2 font-medium text-right">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {bill.bill_items.map((item: TypeBillItem) => (
-                            <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800">
-                              <td className="py-2 text-gray-900 dark:text-white">{item.name}</td>
-                              <td className="py-2 text-right text-gray-600 dark:text-gray-300">{item.quantity}</td>
-                              <td className="py-2 text-right text-gray-600 dark:text-gray-300">{item.price.toFixed(2)}</td>
+                  {expanded && (
+                    <div className="pop border-t border-line bg-sunken px-5 py-4" style={{transformOrigin: 'top'}}>
+                      <div className="overflow-x-auto rounded-xl bg-surface shadow-ring">
+                        <table className="tbl">
+                          <thead>
+                            <tr>
+                              <th>Item</th>
+                              <th className="r">Qty</th>
+                              <th className="r">Price</th>
+                              {!shouldIgnoreTax() && <th className="r">Tax</th>}
+                              <th className="r">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bill.bill_items.map((item: TypeBillItem) => (
+                              <tr key={item.id}>
+                                <td className="font-medium">{item.name}</td>
+                                <td className="r num text-ink-2">{item.quantity}</td>
+                                <td className="r num text-ink-2">{item.price.toFixed(2)}</td>
+                                {!shouldIgnoreTax() && (
+                                  <td className="r num text-ink-2">
+                                    {((item.sgst + item.cgst) * item.price * item.quantity / 100).toFixed(2)}
+                                  </td>
+                                )}
+                                <td className="r num font-medium">{item.total.toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="border-t border-line-strong font-semibold">
+                              <td className="px-4 py-3">Total</td>
+                              <td className="num px-4 py-3 text-right">
+                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.quantity, 0)}
+                              </td>
+                              <td className="num px-4 py-3 text-right">
+                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + (item.price * item.quantity), 0).toFixed(2)}
+                              </td>
                               {!shouldIgnoreTax() && (
-                                <td className="py-2 text-right text-gray-600 dark:text-gray-300">
-                                  {((item.sgst + item.cgst) * item.price * item.quantity / 100).toFixed(2)}
+                                <td className="num px-4 py-3 text-right">
+                                  {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + ((item.sgst + item.cgst) * item.price * item.quantity / 100), 0).toFixed(2)}
                                 </td>
                               )}
-                              <td className="py-2 text-right font-medium text-gray-900 dark:text-white">{item.total.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr className="border-t-2 border-gray-300 dark:border-gray-600 font-bold text-gray-900 dark:text-white">
-                            <td className="py-2">Total</td>
-                            <td className="py-2 text-right">
-                              {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.quantity, 0)}
-                            </td>
-                            <td className="py-2 text-right">
-                              {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + (item.price * item.quantity), 0).toFixed(2)}
-                            </td>
-                            {!shouldIgnoreTax() && (
-                              <td className="py-2 text-right">
-                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + ((item.sgst + item.cgst) * item.price * item.quantity / 100), 0).toFixed(2)}
+                              <td className="num px-4 py-3 text-right">
+                                {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.total, 0).toFixed(2)}
                               </td>
-                            )}
-                            <td className="py-2 text-right">
-                              {bill.bill_items.reduce((sum: number, item: TypeBillItem) => sum + item.total, 0).toFixed(2)}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
 
                       {/* Bill summary */}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                         <button
-                          className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold border-none bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{boxShadow: "0 8px 16px rgba(255,122,24,.2)"}}
+                          className="btn btn-primary"
                           disabled={printingBillId === bill.id}
                           onClick={async (e) => {
                             e.stopPropagation();
@@ -223,25 +212,16 @@ export default function CustomerDetailPage() {
                             setPrintingBillId(null);
                           }}
                         >
-                          {printingBillId === bill.id ? (
-                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          ) : (
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M8 15H16V18M16 18V21H8V18H4V9H8M16 18H20V9H8M8 9V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                          {printingBillId === bill.id ? 'Printing...' : 'Print Invoice'}
+                          <Icon name="print" size={15}/>
+                          {printingBillId === bill.id ? 'Printing…' : 'Print Invoice'}
                         </button>
-                        <div className="text-right text-sm space-y-1">
+                        <div className="text-right text-[13px]">
                           {!shouldIgnoreTax() && (
-                            <div className="text-gray-500 dark:text-gray-400">
+                            <div className="num text-ink-3">
                               Tax: {bill.currency} {bill.total_tax.toFixed(2)}
                             </div>
                           )}
-                          <div className="text-base font-bold text-gray-900 dark:text-white">
+                          <div className="num text-base font-semibold text-ink">
                             Total: {bill.currency} {bill.total_amount.toFixed(2)}
                           </div>
                         </div>
@@ -249,10 +229,10 @@ export default function CustomerDetailPage() {
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

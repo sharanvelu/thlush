@@ -1,4 +1,5 @@
 import {useEffect, useState} from "react";
+import Icon from "@/components/Icon";
 import {Category as TypeCategory, CategoryStatus, CategoryDto as TypeCategoryDto} from "@/types/category";
 import InputField from "@/components/Inputs/Input";
 import TextAreaField from "@/components/Inputs/TextArea";
@@ -17,6 +18,8 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
   const [errors, setErrors] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const isVisible: boolean = isOpen || isEditing;
 
   const [formData, setFormData] = useState<TypeCategoryDto>({
     name: category?.name || '',
@@ -40,8 +43,21 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
     });
 
     setErrors([]);
+    setIsOpen(false);
     clearForm();
   }
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') clearFormData();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const {name, value} = e.target;
@@ -120,78 +136,90 @@ export default function CategoryAdd({category, isEditing, clearForm, refreshCate
   };
 
   return (
-    <form onSubmit={handleSubmit} className="container mx-auto bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
-      <h1 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-        {isEditing ? 'Edit' : 'Add New'} Category
-      </h1>
+    <>
+      <button type="button" className="btn btn-primary" onClick={() => setIsOpen(true)}>
+        <Icon name="plus" size={16}/>
+        Add category
+      </button>
 
-      {errors.length > 0 && (
-        <div className="flex flex-col gap-2 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 mb-6"
-             role="alert">
-          {errors.map((error: string, index: number) => (
-            <p key={index} className="text-sm text-red-700 dark:text-red-300">{error}</p>
-          ))}
+      {isVisible && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/45" onClick={clearFormData}>
+          <form
+            onSubmit={handleSubmit}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={isEditing ? 'Edit Category' : 'Add Category'}
+            className="pop flex h-full w-full max-w-[480px] flex-col bg-raised shadow-pop"
+            style={{transformOrigin: 'right center'}}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+              <div>
+                <h2 className="text-base font-semibold tracking-[-0.01em]">{isEditing ? 'Edit' : 'Add'} Category</h2>
+                <p className="text-[13px] text-ink-3">{isEditing ? 'Update the details below.' : 'Fill in the details below.'}</p>
+              </div>
+              <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label="Close" onClick={clearFormData}>
+                <Icon name="x" size={16}/>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              {errors.length > 0 && (
+                <div className="mb-4 flex flex-col gap-1 rounded-lg bg-bad-soft px-3.5 py-3" role="alert">
+                  {errors.map((error: string, index: number) => (
+                    <p key={index} className="flex items-center gap-2 text-[13px] text-bad">
+                      <Icon name="alert" size={14} className="shrink-0"/>
+                      {error}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
+              <InputField
+                id="name"
+                title="Category Name"
+                placeholder="Enter Category Name"
+                value={formData.name}
+                onchange={handleChangeValue}
+              />
+              <SelectField
+                id="status"
+                title="Status"
+                placeholder="Select Status"
+                value={formData.status as string}
+                onchange={handleChangeValue}
+                options={[{value: "active", text: "Active"}, {value: "disable", text: "Disabled"}]}
+              />
+            </div>
+
+            <TextAreaField
+              id="description"
+              title="Category Description"
+              placeholder="Enter Category Description"
+              value={formData.description}
+              onchange={handleChange}
+            />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-line bg-raised px-5 py-3.5">
+              <button type="button" disabled={isLoading} className="btn btn-ghost" onClick={clearFormData}>
+                Cancel
+              </button>
+              <button type="submit" disabled={isLoading} className="btn btn-primary">
+                {isLoading ? (
+                  <>
+                    <span className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
+                    {isEditing ? 'Updating' : 'Creating'}
+                  </>
+                ) : (
+                  <>{isEditing ? 'Update' : 'Create'} Category</>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
-        <InputField
-          id="name"
-          title="Category Name"
-          placeholder="Enter Category Name"
-          value={formData.name}
-          onchange={handleChangeValue}
-        />
-        <SelectField
-          id="status"
-          title="Status"
-          placeholder="Select Status"
-          value={formData.status as string}
-          onchange={handleChangeValue}
-          options={[{value: "active", text: "Active"}, {value: "disable", text: "Disabled"}]}
-        />
-      </div>
-
-      <TextAreaField
-        id="description"
-        title="Category Description"
-        placeholder="Enter Category Description"
-        value={formData.description}
-        onchange={handleChange}
-      />
-
-      <div className="flex justify-end gap-4 py-4">
-        <button
-          type="button"
-          disabled={isLoading}
-          className="inline-flex items-center bg-red-400 text-white border-none rounded-xl py-2 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
-          onClick={clearFormData}
-        >
-          Clear Form
-        </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="inline-flex items-center bg-linear-120 from-[#28a745] to-[#20c997] text-white border-none rounded-xl py-2 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
-        >
-          {isLoading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
-                   fill="none"
-                   viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {isEditing ? 'Updating' : 'Creating'}
-            </>
-          ) : (
-            <>{isEditing ? 'Update' : 'Create'} Category</>
-          )}
-        </button>
-      </div>
-    </form>
+    </>
   );
 }

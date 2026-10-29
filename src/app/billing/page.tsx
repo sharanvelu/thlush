@@ -12,6 +12,8 @@ import CategoryBillingItem from "@/components/CategoryBillingItem";
 import BillingSummary from "@/components/BillingSummary";
 import {buildReceiptHtml, printReceipt} from "@/components/ThermalReceipt";
 import ConfirmModal from "@/components/ConfirmModal";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 import toast from "react-hot-toast";
 
 export default function BillingPage() {
@@ -148,74 +150,72 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="md:px-[2%] mx-auto">
-        <div className="lg:flex gap-4">
-          {/* Left panel: customer + menu items */}
-          <div className={`lg:w-3/4 space-y-12 lg:pb-0 ${billingItems.length > 0 ? 'pb-[25vh]' : ''}`}>
-            {/* Customer name */}
-            <div className="px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8">
-              <div className="mb-4 max-w-100">
-                <InputField
-                  id="customer_name"
-                  title="Customer Name:"
-                  placeholder="Enter customer name"
-                  value={customerName}
-                  onchange={(id: string, value: string | number) => setCustomerName(value + '')}
-                  clearButton={true}
+    <>
+      <PageHeader title="Billing" description="Tap items to build the bill, then save or print."/>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
+        {/* Left pane: search + menu */}
+        <div className="min-w-0">
+          <InputField
+            id="filter"
+            title="Search menu"
+            placeholder="Search items or categories"
+            value={filterValue}
+            onchange={(id: string, value: string | number) => setFilterValue((value + '').toLowerCase())}
+            clearButton={true}
+          />
+          <div className="flex flex-col gap-4">
+            {isLoading ? (
+              Array.from({length: 2}).map((_, i) => (
+                <div key={i} className="card">
+                  <div className="card-head">
+                    <div className="skeleton h-4 w-32"></div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 p-4">
+                    {Array.from({length: 3}).map((_, j) => (
+                      <div key={j} className="rounded-[10px] bg-sunken p-3.5 flex flex-col gap-2 min-h-[104px]">
+                        <div className="skeleton h-4 w-28"></div>
+                        <div className="skeleton h-3 w-40"></div>
+                        <div className="mt-auto flex items-center justify-between">
+                          <div className="skeleton h-4 w-14"></div>
+                          <div className="skeleton h-7 w-16"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : filteredCategoryWithMenuItems.length === 0 ? (
+              <div className="card empty">
+                <Icon name="search" size={22}/>
+                <p className="text-ink-2 font-medium">No items found</p>
+                <p className="text-ink-3">Try a different search term.</p>
+              </div>
+            ) : (
+              filteredCategoryWithMenuItems.map((category: TypeCategoryWithMenuItem) => (
+                <CategoryBillingItem
+                  key={category.id}
+                  categoryWithMenuItem={category}
+                  billingItems={billingItems}
+                  updateBillingItemAction={updateItem}
                 />
-              </div>
-            </div>
-
-            {/* Menu items */}
-            <div className="bg-gray-50 dark:bg-gray-800 px-4 py-6 rounded-2xl border-2 border-[#f0e6dd] dark:border-gray-600">
-              <InputField
-                id="filter"
-                title="Filter"
-                placeholder="Filter Items"
-                value={filterValue}
-                onchange={(id: string, value: string | number) => setFilterValue((value + '').toLowerCase())}
-                clearButton={true}
-              />
-              <div className="flex flex-col gap-4">
-                {isLoading ? (
-                  Array.from({length: 3}).map((_, i) => (
-                    <div key={i} className="bg-gray-50 dark:bg-gray-900 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl animate-pulse">
-                      <div className="flex items-center justify-between px-6 py-4">
-                        <div className="h-6 w-36 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 px-5 pb-5">
-                        {Array.from({length: 3}).map((_, j) => (
-                          <div key={j} className="min-h-45 border-2 border-[#f0e6dd] dark:border-gray-700 bg-[#fffbf6] dark:bg-gray-950 p-4.5 rounded-2xl flex flex-col gap-2">
-                            <div className="h-5 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <div className="h-3.5 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <div className="mt-auto flex items-center justify-between gap-3">
-                              <div className="w-9.5 h-9.5 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                              <div className="h-6 w-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                              <div className="w-9.5 h-9.5 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  filteredCategoryWithMenuItems.map((category: TypeCategoryWithMenuItem) => (
-                    <CategoryBillingItem
-                      key={category.id}
-                      categoryWithMenuItem={category}
-                      billingItems={billingItems}
-                      updateBillingItemAction={updateItem}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
+              ))
+            )}
           </div>
+        </div>
 
-          {/* Right panel: bill summary */}
+        {/* Right pane: customer + receipt */}
+        <div id="bill" className="lg:sticky lg:top-6 flex flex-col gap-4 pb-3 scroll-mt-20">
+          <div className="card card-pad pb-1">
+            <InputField
+              id="customer_name"
+              title="Customer name"
+              placeholder="Enter customer name"
+              value={customerName}
+              onchange={(id: string, value: string | number) => setCustomerName(value + '')}
+              clearButton={true}
+            />
+          </div>
           <BillingSummary
             customerName={customerName}
             billingItems={billingItems}
@@ -227,6 +227,21 @@ export default function BillingPage() {
           />
         </div>
       </div>
+
+      {/* Mobile: sticky total bar that jumps to the bill */}
+      {billingItems.length > 0 && (
+        <a
+          href="#bill"
+          className="pop lg:hidden fixed inset-x-3 bottom-3 z-20 flex items-center justify-between rounded-xl bg-ink px-4 py-3 text-canvas shadow-pop"
+        >
+          <span className="text-[13px] font-medium">
+            {billingItems.reduce((n: number, i: TypeBillingItem) => n + i.quantity, 0)} item(s) · View bill
+          </span>
+          <span className="num text-[15px] font-semibold">
+            ₹{billingItems.reduce((sum: number, i: TypeBillingItem) => sum + calculateTotalValue(i.price, i.sgst, i.cgst, i.quantity), 0).toFixed(2)}
+          </span>
+        </a>
+      )}
 
       <ConfirmModal
         open={showClearConfirm}
@@ -240,6 +255,6 @@ export default function BillingPage() {
         }}
         onCancel={() => setShowClearConfirm(false)}
       />
-    </div>
+    </>
   );
 }
