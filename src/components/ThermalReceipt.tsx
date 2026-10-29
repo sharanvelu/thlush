@@ -49,7 +49,7 @@ export function buildReceiptHtml(
   <title>Receipt #${billId}</title>
   <style>
     @page {
-      size: 80mm auto;
+      size: 58mm auto;
       margin: 2mm;
     }
     * {
@@ -58,7 +58,7 @@ export function buildReceiptHtml(
       box-sizing: border-box;
     }
     body {
-      width: 80mm;
+      width: 54mm;
       font-family: 'Courier New', monospace;
       font-size: 12px;
       color: #000;
@@ -195,7 +195,7 @@ export function printReceipt(html: string): Promise<void> {
     iframe.style.position = 'fixed';
     iframe.style.left = '-9999px';
     iframe.style.top = '0';
-    iframe.style.width = '80mm';
+    iframe.style.width = '58mm';
     iframe.style.height = '0';
     document.body.appendChild(iframe);
 
