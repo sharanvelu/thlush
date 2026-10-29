@@ -18,6 +18,8 @@ import ConfirmModal from "@/components/ConfirmModal";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import SelectField from "@/components/Inputs/Select";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 
 export default function AdminUsersPage() {
   const {data: session} = useSession();
@@ -31,6 +33,7 @@ export default function AdminUsersPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.BILLING);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<TypeAdminUser | null>(null);
@@ -58,6 +61,12 @@ export default function AdminUsersPage() {
     setPassword('');
     setRole(UserRole.BILLING);
     setEditingUser(null);
+    setIsFormOpen(false);
+  };
+
+  const openCreate = () => {
+    clearForm();
+    setIsFormOpen(true);
   };
 
   const startEdit = (user: TypeAdminUser) => {
@@ -66,7 +75,7 @@ export default function AdminUsersPage() {
     setEmail(user.email);
     setPassword('');
     setRole(user.role);
-    window.scrollTo(0, 0);
+    setIsFormOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,218 +175,201 @@ export default function AdminUsersPage() {
     });
   };
 
+  const initial = (user: TypeAdminUser): string => (user.name || user.email || '?').trim().charAt(0).toUpperCase();
+
   return (
-    <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div>
+      <PageHeader
+        title="Users"
+        description="Manage who can sign in and what they can do."
+        actions={
+          <button type="button" className="btn btn-primary" onClick={openCreate}>
+            <Icon name="plus" size={16}/>
+            Add user
+          </button>
+        }
+      />
 
-        {/* Add / Edit Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-8"
-        >
-          <h1 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-            {editingUser ? 'Edit User' : 'Add New User'}
-          </h1>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="name" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                placeholder="Enter full name"
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required={!editingUser}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                placeholder="Enter email address"
-                className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required={!editingUser}
-              />
-            </div>
-            {/* Change Password - only visible on local env (staging/prod use SSO) */}
-            {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
-              <div>
-                <label htmlFor="password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                  Password {editingUser && <span className="font-normal text-gray-400">(leave blank to keep unchanged)</span>}
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  placeholder={editingUser ? 'Enter new password' : 'Enter password'}
-                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required={!editingUser}
-                  minLength={6}
-                />
-              </div>
-            )}
-            <SelectField
-              id="category_id"
-              title="Category"
-              disabled={isEditingSelf}
-              titleHelperText={isEditingSelf ? '(You cannot change your own role.)' : ''}
-              placeholder="Select Category"
-              value={role}
-              onchange={(name: string, value: string | number) => setRole(value as UserRole)}
-              options={Object.values(UserRole).map((role: UserRole) => {
-                return {value: role, text: UserRoleLabels[role]}
-              })}
-            />
-          </div>
-
-          <div className="flex justify-end gap-4 mt-5">
-            {editingUser && (
-              <button
-                type="button"
-                className="inline-flex items-center bg-red-400 text-white border-none rounded-xl py-2 px-6 font-semibold cursor-pointer"
-                onClick={clearForm}
-              >
-                Cancel
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center bg-linear-120 from-[#28a745] to-[#20c997] text-white border-none rounded-xl py-2 px-6 font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{boxShadow: "0 8px 20px rgba(40,167,69,.3)"}}
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {editingUser ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                <>{editingUser ? 'Update' : 'Create'} User</>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {/* Users List */}
-        <div className="bg-[#fffbf6] dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
-          <h2 className="m-0 mb-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-            Manage Users
-          </h2>
-
-          {isLoading ? (
-            <div className="flex flex-col gap-4">
-              {Array.from({length: 3}).map((_, i) => (
-                <div
-                  key={i}
-                  className="shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center animate-pulse"
-                >
-                  <div className="flex flex-col gap-2 flex-1">
-                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-3.5 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="h-10 w-16 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                    <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                  </div>
+      <div className="card overflow-hidden rise">
+        {isLoading ? (
+          <div className="flex flex-col">
+            {Array.from({length: 4}).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 border-b border-line px-4 py-3.5 last:border-b-0">
+                <div className="skeleton size-9 shrink-0 !rounded-full"></div>
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="skeleton h-3.5 w-40"></div>
+                  <div className="skeleton h-3 w-56 max-w-full"></div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {users.length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400">No users found.</p>
-              )}
-
-              <div className="flex flex-col gap-4">
-                {users.map((user: TypeAdminUser) => (
-                  <div
-                    key={user.id}
-                    className="shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex flex-wrap justify-between items-center gap-4"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="m-0 text-lg text-gray-900 dark:text-white">{user.name || user.email}</h4>
-                        <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
-                          user.role === UserRole.SUPER_ADMIN
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                        }`}>
+                <div className="skeleton hidden h-6 w-20 sm:block"></div>
+              </div>
+            ))}
+          </div>
+        ) : users.length === 0 ? (
+          <div className="empty">
+            <Icon name="users" size={28} className="text-ink-4"/>
+            <p className="font-medium text-ink-2">No users found</p>
+            <p className="text-[13px]">Add the first user to get started.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th className="hidden sm:table-cell">Role</th>
+                  <th className="hidden md:table-cell">Created</th>
+                  <th className="hidden md:table-cell">Last login</th>
+                  <th className="r"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user: TypeAdminUser) => {
+                  const isRemoving = deletingUserId === user.id;
+                  return (
+                    <tr key={user.id}>
+                      <td>
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-[13px] font-semibold text-accent">
+                            {initial(user)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate font-medium text-ink">{user.name || user.email}</span>
+                              {user.id === currentUserId && <span className="badge badge-good">You</span>}
+                            </div>
+                            {user.name && <div className="truncate text-xs text-ink-3">{user.email}</div>}
+                            <span className={`badge mt-1 sm:hidden ${user.role === UserRole.SUPER_ADMIN ? 'badge-accent' : 'badge-info'}`}>{UserRoleLabels[user.role]}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hidden sm:table-cell">
+                        <span className={`badge ${user.role === UserRole.SUPER_ADMIN ? 'badge-accent' : 'badge-info'}`}>
                           {UserRoleLabels[user.role]}
                         </span>
-                        {user.id === currentUserId && (
-                          <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                            You
-                          </span>
-                        )}
-                      </div>
-                      {user.name && (
-                        <span className="text-sm text-gray-600 dark:text-gray-300">{user.email}</span>
-                      )}
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                        <span>Created: {formatDate(user.created_at)}</span>
-                        <span>Last login: {formatDate(user.last_sign_in_at)}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 items-center">
-                      <Link
-                        href={`/admin/users/${user.id}`}
-                        className="flex items-center justify-center w-10 h-10 border-2 border-solid border-[#e0d7cf] dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:text-[#ff7a18] hover:border-[#ff7a18] dark:hover:text-[#ff7a18] dark:hover:border-[#ff7a18] hover:scale-105 active:scale-95"
-                        style={{transition: "transform 0.15s"}}
-                        title="View user"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                      </Link>
-                      <button
-                        className={`from-[#008559] via-[#006ce0] to-[#6842ff] text-[#dc3545] dark:text-white border-2 border-[#dc3545] rounded-xl px-5 py-2 text-sm font-semibold cursor-pointer hover:scale-105 active:scale-95 hover:bg-linear-to-br hover:text-white ${deletingUserId === user.id ? 'cursor-not-allowed' : ''}`}
-                        style={{transition: "transform 0.15s"}}
-                        onClick={() => startEdit(user)}
-                        disabled={deletingUserId === user.id}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className={`flex items-center bg-[#dc3545] text-white border-none rounded-xl px-5 py-2 text-sm font-semibold ${(deletingUserId === user.id || user.id === currentUserId) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
-                        style={{transition: "transform 0.15s"}}
-                        onClick={() => setUserToDelete(user)}
-                        disabled={deletingUserId === user.id || user.id === currentUserId}
-                      >
-                        {deletingUserId === user.id ? (
-                          <>
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Removing
-                          </>
-                        ) : (
-                          <>Remove</>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+                      </td>
+                      <td className="num hidden text-xs text-ink-2 md:table-cell">{formatDate(user.created_at)}</td>
+                      <td className="num hidden text-xs text-ink-2 md:table-cell">{formatDate(user.last_sign_in_at)}</td>
+                      <td className="r">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/admin/users/${user.id}`} className="btn btn-ghost btn-icon btn-sm hidden sm:inline-flex" title="View user" aria-label="View user">
+                            <Icon name="chevronRight" size={15}/>
+                          </Link>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-icon btn-sm"
+                            title="Edit user"
+                            aria-label="Edit user"
+                            onClick={() => startEdit(user)}
+                            disabled={isRemoving}
+                          >
+                            <Icon name="edit" size={15}/>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() => setUserToDelete(user)}
+                            disabled={isRemoving || user.id === currentUserId}
+                          >
+                            {isRemoving ? 'Removing…' : (<><Icon name="trash" size={14}/><span className="hidden sm:inline">Remove</span></>)}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Add / Edit slide-over */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-40 flex justify-end bg-black/45" onClick={clearForm}>
+          <form
+            onSubmit={handleSubmit}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingUser ? 'Edit user' : 'Add user'}
+            className="rise flex h-full w-full max-w-[420px] flex-col bg-raised shadow-pop"
+          >
+            <div className="card-head">
+              <div>
+                <div className="eyebrow">{editingUser ? 'Editing' : 'New'}</div>
+                <h2 className="text-base font-semibold tracking-[-0.01em]">{editingUser ? 'Edit user' : 'Add user'}</h2>
+              </div>
+              <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={clearForm} aria-label="Close">
+                <Icon name="x" size={16}/>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              <div className="mb-4">
+                <label htmlFor="name" className="field-label">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  placeholder="Enter full name"
+                  className="field"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={!editingUser}
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="email" className="field-label">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="Enter email address"
+                  className="field"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required={!editingUser}
+                />
+              </div>
+              {/* Change Password - only visible on local env (staging/prod use SSO) */}
+              {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
+                <div className="mb-4">
+                  <label htmlFor="password" className="field-label">
+                    Password {editingUser && <span className="font-normal text-ink-3">(leave blank to keep unchanged)</span>}
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    placeholder={editingUser ? 'Enter new password' : 'Enter password'}
+                    className="field"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required={!editingUser}
+                    minLength={6}
+                  />
+                </div>
+              )}
+              <SelectField
+                id="category_id"
+                title="Role"
+                disabled={isEditingSelf}
+                titleHelperText={isEditingSelf ? '(You cannot change your own role.)' : ''}
+                placeholder="Select Role"
+                value={role}
+                onchange={(name: string, value: string | number) => setRole(value as UserRole)}
+                options={Object.values(UserRole).map((role: UserRole) => {
+                  return {value: role, text: UserRoleLabels[role]}
+                })}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-line p-4">
+              <button type="button" className="btn btn-secondary" onClick={clearForm}>Cancel</button>
+              <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+                {isSubmitting ? (editingUser ? 'Updating…' : 'Creating…') : <>{editingUser ? 'Update' : 'Create'} user</>}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <ConfirmModal
         open={!!userToDelete}

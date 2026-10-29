@@ -4,6 +4,8 @@ import {useEffect, useState} from "react";
 import {signOut} from "next-auth/react";
 import {AdminUser as TypeAdminUser, UserRole, UserRoleLabels} from "@/types/user";
 import {ApiResponse as TypeApiResponse} from "@/types/global";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<TypeAdminUser | null>(null);
@@ -118,182 +120,178 @@ export default function ProfilePage() {
     await signOut({callbackUrl: '/login'});
   };
 
+  const fmtDate = (d: string | null | undefined, withTime = false): string => {
+    if (!d) return '-';
+    return new Date(d).toLocaleDateString('en-IN', withTime
+      ? {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}
+      : {day: '2-digit', month: 'short', year: 'numeric'});
+  };
+
+  const initial: string = (user?.name || user?.email || '?').trim().charAt(0).toUpperCase();
+
   return (
-    <div className="min-h-screen py-20 pt-32 bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl">
+    <div>
+      <PageHeader title="Profile" description="Your account details and security."/>
 
-        <h1 className="m-0 mb-8 text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          Profile
-        </h1>
-
-        {/* User Info */}
-        <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-6">
-          <h2 className="m-0 mb-4 text-lg font-semibold text-gray-900 dark:text-white">Account Details</h2>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+        {/* Identity */}
+        <div className="card rise overflow-hidden">
+          <div className="card-head">
+            <h2 className="card-title">Account details</h2>
+          </div>
 
           {isLoading ? (
-            <div className="animate-pulse flex flex-col gap-3">
-              <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="flex flex-col gap-4 p-5">
+              <div className="flex items-center gap-3">
+                <div className="skeleton size-12 !rounded-full"></div>
+                <div className="skeleton h-4 w-40"></div>
+              </div>
+              <div className="skeleton h-4 w-64 max-w-full"></div>
+              <div className="skeleton h-4 w-48"></div>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Name</span>
-                {isEditingName ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <input
-                      type="text"
-                      className="flex-1 p-2 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-sm focus:outline-none focus:border-[#ff7a18]"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={isUpdatingName}
-                    />
-                    <button
-                      onClick={handleNameSave}
-                      disabled={isUpdatingName}
-                      className="text-sm font-semibold text-white bg-[#28a745] border-none rounded-xl px-4 py-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isUpdatingName ? 'Saving...' : 'Save'}
-                    </button>
-                    <button
-                      onClick={() => { setIsEditingName(false); setName(user?.name ?? ''); setNameError(''); setNameSuccess(''); }}
-                      className="text-sm font-semibold text-gray-600 dark:text-gray-300 bg-transparent border-2 border-solid border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-900 dark:text-white">{user?.name || '-'}</span>
-                    <button
-                      onClick={() => setIsEditingName(true)}
-                      className="text-xs text-[#ff7a18] bg-transparent border-none cursor-pointer font-medium hover:underline"
-                    >
-                      Edit
-                    </button>
+            <div>
+              <div className="flex items-center gap-3.5 border-b border-line p-5">
+                <div className="grid size-12 shrink-0 place-items-center rounded-full bg-accent-soft text-lg font-semibold text-accent">
+                  {initial}
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-base font-semibold tracking-[-0.01em]">{user?.name || user?.email || '-'}</div>
+                  <span className={`badge mt-1 ${user?.role === UserRole.SUPER_ADMIN ? 'badge-accent' : 'badge-info'}`}>
+                    {UserRoleLabels[user?.role ?? UserRole.BILLING]}
+                  </span>
+                </div>
+              </div>
+
+              <div className="divide-y divide-line">
+                <div className="flex flex-col gap-1.5 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+                  <span className="eyebrow sm:w-28 sm:shrink-0">Name</span>
+                  {isEditingName ? (
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        className="field min-w-0 flex-1"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={isUpdatingName}
+                      />
+                      <button onClick={handleNameSave} disabled={isUpdatingName} className="btn btn-primary">
+                        {isUpdatingName ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => { setIsEditingName(false); setName(user?.name ?? ''); setNameError(''); setNameSuccess(''); }}
+                        className="btn btn-ghost"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm text-ink">{user?.name || '-'}</span>
+                      <button onClick={() => setIsEditingName(true)} className="btn btn-ghost btn-icon btn-sm" aria-label="Edit name" title="Edit name">
+                        <Icon name="edit" size={14}/>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {nameError && (
+                  <div className="flex items-center gap-2 bg-bad-soft px-5 py-2.5 text-[13px] text-bad">
+                    <Icon name="alert" size={15} className="shrink-0"/>
+                    <p>{nameError}</p>
                   </div>
                 )}
-              </div>
-              {nameError && (
-                <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-2 rounded">
-                  <p className="text-sm text-red-700 dark:text-red-300 m-0">{nameError}</p>
+                {nameSuccess && (
+                  <div className="flex items-center gap-2 bg-good-soft px-5 py-2.5 text-[13px] text-good">
+                    <Icon name="check" size={15} className="shrink-0"/>
+                    <p>{nameSuccess}</p>
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+                  <span className="eyebrow sm:w-28 sm:shrink-0">Email</span>
+                  <span className="min-w-0 break-words text-sm text-ink">{user?.email ?? '-'}</span>
                 </div>
-              )}
-              {nameSuccess && (
-                <div className="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-2 rounded">
-                  <p className="text-sm text-green-700 dark:text-green-300 m-0">{nameSuccess}</p>
+                <div className="flex flex-col gap-1.5 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+                  <span className="eyebrow sm:w-28 sm:shrink-0">Member since</span>
+                  <span className="text-sm text-ink">{fmtDate(user?.created_at)}</span>
                 </div>
-              )}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Email</span>
-                <span className="text-sm text-gray-900 dark:text-white">{user?.email ?? '-'}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Role</span>
-                <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
-                  user?.role === UserRole.SUPER_ADMIN
-                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                }`}>
-                  {UserRoleLabels[user?.role ?? UserRole.BILLING]}
-                </span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Member Since</span>
-                <span className="text-sm text-gray-900 dark:text-white">
-                  {user?.created_at
-                    ? new Date(user.created_at).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'})
-                    : '-'
-                  }
-                </span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:w-32">Last Sign In</span>
-                <span className="text-sm text-gray-900 dark:text-white">
-                  {user?.last_sign_in_at
-                    ? new Date(user.last_sign_in_at).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})
-                    : '-'
-                  }
-                </span>
+                <div className="flex flex-col gap-1.5 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+                  <span className="eyebrow sm:w-28 sm:shrink-0">Last sign in</span>
+                  <span className="text-sm text-ink">{fmtDate(user?.last_sign_in_at, true)}</span>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Change Password - only visible on local env (staging/prod use SSO) */}
-        {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
-          <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6 mb-6">
-            <h2 className="m-0 mb-4 text-lg font-semibold text-gray-900 dark:text-white">Change Password</h2>
-
-            {passwordError && (
-              <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-3 mb-4 rounded">
-                <p className="text-sm text-red-700 dark:text-red-300 m-0">{passwordError}</p>
-              </div>
-            )}
-
-            {passwordSuccess && (
-              <div className="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-3 mb-4 rounded">
-                <p className="text-sm text-green-700 dark:text-green-300 m-0">{passwordSuccess}</p>
-              </div>
-            )}
-
-            <form onSubmit={handlePasswordChange} className="flex flex-col gap-4">
-              <div>
-                <label htmlFor="new_password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  id="new_password"
-                  placeholder="Enter new password"
-                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={isUpdating}
-                />
+        {/* Security */}
+        <div className="flex flex-col gap-5">
+          {/* Change Password - only visible on local env (staging/prod use SSO) */}
+          {process.env.NEXT_PUBLIC_APP_ENV === 'local' && (
+            <div className="card rise overflow-hidden">
+              <div className="card-head">
+                <h2 className="card-title">Change password</h2>
+                <Icon name="key" size={16} className="text-ink-3"/>
               </div>
 
-              <div>
-                <label htmlFor="confirm_password" className="block mb-1.5 font-semibold text-[#1f1f1f] dark:text-gray-300 text-sm">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  id="confirm_password"
-                  placeholder="Confirm new password"
-                  className="w-full p-3 border-2 border-solid border-[#e0d7cf] dark:border-gray-700 text-[#1f1f1f] dark:text-gray-300 bg-white dark:bg-gray-950 rounded-xl text-[15px] focus:outline-none focus:border-[#ff7a18]"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={isUpdating}
-                />
-              </div>
+              <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 p-5">
+                {passwordError && (
+                  <div className="flex items-center gap-2 rounded-lg bg-bad-soft px-3 py-2.5 text-[13px] text-bad">
+                    <Icon name="alert" size={15} className="shrink-0"/>
+                    <p>{passwordError}</p>
+                  </div>
+                )}
+                {passwordSuccess && (
+                  <div className="flex items-center gap-2 rounded-lg bg-good-soft px-3 py-2.5 text-[13px] text-good">
+                    <Icon name="check" size={15} className="shrink-0"/>
+                    <p>{passwordSuccess}</p>
+                  </div>
+                )}
 
-              <div>
-                <button
-                  type="submit"
-                  disabled={isUpdating}
-                  className="border-none rounded-2xl px-6 py-3 text-[15px] font-semibold -bg-linear-120 from-[#ff7a18] to-[#ffb347] text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{boxShadow: "0 12px 25px rgba(255,122,24,.3)"}}
-                >
-                  {isUpdating ? 'Updating...' : 'Update Password'}
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label htmlFor="new_password" className="field-label">New password</label>
+                  <input
+                    type="password"
+                    id="new_password"
+                    placeholder="Enter new password"
+                    className="field"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isUpdating}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="confirm_password" className="field-label">Confirm password</label>
+                  <input
+                    type="password"
+                    id="confirm_password"
+                    placeholder="Confirm new password"
+                    className="field"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={isUpdating}
+                  />
+                </div>
+
+                <div>
+                  <button type="submit" disabled={isUpdating} className="btn btn-primary">
+                    {isUpdating ? 'Updating…' : 'Update password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Sign Out */}
+          <div className="card rise card-pad">
+            <h2 className="card-title">Sign out</h2>
+            <p className="mb-4 mt-1 text-[13px] text-ink-3">Sign out from your account on this device.</p>
+            <button onClick={handleSignOut} className="btn btn-danger">
+              <Icon name="logout" size={15}/>
+              Sign out
+            </button>
           </div>
-        )}
-
-        {/* Sign Out */}
-        <div className="bg-gray-50 dark:bg-gray-800 border-2 border-solid border-[#f0e6dd] dark:border-gray-700 rounded-2xl p-6">
-          <h2 className="m-0 mb-2 text-lg font-semibold text-gray-900 dark:text-white">Sign Out</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0 mb-4">Sign out from your account on this device.</p>
-          <button
-            onClick={handleSignOut}
-            className="rounded-[14px] px-5 py-2.5 text-[15px] font-semibold border-2 border-solid border-red-400 text-red-600 dark:text-red-400 bg-transparent cursor-pointer hover:bg-red-50 dark:hover:bg-gray-700 transition"
-          >
-            Sign Out
-          </button>
         </div>
-
       </div>
     </div>
   );

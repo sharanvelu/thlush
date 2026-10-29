@@ -2,6 +2,7 @@ import {Category as TypeCategory, CategoryStatus} from "@/types/category";
 import {useState} from "react";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import toast from "react-hot-toast";
+import Icon from "@/components/Icon";
 
 interface CategoryProps {
   category: TypeCategory;
@@ -32,52 +33,51 @@ export default function Category({category, editAction, refreshCategories}: Cate
     setIsDeleting(false);
   }
 
-  return (
-    <div
-      className="relative shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center">
+  const disabled: boolean = category.status === CategoryStatus.DISABLE;
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <h4 className="m-0 text-lg">{category.name}</h4>
-          {category.status === CategoryStatus.DISABLE && (
-            <span className="inline-block px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-              Disabled
-            </span>
-          )}
+  return (
+    <div className={`card card-pad flex w-full flex-col gap-3 ${isDeleting ? 'opacity-60' : ''}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
+            <Icon name="tag" size={16}/>
+          </span>
+          <h4 className={`truncate text-[15px] font-semibold ${disabled ? 'text-ink-3' : 'text-ink'}`}>{category.name}</h4>
         </div>
-        <p className="m-0 mb-1 text-sm">{category.description || 'No description'}</p>
+        <span className={`badge badge-dot shrink-0 ${disabled ? 'badge-bad' : 'badge-good'}`}>{disabled ? 'Disabled' : 'Active'}</span>
       </div>
 
-      <div className="flex gap-4">
+      <p className="line-clamp-2 flex-1 text-[13px] text-ink-3">{category.description}</p>
+
+      <div className="flex items-center justify-end gap-1 border-t border-line pt-3">
         <button
-          className={`from-[#008559] via-[#006ce0] to-[#6842ff] text-[#dc3545] dark:text-white border-2 border-[#dc3545] rounded-xl px-5 py-2 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105 active:scale-95 hover:bg-linear-to-br hover:text-white'}`}
-          style={{transition: "transform 0.15s"}}
+          type="button"
+          className="btn btn-ghost btn-sm"
           onClick={() => editAction(category)}
           disabled={isDeleting}
-        >Edit
+        >
+          <Icon name="edit" size={14}/>
+          Edit
         </button>
         <button
-          className={`flex items-center bg-[#dc3545] text-white border-none rounded-xl px-5 py-2 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed': 'cursor-pointer hover:scale-105 active:scale-95'}`}
-          style={{transition: "transform 0.15s"}}
+          type="button"
+          className="btn btn-ghost btn-sm hover:!bg-bad-soft hover:!text-bad"
           onClick={() => removeCategory()}
           disabled={isDeleting}
         >
           {isDeleting ? (
             <>
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
-                   fill="none"
-                   viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <span className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
               Removing
             </>
           ) : (
-            <>Remove</>
+            <>
+              <Icon name="trash" size={14}/>
+              Remove
+            </>
           )}
         </button>
       </div>
     </div>
   );
-} 
+}

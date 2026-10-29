@@ -1,8 +1,9 @@
 import {MenuItem as TypeMenuItem, MenuItemStatus} from "@/types/menu";
-import {calculateTotalValue} from "@/helpers";
+import {calculateTotalTaxValue, calculateTotalValue, shouldIgnoreTax} from "@/helpers";
 import {ApiDeleteResponse as TypeApiDeleteResponse} from "@/types/global";
 import {useState} from "react";
 import toast from "react-hot-toast";
+import Icon from "@/components/Icon";
 
 interface MenuItemProps {
   menu: TypeMenuItem;
@@ -33,52 +34,46 @@ export default function MenuItem({menu, editAction, refreshMenuItems}: MenuItemP
     setIsDeleting(false);
   }
 
+  const disabled: boolean = menu.status === MenuItemStatus.DISABLE;
+  const tax: number = calculateTotalTaxValue(menu.sgst, menu.cgst);
+
   return (
-    <div
-      className="relative shadow-lg border-2 border-solid border-[#f0e6dd] dark:border-gray-600 rounded-2xl p-4.5 bg-[#fffbf6] dark:bg-gray-950 flex justify-between items-center">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <h4 className="m-0 text-lg">{menu.name}</h4>
-          {menu.status === MenuItemStatus.DISABLE && (
-            <span className="inline-block px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-              Disabled
-            </span>
-          )}
+    <div className={`flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 hover:bg-sunken sm:gap-4 sm:px-5 ${isDeleting ? 'opacity-60' : ''}`}>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h4 className={`truncate text-sm font-medium ${disabled ? 'text-ink-3' : 'text-ink'}`}>{menu.name}</h4>
+          {disabled && <span className="badge badge-bad">Disabled</span>}
         </div>
-        <p className="m-0 mb-1 text-sm">{menu.description || 'No description'}</p>
-        <span className="text-[#f0673a] font-semibold text-[16px]">{menu.currency}{calculateTotalValue(menu.price, menu.cgst, menu.sgst)}</span>
+        {menu.description && <p className="mt-0.5 truncate text-[13px] text-ink-3">{menu.description}</p>}
       </div>
 
-      <div className="flex gap-4">
+      <div className="shrink-0 text-right">
+        <div className="num text-sm font-semibold text-ink">{menu.currency}{calculateTotalValue(menu.price, menu.cgst, menu.sgst)}</div>
+        {!shouldIgnoreTax() && tax > 0 && <div className="num text-[11px] text-ink-3">{tax}% tax</div>}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-0.5">
         <button
-          className={`from-[#008559] via-[#006ce0] to-[#6842ff] text-[#dc3545] dark:text-white border-2 border-[#dc3545] rounded-xl px-5 py-2 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed': 'cursor-pointer hover:scale-105 active:scale-95 hover:bg-linear-to-br hover:text-white'}`}
-          style={{transition: "transform 0.15s"}}
+          type="button"
+          className="btn btn-ghost btn-icon btn-sm"
+          aria-label={`Edit ${menu.name}`}
+          title="Edit"
           onClick={() => editAction(menu)}
           disabled={isDeleting}
-        >Edit
+        >
+          <Icon name="edit" size={15}/>
         </button>
         <button
-          className={`flex items-center bg-[#dc3545] text-white border-none rounded-xl px-5 py-2 text-sm font-semibold ${isDeleting ? 'cursor-not-allowed': 'cursor-pointer hover:scale-105 active:scale-95'}`}
-          style={{transition: "transform 0.15s"}}
+          type="button"
+          className="btn btn-ghost btn-icon btn-sm hover:!bg-bad-soft hover:!text-bad"
+          aria-label={`Remove ${menu.name}`}
+          title="Remove"
           onClick={() => removeMenuItem()}
           disabled={isDeleting}
         >
-          {isDeleting ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
-                   fill="none"
-                   viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Removing
-            </>
-          ) : (
-            <>Remove</>
-          )}
+          {isDeleting ? <span className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span> : <Icon name="trash" size={15}/>}
         </button>
       </div>
     </div>
   );
-} 
+}

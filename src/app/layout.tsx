@@ -1,7 +1,7 @@
 import type {Metadata} from "next";
 import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import AppShell from "@/components/AppShell";
 import Providers from "@/components/Providers";
 import {Toaster} from "react-hot-toast";
 import {Config} from "@/config";
@@ -25,12 +25,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: Readonly<{ children: React.ReactNode; }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+    <head>
+      <script dangerouslySetInnerHTML={{__html: `try{var t=localStorage.getItem('thlush:theme');if(t)document.documentElement.dataset.theme=t}catch(e){}`}}/>
+    </head>
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
     <Providers>
-      <Toaster position="top-right" toastOptions={{duration: 3500}}/>
-      <Navbar/>
-      {children}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: {background: 'var(--raised)', color: 'var(--ink)', boxShadow: 'var(--ring-pop)', borderRadius: '10px', fontSize: '13px'},
+        }}
+      />
+      <AppShell>{children}</AppShell>
     </Providers>
     </body>
     </html>
