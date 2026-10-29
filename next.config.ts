@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // `ws` is required by the Neon serverless Pool for interactive transactions.
+  serverExternalPackages: ["ws"],
   turbopack: {
     rules: {
       "*.css": {
