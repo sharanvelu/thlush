@@ -38,12 +38,15 @@ export const bills = table(
     heldAt: timestamp("held_at", { withTimezone: true }),
     voidedAt: timestamp("voided_at", { withTimezone: true }),
     voidReason: text("void_reason"),
+    /** Client-generated id for one save attempt, so a retried or double-clicked save returns the same bill. */
+    clientRef: text("client_ref"),
     voidedBy: uuid("voided_by").references(() => users.id, { onDelete: "set null" }),
     createdUserId: uuid("created_user_id").references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex(ix("bills_bill_no_key")).on(t.billNo),
+    uniqueIndex(ix("bills_client_ref_key")).on(t.clientRef),
     index(ix("bills_created_at_idx")).on(t.createdAt),
     index(ix("bills_customer_idx")).on(t.customerId),
     index(ix("bills_created_user_idx")).on(t.createdUserId),

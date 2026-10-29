@@ -48,14 +48,16 @@ export interface FormatMoneyOptions {
   locale?: string;
   /** Drop the currency symbol and return only the formatted number. */
   plain?: boolean;
+  /** "code" prints INR instead of the symbol, for fonts that lack it (such as PDF built-in fonts). */
+  display?: "symbol" | "code";
 }
 
 /** Formats an amount for display. Defaults match `defaultSettings.locale`. */
 export function formatMoney(value: Numeric, options: FormatMoneyOptions = {}): string {
-  const { currency = "INR", locale = "en-IN", plain = false } = options;
+  const { currency = "INR", locale = "en-IN", plain = false, display = "symbol" } = options;
   const amount = round2(value).toFixed(2) as `${number}`;
   const formatter = new Intl.NumberFormat(locale, {
-    ...(plain ? {} : { style: "currency" as const, currency }),
+    ...(plain ? {} : { style: "currency" as const, currency, currencyDisplay: display }),
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

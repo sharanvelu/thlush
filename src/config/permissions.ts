@@ -82,6 +82,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<readonly [prefix: string, permissi
   ["/", "dashboard.view"],
   ["/billing", "bills.create"],
   ["/bills", "bills.view_own"],
+  ["/receipt", "bills.view_own"],
   ["/menu", "menu.view"],
   ["/categories", "categories.manage"],
   ["/inventory", "inventory.view"],

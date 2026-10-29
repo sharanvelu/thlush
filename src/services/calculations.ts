@@ -81,7 +81,10 @@ function nonNegative(value: Numeric): Dec {
   return d.isNegative() ? ZERO : d;
 }
 
-/** Unit price including tax, as shown on a receipt. */
+/**
+ * Unit price including tax, as shown on a receipt. Tax is rounded per component,
+ * exactly like a bill line, so a single unit's price matches its line amount.
+ */
 export function unitPriceInclTax(
   price: Numeric,
   sgst: Numeric,
@@ -90,8 +93,9 @@ export function unitPriceInclTax(
 ): string {
   const base = nonNegative(price);
   if (ignoreTax) return round2(base).toFixed(2);
-  const rate = nonNegative(sgst).plus(nonNegative(cgst));
-  return round2(base.plus(base.times(rate).div(100))).toFixed(2);
+  const sgstAmount = round2(base.times(nonNegative(sgst)).div(100));
+  const cgstAmount = round2(base.times(nonNegative(cgst)).div(100));
+  return round2(base).plus(sgstAmount).plus(cgstAmount).toFixed(2);
 }
 
 /** Resolves a bill-level discount to a capped, 2-dp amount. */

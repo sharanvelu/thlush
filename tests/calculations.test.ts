@@ -220,6 +220,12 @@ describe("unitPriceInclTax", () => {
     expect(unitPriceInclTax("100", "2.5", "2.5")).toBe("105.00");
   });
 
+  it("rounds each tax component like a bill line does", () => {
+    // 145 x 2.5% = 3.625 -> 3.63 for each half, so one unit costs 152.26 (not 152.25).
+    expect(unitPriceInclTax("145", "2.5", "2.5")).toBe("152.26");
+    expect(calculateBill([{ price: "145", quantity: 1, sgst: "2.5", cgst: "2.5" }]).grandTotal).toBe("152.26");
+  });
+
   it("returns the base price when tax is ignored", () => {
     expect(unitPriceInclTax("100", "2.5", "2.5", true)).toBe("100.00");
   });

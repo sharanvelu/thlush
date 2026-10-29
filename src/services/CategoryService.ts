@@ -24,6 +24,8 @@ export interface CategoryOption {
   id: number;
   name: string;
   status: "active" | "disabled";
+  color: string | null;
+  icon: string | null;
 }
 
 /** Escapes LIKE wildcards so user input is matched literally. */
@@ -76,7 +78,13 @@ export async function listCategories(
 /** Lightweight list for dropdowns. Bounded, ordered like the POS tabs. */
 export async function listCategoryOptions(): Promise<CategoryOption[]> {
   return db
-    .select({ id: categories.id, name: categories.name, status: categories.status })
+    .select({
+      id: categories.id,
+      name: categories.name,
+      status: categories.status,
+      color: categories.color,
+      icon: categories.icon,
+    })
     .from(categories)
     .orderBy(asc(categories.sortOrder), asc(categories.name))
     .limit(500);

@@ -2,7 +2,7 @@
 
 Billing and point-of-sale for restaurants, cafés and small shops. Built with Next.js (App Router), TypeScript, Tailwind CSS v4, shadcn/ui, Drizzle ORM and Neon Postgres.
 
-**Status:** milestone 2 of 8 done (categories and menu CRUD on top of the milestone 1 foundation). See [Roadmap](#roadmap).
+**Status:** milestone 3 of 8 done (POS billing, bill saving and receipts, on top of categories, menu and the foundation). See [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -57,6 +57,32 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 
 The seed is safe to re-run: users, categories, items and settings are only inserted when missing, and demo bills are only created when there are none.
 
+## Billing screen
+
+`/billing` is a two-pane POS: items on the left (search, category chips, grid or list), the bill on the right. On phones the bill opens from a bar at the bottom.
+
+| Shortcut                 | Action                                           |
+| ------------------------ | ------------------------------------------------ |
+| `/`                      | Focus the search box                             |
+| `Enter` in search        | Add the exact SKU match, or the only result      |
+| `Esc` in search          | Clear the search                                 |
+| `Ctrl/⌘ + Enter`         | Save bill                                        |
+| `Ctrl/⌘ + Shift + Enter` | Save and print                                   |
+| `Alt + H`                | Hold bill                                        |
+| `Alt + Backspace`        | Clear the bill                                   |
+
+How a bill is saved:
+
+- The browser sends only item ids, quantities, discounts and payments. The server prices everything from the catalog (`src/services/bill-plan.ts`), so a stale or tampered client cannot change what is billed.
+- One transaction writes the customer, bill, lines (a snapshot of name, price and tax), payments, stock movements and the audit entry. Any failure rolls all of it back.
+- Bill numbers are `{prefix}{YYYYMMDD}-{seq}` in the business timezone, taken under a per-day lock so they are unique and gap-free. Held bills carry a temporary number and get the real one when finished.
+- Each save carries a client reference. Pressing Save twice, or retrying after a dropped connection, returns the same bill.
+- Tracked items are locked and deducted in the same transaction. Turn on "block out of stock" in settings to refuse overselling.
+
+Rounding: tax is rounded half-up to 2 decimals per component (SGST, CGST) per line, and totals are sums of the rounded lines, so every figure on a bill reconciles to the paisa.
+
+Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58mm from settings). `/api/bills/{id}/pdf` returns the same receipt as a narrow PDF; amounts there are plain numbers and the total names the currency code, because the PDF's built-in fonts have no rupee sign. WhatsApp and email links carry a plain-text copy of the receipt.
+
 ## Architecture
 
 ```
@@ -106,7 +132,7 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 | -------------------------------------- | :-------: |
 | Auth (password + optional SSO), roles, sidebar shell, theme, command palette | 1 (done) |
 | Categories (drag to reorder, block-delete) and Menu CRUD: table/grid, filters, bulk actions, photos, variants, CSV import/export | 2 (done) |
-| POS billing, bill saving, thermal receipts | 3 |
+| POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing | 3 (done) |
 | Bill History: filters, sort, export, reprint, void | 4 |
 | Dashboard and charts                   | 5 |
 | Customers, Users, Audit log, Settings  | 6 |

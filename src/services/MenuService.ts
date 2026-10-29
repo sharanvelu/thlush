@@ -50,6 +50,10 @@ export interface MenuListItem {
   isVeg: boolean | null;
   variants: MenuVariant[];
   addons: MenuAddon[];
+  unit: string;
+  trackStock: boolean;
+  /** Stock on hand. Only meaningful when `trackStock` is true. */
+  stockQty: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -81,7 +85,7 @@ function filterConditions(filters: MenuFilters): SQL[] {
  * be ~100 KB each, so we only learn whether one exists and link to the image route.
  */
 const listColumns = () => {
-  const { imageUrl: _imageUrl, stockQty: _s, reorderLevel: _r, costPrice: _c, trackStock: _t, deletedAt: _d, createdUserId: _u, unit: _unit, ...rest } =
+  const { imageUrl: _imageUrl, reorderLevel: _r, costPrice: _c, deletedAt: _d, createdUserId: _u, ...rest } =
     getTableColumns(menuItems);
   return {
     ...rest,
@@ -126,6 +130,9 @@ function toListItem(row: ListRow): MenuListItem {
     isVeg: row.isVeg,
     variants: row.variants,
     addons: row.addons,
+    unit: row.unit,
+    trackStock: row.trackStock,
+    stockQty: row.stockQty,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -179,6 +186,20 @@ export async function listMenuItems(
     total: totalRows[0]?.n ?? 0,
     groupTotals: Object.fromEntries(counts.map((c) => [c.categoryId, c.n])),
   };
+}
+
+/**
+ * Everything the billing screen can show: all live items in active categories,
+ * in POS tab order. Disabled items are included so the screen can grey them out.
+ */
+export async function listCatalogForPos(): Promise<MenuListItem[]> {
+  const rows = await selectList(
+    and(isNull(menuItems.deletedAt), eq(categories.status, "active")),
+    [asc(categories.sortOrder), asc(sql`lower(${categories.name})`), asc(sql`lower(${menuItems.name})`)],
+    5000,
+    0,
+  );
+  return rows.map(toListItem);
 }
 
 export async function getMenuItem(id: number, executor: DbExecutor = db): Promise<MenuListItem> {
