@@ -114,3 +114,17 @@ export async function upsertFromOidc(identity: OidcIdentity): Promise<SessionUse
 export function parseRole(value: unknown) {
   return isRole(value) ? value : null;
 }
+
+export interface UserOption {
+  id: string;
+  name: string;
+}
+
+/** Everyone who can appear as a cashier, for filter dropdowns. */
+export async function listUserOptions(): Promise<UserOption[]> {
+  return db
+    .select({ id: schema.users.id, name: schema.users.name })
+    .from(schema.users)
+    .orderBy(sql`lower(${schema.users.name})`)
+    .limit(500);
+}

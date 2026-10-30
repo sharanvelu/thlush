@@ -2,7 +2,7 @@
 
 Billing and point-of-sale for restaurants, cafés and small shops. Built with Next.js (App Router), TypeScript, Tailwind CSS v4, shadcn/ui, Drizzle ORM and Neon Postgres.
 
-**Status:** milestone 3 of 8 done (POS billing, bill saving and receipts, on top of categories, menu and the foundation). See [Roadmap](#roadmap).
+**Status:** milestone 4 of 8 done (Bill History, on top of POS billing, menu and the foundation). See [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -83,6 +83,15 @@ Rounding: tax is rounded half-up to 2 decimals per component (SGST, CGST) per li
 
 Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58mm from settings). `/api/bills/{id}/pdf` returns the same receipt as a narrow PDF; amounts there are plain numbers and the total names the currency code, because the PDF's built-in fonts have no rupee sign. WhatsApp and email links carry a plain-text copy of the receipt.
 
+## Bill History
+
+`/bills` lists bills with server-side paging. Filters (all in the URL, so views can be shared): date range in the business timezone, customer, item, min and max total, payment method, status and cashier. Held bills are hidden unless you filter for them. Sort by date, total or customer.
+
+- **Who sees what:** cashiers only ever get their own bills, even if they ask for someone else's. Managers and admins see all and can void or refund.
+- **Void or refund:** needs a reason. One transaction marks the bill, records who and why, writes the audit entry, and puts back exactly the stock that bill's sale deducted (read from the stock ledger). A bill can only be reversed once.
+- **Export:** CSV and XLSX follow the active filters, one row per bill line: Bill ID, Date, Customer, Item, Qty, Currency, Price (before tax), Tax, Total, plus Status so voided bills are not mistaken for sales. XLSX amounts are real numbers. Exports stop at 10,000 bills (the response header `X-Export-Truncated` says when).
+- **Revenue** in the summary line counts completed bills only.
+
 ## Architecture
 
 ```
@@ -133,7 +142,7 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 | Auth (password + optional SSO), roles, sidebar shell, theme, command palette | 1 (done) |
 | Categories (drag to reorder, block-delete) and Menu CRUD: table/grid, filters, bulk actions, photos, variants, CSV import/export | 2 (done) |
 | POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing | 3 (done) |
-| Bill History: filters, sort, export, reprint, void | 4 |
+| Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock | 4 (done) |
 | Dashboard and charts                   | 5 |
 | Customers, Users, Audit log, Settings  | 6 |
 | Inventory: stock, movements, alerts, suppliers | 7 |

@@ -210,3 +210,18 @@ export function balanceDue(total: Numeric, paid: Numeric): string {
   const diff = toDecimal(total).minus(toDecimal(paid));
   return round2(diff.isNegative() ? ZERO : diff).toFixed(2);
 }
+
+/**
+ * SGST and CGST of a line as saved on a bill, rebuilt from its snapshot with the same
+ * rounding as `calculateBill`. `taxCharged` is false for bills saved while tax was ignored.
+ */
+export function savedLineTax(
+  line: { price: Numeric; quantity: Numeric; discount: Numeric; sgst: Numeric; cgst: Numeric },
+  taxCharged: boolean,
+): { sgst: string; cgst: string; tax: string } {
+  if (!taxCharged) return { sgst: "0.00", cgst: "0.00", tax: "0.00" };
+  const taxable = round2(nonNegative(line.price).times(nonNegative(line.quantity))).minus(nonNegative(line.discount));
+  const sgst = round2(taxable.times(nonNegative(line.sgst)).div(100));
+  const cgst = round2(taxable.times(nonNegative(line.cgst)).div(100));
+  return { sgst: sgst.toFixed(2), cgst: cgst.toFixed(2), tax: sgst.plus(cgst).toFixed(2) };
+}
