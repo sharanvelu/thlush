@@ -62,6 +62,44 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 
 The seed is safe to re-run: users, categories, items and settings are only inserted when missing, and demo bills are only created when there are none.
 
+## Deploying to Vercel
+
+1. **Database.** In Neon, use a separate project or branch for production. Copy its connection string (with `sslmode=require`).
+2. **Import the repo.** In Vercel choose **Add New, Project**, pick `sharanvelu/thlush` and keep the detected Next.js settings. Set the production branch to `main`.
+3. **Environment variables** (Project Settings, Environment Variables):
+
+   | Variable | Production | Preview |
+   | -------- | ---------- | ------- |
+   | `DATABASE_URL` | production Neon URL | a separate Neon branch, never the production URL |
+   | `AUTH_SECRET` | a fresh `openssl rand -base64 32` | a different secret |
+   | `NEXT_PUBLIC_BASE_URL` | your public URL, e.g. `https://pos.example.com` | the preview URL, or the same placeholder |
+   | `NEXT_PUBLIC_APP_ENV` | `production` | `staging` |
+   | `OIDC_*` | optional, see above | optional |
+
+   `NEXT_PUBLIC_*` values are baked in at build time, so set them before the first deploy and redeploy after changing them. You do not need `AUTH_TRUST_HOST` on Vercel.
+4. **Create the tables.** Migrations are not run by the build. From your machine, once per database and again after any new file appears in `drizzle/`:
+
+   ```bash
+   DATABASE_URL='<that environment's URL>' npm run db:migrate
+   ```
+
+   Do this before the deploy that needs the new schema.
+5. **First admin.** The seed refuses to run against a production environment unless forced. To load the demo users (and demo data) into a new database:
+
+   ```bash
+   DATABASE_URL='<production URL>' NEXT_PUBLIC_APP_ENV=production npm run db:seed -- --force
+   ```
+
+   Then sign in as `admin@thlush.local`, change the password, and delete the demo users in **Users & Roles**. Never leave the default `Password@123` on a public deployment. Set `SEED_PASSWORD` in that command to use a different one from the start.
+6. **Deploy.** Push to `main`. Every pull request also gets a preview deployment.
+7. **Check it.** Sign in, open **Reports** and download a PDF, and print a receipt. PDF export uses `pdfkit`, which reads font files at run time, so confirm it once on the first deployment.
+
+**Region.** Set the function region (Project Settings, Functions) close to your Neon region to keep queries fast.
+
+**Sharing previews.** Vercel protects previews by default, so only people signed in to your Vercel team can open them. To share one with reviewers, open Project Settings, Deployment Protection and change **Vercel Authentication**. Preview deployments then need no Vercel login, but anyone with the URL can open the app, so keep preview data fake and never point previews at the production database.
+
+**Custom domain.** Add it under Domains, then update `NEXT_PUBLIC_BASE_URL` and redeploy. If you use SSO, add `<your URL>/api/auth/callback/oidc` as a redirect URI at the identity provider.
+
 ## Billing screen
 
 `/billing` is a two-pane POS: items on the left (search, category chips, grid or list), the bill on the right. On phones the bill opens from a bar at the bottom.
@@ -204,4 +242,4 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 
 ## Roadmap
 
-All eight milestones are built. Not done: recipe and ingredient tracking (an optional stretch goal), and tax-inclusive pricing (prices are tax-exclusive by design). Deploying to Vercel needs your own project and environment variables; the app needs `DATABASE_URL`, `AUTH_SECRET` and `AUTH_URL` there, and `npm run db:migrate` run once against the production database.
+All eight milestones are built. Not done: recipe and ingredient tracking (an optional stretch goal), and tax-inclusive pricing (prices are tax-exclusive by design). See [Deploying to Vercel](#deploying-to-vercel).
