@@ -2,7 +2,7 @@
 
 Billing and point-of-sale for restaurants, cafés and small shops. Built with Next.js (App Router), TypeScript, Tailwind CSS v4, shadcn/ui, Drizzle ORM and Neon Postgres.
 
-**Status:** milestone 4 of 8 done (Bill History, on top of POS billing, menu and the foundation). See [Roadmap](#roadmap).
+**Status:** milestone 5 of 8 done (Dashboard and charts, on top of Bill History, POS billing, menu and the foundation). See [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -92,6 +92,16 @@ Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58m
 - **Export:** CSV and XLSX follow the active filters, one row per bill line: Bill ID, Date, Customer, Item, Qty, Currency, Price (before tax), Tax, Total, plus Status so voided bills are not mistaken for sales. XLSX amounts are real numbers. Exports stop at 10,000 bills (the response header `X-Export-Truncated` says when).
 - **Revenue** in the summary line counts completed bills only.
 
+## Dashboard
+
+`/` shows a date range (Today, 7 days, 30 days or a custom range, kept in the URL) with:
+
+- **KPI cards** for bills, revenue, average order value and items sold, each compared with the period of equal length just before it ("New" when there is nothing to compare).
+- **Charts:** revenue (by hour for a single day, otherwise by day), bills per hour, sales by category (each category keeps its own colour) and payment methods.
+- **Top 5 items**, **low stock** (tracked items at or under their reorder level, shown only to roles that can see inventory) and **recent bills**.
+
+Only completed bills count as sales. Days and hours follow the business timezone from settings. Cashiers see figures for their own bills only. Every chart has a data table for screen readers.
+
 ## Architecture
 
 ```
@@ -143,7 +153,7 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 | Categories (drag to reorder, block-delete) and Menu CRUD: table/grid, filters, bulk actions, photos, variants, CSV import/export | 2 (done) |
 | POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing | 3 (done) |
 | Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock | 4 (done) |
-| Dashboard and charts                   | 5 |
+| Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock | 5 (done) |
 | Customers, Users, Audit log, Settings  | 6 |
 | Inventory: stock, movements, alerts, suppliers | 7 |
 | Reports, accessibility pass, docs      | 8 |
