@@ -89,20 +89,20 @@ export default function BillingSummary({customerName, billingItems, isSaving, is
           <button
             type="button"
             className="btn btn-primary btn-lg flex-1"
-            onClick={onSave}
-            disabled={!canSave}
-          >
-            <Icon name="check" size={16}/>
-            {isSaving ? 'Saving...' : 'Save'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-lg flex-1"
             onClick={onPrint}
             disabled={!canSave}
           >
             <Icon name="print" size={16}/>
             {isSaving ? 'Saving...' : (isPrinting ? 'Printing...' : 'Save & Print')}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-lg flex-1"
+            onClick={onSave}
+            disabled={!canSave}
+          >
+            <Icon name="check" size={16}/>
+            {isSaving ? 'Saving...' : 'Save'}
           </button>
         </div>
         <button
