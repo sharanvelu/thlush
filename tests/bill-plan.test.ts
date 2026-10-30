@@ -250,6 +250,12 @@ describe("planBill: stock", () => {
     expect(planBill(sale("6", "252.00"), catalog(samosa), settings).stockUse.get(3)).toBe("6.000");
   });
 
+  it("ignores stock entirely when the Inventory feature is off", () => {
+    const off = { ...settings, blockOutOfStock: true, inventoryEnabled: false };
+    const plan = planBill(sale("50", "2100.00"), catalog(samosa), off);
+    expect(plan.stockUse.size).toBe(0);
+  });
+
   it("does not touch stock for untracked items or held bills", () => {
     expect(planBill(request(), catalog(dosa), settings).stockUse.size).toBe(0);
     const held = planBill(request({ action: "hold", lines: [{ menuItemId: 3, quantity: "50" }], payments: [] }), catalog(samosa), { ...settings, blockOutOfStock: true });

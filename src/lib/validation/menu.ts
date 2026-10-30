@@ -4,8 +4,10 @@ import {
   moneyString,
   optionalText,
   percentString,
+  quantityField,
   signedMoneyString,
   statusSchema,
+  unitSchema,
 } from "@/lib/validation/common";
 
 /** Product photos are stored as small WebP/PNG/JPEG data URLs, or an https link. */
@@ -29,7 +31,12 @@ export const addonSchema = z.object({
   price: moneyString("Add-on price"),
 });
 
-export const menuItemSchema = z.object({
+/**
+ * The fields of a menu item, with no defaults. Creating adds defaults on top; updating makes every
+ * field optional. Keeping defaults out of this shape matters: a default inside an update schema
+ * would be "filled in" for fields the caller never sent and silently overwrite real data.
+ */
+const menuItemShape = {
   name: z.string().trim().min(1, "Name is required").max(120, "Name must be 120 characters or fewer"),
   description: optionalText(500, "Description"),
   categoryId: z.number("Choose a category").int().positive("Choose a category"),
@@ -43,19 +50,41 @@ export const menuItemSchema = z.object({
     .toUpperCase()
     .regex(/^[A-Z]{3}$/, "Use a 3-letter currency code like INR")
     .optional(),
-  status: statusSchema.default("active"),
+  status: statusSchema,
   sku: optionalText(64, "SKU"),
   imageUrl: imageUrlSchema.nullish().transform((v) => v ?? null),
   /** true = veg, false = non-veg, null = not applicable. */
   isVeg: z.boolean().nullish().transform((v) => v ?? null),
-  variants: z.array(variantSchema).max(10, "At most 10 variants").default([]),
-  addons: z.array(addonSchema).max(20, "At most 20 add-ons").default([]),
+  variants: z.array(variantSchema).max(10, "At most 10 variants"),
+  addons: z.array(addonSchema).max(20, "At most 20 add-ons"),
+  /** Stock is only counted for items that track it. */
+  trackStock: z.boolean(),
+  unit: unitSchema,
+  reorderLevel: quantityField("Reorder level"),
+  costPrice: moneyString("Cost price"),
+};
+
+export const menuItemSchema = z.object({
+  ...menuItemShape,
+  status: menuItemShape.status.default("active"),
+  variants: menuItemShape.variants.default([]),
+  addons: menuItemShape.addons.default([]),
+  trackStock: menuItemShape.trackStock.default(false),
+  unit: menuItemShape.unit.default("pcs"),
+  reorderLevel: menuItemShape.reorderLevel.default("0"),
+  costPrice: menuItemShape.costPrice.default("0"),
+  /** Stock on hand when the item is created. Later changes go through stock adjustments. */
+  openingStock: z
+    .union([z.literal(""), quantityField("Opening stock")])
+    .optional()
+    .transform((v) => v || undefined),
 });
 
 export type MenuItemInput = z.input<typeof menuItemSchema>;
 export type MenuItemData = z.output<typeof menuItemSchema>;
 
-export const menuItemPatchSchema = menuItemSchema.partial();
+/** Stock quantities are never edited here, only through adjustments, purchases and sales. */
+export const menuItemPatchSchema = z.object(menuItemShape).partial();
 export type MenuItemPatch = z.output<typeof menuItemPatchSchema>;
 
 export const MENU_SORT_FIELDS = ["name", "category", "price", "status", "created"] as const;

@@ -3,6 +3,7 @@ import { AppSidebar, type Brand } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { ThemeSync } from "@/components/theme/theme-sync";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import type { LowStockAlerts } from "@/services/StockService";
 import type { SessionUser } from "@/types/user";
 
 interface AppShellProps {
@@ -10,11 +11,12 @@ interface AppShellProps {
   defaultSidebarOpen: boolean;
   brand: Brand;
   features: { inventory: boolean };
+  alerts: LowStockAlerts | null;
   children: ReactNode;
 }
 
 /** Sidebar + top bar + content area. On phones the sidebar becomes a drawer. */
-export function AppShell({ user, defaultSidebarOpen, brand, features, children }: AppShellProps) {
+export function AppShell({ user, defaultSidebarOpen, brand, features, alerts, children }: AppShellProps) {
   return (
     <SidebarProvider defaultOpen={defaultSidebarOpen}>
       <a
@@ -26,7 +28,7 @@ export function AppShell({ user, defaultSidebarOpen, brand, features, children }
       {user.themePreference ? <ThemeSync preference={user.themePreference} /> : null}
       <AppSidebar user={user} brand={brand} features={features} />
       <SidebarInset>
-        <TopBar user={user} features={features} />
+        <TopBar user={user} features={features} alerts={alerts} />
         <main id="main-content" className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>

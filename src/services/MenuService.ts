@@ -15,7 +15,7 @@ import { db, schema, type DbExecutor } from "@/db";
 import { toCsv, parseCsv, unescapeCell } from "@/lib/csv";
 import { isForeignKeyViolation, isUniqueViolation } from "@/lib/db-errors";
 import { HttpError } from "@/lib/errors";
-import { parseMoney } from "@/lib/money";
+import { D, parseMoney, parseQuantity } from "@/lib/money";
 import {
   menuItemSchema,
   type MenuBulkInput,
@@ -54,6 +54,8 @@ export interface MenuListItem {
   trackStock: boolean;
   /** Stock on hand. Only meaningful when `trackStock` is true. */
   stockQty: string;
+  reorderLevel: string;
+  costPrice: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -85,7 +87,7 @@ function filterConditions(filters: MenuFilters): SQL[] {
  * be ~100 KB each, so we only learn whether one exists and link to the image route.
  */
 const listColumns = () => {
-  const { imageUrl: _imageUrl, reorderLevel: _r, costPrice: _c, deletedAt: _d, createdUserId: _u, ...rest } =
+  const { imageUrl: _imageUrl, deletedAt: _d, createdUserId: _u, ...rest } =
     getTableColumns(menuItems);
   return {
     ...rest,
@@ -133,6 +135,8 @@ function toListItem(row: ListRow): MenuListItem {
     unit: row.unit,
     trackStock: row.trackStock,
     stockQty: row.stockQty,
+    reorderLevel: row.reorderLevel,
+    costPrice: row.costPrice,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -237,6 +241,8 @@ function badCategory() {
 
 export async function createMenuItem(input: MenuItemData, userId: string): Promise<MenuListItem> {
   const settings = await getSettings();
+  // Opening stock only counts for items that track stock.
+  const opening = input.trackStock && input.openingStock ? parseQuantity(input.openingStock) : "0.000";
   try {
     const id = await db.transaction(async (tx) => {
       const [created] = await tx
@@ -255,10 +261,25 @@ export async function createMenuItem(input: MenuItemData, userId: string): Promi
           isVeg: input.isVeg,
           variants: input.variants,
           addons: input.addons,
+          trackStock: input.trackStock,
+          unit: input.unit,
+          reorderLevel: parseQuantity(input.reorderLevel),
+          costPrice: parseMoney(input.costPrice),
+          stockQty: opening,
           createdUserId: userId,
         })
         .returning({ id: menuItems.id });
       if (!created) throw new Error("Menu item insert returned no row");
+      if (new D(opening).greaterThan(0)) {
+        await tx.insert(stockMovements).values({
+          menuItemId: created.id,
+          delta: opening,
+          reason: "correction",
+          userId,
+          note: "Opening stock",
+          balanceAfter: opening,
+        });
+      }
       await AuditService.record(
         { userId, action: "menu.create", entity: "menu_item", entityId: created.id, metadata: { name: input.name } },
         tx,
@@ -288,6 +309,10 @@ export async function updateMenuItem(id: number, patch: MenuItemPatch, userId: s
   if (patch.isVeg !== undefined) values.isVeg = patch.isVeg;
   if (patch.variants !== undefined) values.variants = patch.variants;
   if (patch.addons !== undefined) values.addons = patch.addons;
+  if (patch.trackStock !== undefined) values.trackStock = patch.trackStock;
+  if (patch.unit !== undefined) values.unit = patch.unit;
+  if (patch.reorderLevel !== undefined) values.reorderLevel = parseQuantity(patch.reorderLevel);
+  if (patch.costPrice !== undefined) values.costPrice = parseMoney(patch.costPrice);
 
   try {
     await db.transaction(async (tx) => {

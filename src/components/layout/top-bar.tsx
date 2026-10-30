@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
+import type { LowStockAlerts } from "@/services/StockService";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
@@ -32,7 +33,7 @@ function useBreadcrumb(pathname: string): { group: string | null; page: string }
   return { group: null, page: "" };
 }
 
-export function TopBar({ user, features }: { user: SessionUser; features: { inventory: boolean } }) {
+export function TopBar({ user, features, alerts }: { user: SessionUser; features: { inventory: boolean }; alerts: LowStockAlerts | null }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const pathname = usePathname();
   const { group, page } = useBreadcrumb(pathname);
@@ -91,7 +92,7 @@ export function TopBar({ user, features }: { user: SessionUser; features: { inve
         ) : null}
 
         <ThemeToggle />
-        <NotificationsBell />
+        <NotificationsBell alerts={alerts} />
         <UserMenu user={user} />
       </div>
 

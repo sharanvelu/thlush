@@ -34,6 +34,7 @@ export default async function MenuPage({ searchParams }: PageProps<"/menu">) {
       categories={categories}
       canManage={hasPermission(user.role, "menu.manage")}
       defaults={{
+        inventory: settings.features.inventory,
         currency: settings.locale.currency,
         locale: settings.locale.locale,
         sgst: settings.tax.defaultSgst,

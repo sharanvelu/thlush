@@ -40,7 +40,8 @@ export default async function BillingPage() {
     variants: i.variants,
     addons: i.addons,
     unit: i.unit,
-    trackStock: i.trackStock,
+    // With Inventory switched off, stock is not shown or enforced at the till.
+    trackStock: i.trackStock && appSettings.features.inventory,
     stockQty: i.stockQty,
     status: i.status,
   }));

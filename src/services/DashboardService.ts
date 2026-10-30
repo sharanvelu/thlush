@@ -1,10 +1,11 @@
-import { and, desc, eq, gte, isNull, lt, lte, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { hasPermission } from "@/config/permissions";
 import { zonedStartOfDay, nextDay } from "@/lib/dates";
 import { fillSeries, foldSlices, listDays, percentChange, type ResolvedRange, type SeriesPoint } from "@/lib/dashboard";
 import { D } from "@/lib/money";
 import * as BillHistoryService from "@/services/BillHistoryService";
+import { lowStock } from "@/services/StockService";
 import type { PaymentMethod } from "@/types/bill";
 import type { SessionUser } from "@/types/user";
 
@@ -180,23 +181,5 @@ export async function getDashboard(range: ResolvedRange, user: SessionUser, time
     topItems: topRows.map((r) => ({ name: r.name, quantity: num(r.quantity).toString(), revenue: num(r.revenue).toFixed(2) })),
     lowStock: lowRows,
     recentBills: recent.rows,
-  };
-}
-
-/** Tracked items at or under their reorder level, emptiest first. Shared with the alerts bell later. */
-export async function lowStock(limit = 8) {
-  const low = and(eq(menuItems.trackStock, true), isNull(menuItems.deletedAt), lte(menuItems.stockQty, menuItems.reorderLevel));
-  const [rows, [count]] = await Promise.all([
-    db
-      .select({ id: menuItems.id, name: menuItems.name, stock: menuItems.stockQty, reorderLevel: menuItems.reorderLevel, unit: menuItems.unit })
-      .from(menuItems)
-      .where(low)
-      .orderBy(sql`${menuItems.stockQty} - ${menuItems.reorderLevel}`, menuItems.name)
-      .limit(limit),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(menuItems).where(low),
-  ]);
-  return {
-    total: count?.n ?? 0,
-    items: rows.map((r) => ({ ...r, stock: num(r.stock).toString(), reorderLevel: num(r.reorderLevel).toString() })),
   };
 }

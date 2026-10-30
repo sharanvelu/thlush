@@ -1,17 +1,16 @@
 import { z } from "zod";
 import { optionalText } from "@/lib/validation/common";
 
-const tags = z
+const tagList = z
   .array(z.string().trim().min(1).max(30, "Tags must be 30 characters or fewer"))
   .max(10, "At most 10 tags")
-  .default([])
   .transform((list) => {
     // One tag per word, whatever the case it was typed in.
     const seen = new Set<string>();
     return list.filter((t) => (seen.has(t.toLowerCase()) ? false : seen.add(t.toLowerCase()) && true));
   });
 
-export const customerSchema = z.object({
+const customerShape = {
   name: z.string().trim().min(1, "Name is required").max(120, "Name must be 120 characters or fewer"),
   phone: z
     .string()
@@ -28,11 +27,14 @@ export const customerSchema = z.object({
     .nullish()
     .transform((v) => (v ? v.toLowerCase() : null)),
   notes: optionalText(500, "Notes"),
-  tags,
-});
+  tags: tagList,
+};
+
+/** Create: tags default to none. Update: only the fields sent are changed. */
+export const customerSchema = z.object({ ...customerShape, tags: customerShape.tags.default([]) });
 export type CustomerInput = z.input<typeof customerSchema>;
 export type CustomerData = z.output<typeof customerSchema>;
-export const customerPatchSchema = customerSchema.partial();
+export const customerPatchSchema = z.object(customerShape).partial();
 
 /** "regular, office" typed into one box becomes ["regular", "office"]. */
 export function parseTags(input: string): string[] {

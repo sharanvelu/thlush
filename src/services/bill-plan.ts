@@ -36,6 +36,8 @@ export interface PlanSettings {
   discountsEnabled: boolean;
   orderTypesEnabled: boolean;
   blockOutOfStock: boolean;
+  /** When the Inventory feature is off, stock is neither deducted nor checked. Defaults to on. */
+  inventoryEnabled?: boolean;
 }
 
 export interface PlannedLine {
@@ -165,7 +167,7 @@ export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanIt
 
   // ---- Stock (only a completed sale takes stock) -------------------------
   const stockUse = new Map<number, string>();
-  if (completing) {
+  if (completing && settings.inventoryEnabled !== false) {
     const used = new Map<number, Dec>();
     for (const r of resolved) {
       if (!r.item.trackStock) continue;

@@ -2,7 +2,7 @@
 
 Billing and point-of-sale for restaurants, cafés and small shops. Built with Next.js (App Router), TypeScript, Tailwind CSS v4, shadcn/ui, Drizzle ORM and Neon Postgres.
 
-**Status:** milestone 6 of 8 done (Customers and Admin: users, audit log, settings and profile). See [Roadmap](#roadmap).
+**Status:** milestone 7 of 8 done (Inventory: stock, adjustments, suppliers and purchases). See [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -113,6 +113,15 @@ Only completed bills count as sales. Days and hours follow the business timezone
 - **Settings** (super admin only), saved one section at a time with an audit entry for each: business profile and logo, currency, locale and time zone, tax, receipt text and paper width, bill number prefix and digits, accent colour (live preview, auto-picked readable text, AA contrast check) and feature toggles. Turning Inventory off hides its navigation; Discounts and Order types hide those controls on the billing screen.
 - **Profile**: everyone can edit their own name and email, change their password (not for SSO accounts) and save a theme that follows them to other devices.
 
+## Inventory
+
+Switch it on in Settings. Stock is only counted for items with **Track stock** turned on in the menu form (unit, reorder level, cost price and opening stock live there too). Turning the feature off stops stock being deducted or checked at billing.
+
+- **Stock Overview** (`/inventory`): tracked items, stock value at cost, low and out-of-stock counts, with search, category and status filters and sorting.
+- **Stock Adjustments**: add or remove stock with a reason (purchase, wastage, damage, correction, return). Removing more than is on hand is refused. Every change, including sales, voids and refunds, lands in an append-only ledger with the balance after it.
+- **Suppliers & Purchases** (`/inventory/suppliers`): receiving a delivery adds stock, updates each item's cost price and writes ledger rows in one transaction. Deleting a supplier keeps its past purchases.
+- **Alerts**: the bell in the top bar and the dashboard list items at or under their reorder level.
+
 ## Architecture
 
 ```
@@ -166,7 +175,7 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 | Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock | 4 (done) |
 | Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock | 5 (done) |
 | Customers, Users & Roles, Audit log, Settings, Profile | 6 (done) |
-| Inventory: stock, movements, alerts, suppliers | 7 |
+| Inventory: stock, movements, alerts, suppliers | 7 (done) |
 | Reports, accessibility pass, docs      | 8 |
 
 ## Roadmap

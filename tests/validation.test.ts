@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { categorySchema } from "@/lib/validation/category";
-import { menuBulkSchema, menuItemSchema, menuListQuerySchema } from "@/lib/validation/menu";
+import { categoryPatchSchema, categorySchema } from "@/lib/validation/category";
+import { customerPatchSchema } from "@/lib/validation/customer";
+import { menuBulkSchema, menuItemPatchSchema, menuItemSchema, menuListQuerySchema } from "@/lib/validation/menu";
 
 const validItem = {
   name: "Masala Dosa",
@@ -121,5 +122,40 @@ describe("categorySchema", () => {
     expect(categorySchema.safeParse({ name: "A", color: "orange" }).success).toBe(false);
     expect(categorySchema.safeParse({ name: "A", icon: "rocket" }).success).toBe(false);
     expect(categorySchema.safeParse({ name: "A", color: "#f97316", icon: "coffee" }).success).toBe(true);
+  });
+});
+
+describe("update schemas never invent fields", () => {
+  // A default inside an update schema would be filled in for fields the caller did not send,
+  // overwriting real data (for example wiping variants when only the status is toggled).
+  it("a menu item update contains only what was sent", () => {
+    expect(menuItemPatchSchema.parse({ status: "disabled" })).toEqual({ status: "disabled" });
+    expect(menuItemPatchSchema.parse({})).toEqual({});
+    expect(menuItemPatchSchema.parse({ price: "12" })).toEqual({ price: "12" });
+  });
+
+  it("a category update contains only what was sent", () => {
+    expect(categoryPatchSchema.parse({ name: "Drinks" })).toEqual({ name: "Drinks" });
+    expect(categoryPatchSchema.parse({ status: "disabled" })).toEqual({ status: "disabled" });
+  });
+
+  it("a customer update contains only what was sent", () => {
+    expect(customerPatchSchema.parse({ name: "Asha" })).toEqual({ name: "Asha" });
+    expect(customerPatchSchema.parse({ tags: ["VIP"] })).toEqual({ tags: ["VIP"] });
+  });
+
+  it("creating still fills in the defaults", () => {
+    const item = menuItemSchema.parse({ name: "Tea", categoryId: 1, price: "10", sgst: "2.5", cgst: "2.5" });
+    expect(item).toMatchObject({ status: "active", variants: [], addons: [], trackStock: false, unit: "pcs", reorderLevel: "0", costPrice: "0" });
+    expect(categorySchema.parse({ name: "X" }).status).toBe("active");
+  });
+
+  it("validates the stock fields", () => {
+    const base = { name: "Tea", categoryId: 1, price: "10", sgst: "2.5", cgst: "2.5" };
+    expect(menuItemSchema.safeParse({ ...base, trackStock: true, unit: "kg", reorderLevel: "2.5", costPrice: "40", openingStock: "12.250" }).success).toBe(true);
+    expect(menuItemSchema.safeParse({ ...base, unit: "box" }).success).toBe(false);
+    expect(menuItemSchema.safeParse({ ...base, reorderLevel: "-1" }).success).toBe(false);
+    expect(menuItemSchema.safeParse({ ...base, openingStock: "1.2345" }).success).toBe(false);
+    expect(menuItemPatchSchema.safeParse({ openingStock: "5" }).data).toEqual({});
   });
 });

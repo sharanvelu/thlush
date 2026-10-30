@@ -214,6 +214,7 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
         discountsEnabled: settings.features.discounts,
         orderTypesEnabled: settings.features.orderTypes,
         blockOutOfStock: settings.billing.blockOutOfStock,
+        inventoryEnabled: settings.features.inventory,
       });
 
       // Customer: an existing one by id, a typed name (find or create), or walk-in.

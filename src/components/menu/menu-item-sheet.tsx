@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePlus, LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import Decimal from "decimal.js";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { ItemThumb } from "@/components/menu/menu-primitives";
@@ -29,6 +30,8 @@ import type { CategoryOption } from "@/services/CategoryService";
 import type { MenuListItem } from "@/services/MenuService";
 
 export interface MenuFormDefaults {
+  /** Whether the Inventory feature is on; stock fields only show when it is. */
+  inventory: boolean;
   currency: string;
   sgst: string;
   cgst: string;
@@ -48,7 +51,7 @@ interface MenuItemSheetProps {
 
 type ImageChange = { kind: "keep" } | { kind: "remove" } | { kind: "set"; dataUrl: string };
 
-const FIELD_KEYS = ["name", "description", "categoryId", "price", "sgst", "cgst", "currency", "sku", "status"] as const;
+const FIELD_KEYS = ["name", "description", "categoryId", "price", "sgst", "cgst", "currency", "sku", "status", "reorderLevel", "costPrice", "openingStock"] as const;
 
 function emptyValues(defaults: MenuFormDefaults, categoryId?: number): MenuItemInput {
   return {
@@ -65,6 +68,11 @@ function emptyValues(defaults: MenuFormDefaults, categoryId?: number): MenuItemI
     isVeg: null,
     variants: [],
     addons: [],
+    trackStock: false,
+    unit: "pcs",
+    reorderLevel: "0",
+    costPrice: "0",
+    openingStock: "",
   };
 }
 
@@ -83,6 +91,11 @@ function valuesFor(item: MenuListItem): MenuItemInput {
     isVeg: item.isVeg,
     variants: item.variants,
     addons: item.addons,
+    trackStock: item.trackStock,
+    unit: item.unit as "pcs" | "kg" | "l",
+    reorderLevel: new Decimal(item.reorderLevel).toString(),
+    costPrice: item.costPrice,
+    openingStock: "",
   };
 }
 
@@ -114,6 +127,7 @@ export function MenuItemSheet({
     resolver: zodResolver(menuItemSchema),
     defaultValues: emptyValues(defaults, initialCategoryId),
   });
+  const trackStock = useWatch({ control, name: "trackStock" });
   const variants = useFieldArray({ control, name: "variants" });
   const addons = useFieldArray({ control, name: "addons" });
 
@@ -369,6 +383,73 @@ export function MenuItemSheet({
                     <Plus aria-hidden /> Add add-on
                   </Button>
                 </FieldSet>
+
+                {defaults.inventory ? (
+                  <FieldSet>
+                    <FieldLegend variant="label">Stock</FieldLegend>
+                    <Controller
+                      control={control}
+                      name="trackStock"
+                      render={({ field }) => (
+                        <Field orientation="horizontal">
+                          <Switch id="item-track" checked={field.value} onCheckedChange={field.onChange} />
+                          <div className="flex flex-col gap-0.5">
+                            <FieldLabel htmlFor="item-track">Track stock</FieldLabel>
+                            <FieldDescription>Counts down as it sells, and warns when it runs low.</FieldDescription>
+                          </div>
+                        </Field>
+                      )}
+                    />
+                    {trackStock ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        <Controller
+                          control={control}
+                          name="unit"
+                          render={({ field }) => (
+                            <Field>
+                              <FieldLabel htmlFor="item-unit">Unit</FieldLabel>
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger id="item-unit" className="w-full">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pcs">Pieces</SelectItem>
+                                  <SelectItem value="kg">Kilograms</SelectItem>
+                                  <SelectItem value="l">Litres</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </Field>
+                          )}
+                        />
+                        <Field data-invalid={Boolean(errors.reorderLevel)}>
+                          <FieldLabel htmlFor="item-reorder">Reorder level</FieldLabel>
+                          <Input id="item-reorder" inputMode="decimal" aria-invalid={Boolean(errors.reorderLevel)} {...register("reorderLevel")} />
+                          <FieldError errors={[errors.reorderLevel]} />
+                        </Field>
+                        <Field data-invalid={Boolean(errors.costPrice)}>
+                          <FieldLabel htmlFor="item-cost">Cost price</FieldLabel>
+                          <Input id="item-cost" inputMode="decimal" aria-invalid={Boolean(errors.costPrice)} {...register("costPrice")} />
+                          <FieldError errors={[errors.costPrice]} />
+                        </Field>
+                        {item ? (
+                          <Field>
+                            <FieldLabel>In stock now</FieldLabel>
+                            <p className="flex h-8 items-center text-sm tabular-nums">{new Decimal(item.stockQty).toString()} {item.unit}</p>
+                          </Field>
+                        ) : (
+                          <Field data-invalid={Boolean(errors.openingStock)}>
+                            <FieldLabel htmlFor="item-opening">Opening stock</FieldLabel>
+                            <Input id="item-opening" inputMode="decimal" placeholder="0" aria-invalid={Boolean(errors.openingStock)} {...register("openingStock")} />
+                            <FieldError errors={[errors.openingStock]} />
+                          </Field>
+                        )}
+                      </div>
+                    ) : null}
+                    {trackStock && item ? (
+                      <FieldDescription>To change what is in stock, use Stock Adjustments or receive a purchase, so the change is recorded.</FieldDescription>
+                    ) : null}
+                  </FieldSet>
+                ) : null}
 
                 <Controller
                   control={control}

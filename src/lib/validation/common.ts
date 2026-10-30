@@ -7,6 +7,17 @@ export const moneyString = (label = "Amount") =>
     .trim()
     .regex(/^\d{1,9}(\.\d{1,2})?$/, `${label} must be a number like 120 or 120.50`);
 
+/** A non-negative quantity with up to 3 decimals (kilograms, litres), kept as a string. */
+export const quantityField = (label = "Quantity") =>
+  z
+    .string()
+    .trim()
+    .regex(/^\d{1,9}(\.\d{1,3})?$/, `${label} must be a number like 12 or 2.5`);
+
+export const UNITS = ["pcs", "kg", "l"] as const;
+export const unitSchema = z.enum(UNITS);
+export type Unit = (typeof UNITS)[number];
+
 /** A signed amount (for variant price differences). */
 export const signedMoneyString = (label = "Amount") =>
   z
