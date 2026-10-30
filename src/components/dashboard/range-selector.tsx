@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { ResolvedRange } from "@/lib/dashboard";
+import type { RangeKey, ResolvedRange } from "@/lib/dashboard";
 import { cn } from "@/lib/utils";
 
 const PRESETS = [
@@ -13,8 +13,11 @@ const PRESETS = [
   { value: "30d", label: "30 days" },
 ] as const;
 
-/** Date-range control. The choice lives in the URL, so a view can be bookmarked or shared. */
-export function RangeSelector({ range, today }: { range: ResolvedRange; today: string }) {
+/**
+ * Date-range control. The choice lives in the URL, so a view can be bookmarked or shared.
+ * `defaultKey` is the range a page uses when the URL has none, so choosing it just clears the param.
+ */
+export function RangeSelector({ range, today, defaultKey = "today" }: { range: ResolvedRange; today: string; defaultKey?: RangeKey }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -47,7 +50,7 @@ export function RangeSelector({ range, today }: { range: ResolvedRange; today: s
               aria-pressed={selected}
               onClick={() => {
                 setCustomOpen(false);
-                go({ range: value === "today" ? null : value, from: null, to: null });
+                go({ range: value === defaultKey ? null : value, from: null, to: null });
               }}
               className={cn("rounded-lg px-3", selected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground")}
             >

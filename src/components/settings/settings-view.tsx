@@ -82,7 +82,7 @@ function BusinessForm({ initial }: GroupProps<"business">) {
               )}
             </span>
             <div className="flex flex-wrap gap-2">
-              <input ref={file} type="file" accept={IMAGE_ACCEPT} className="sr-only" id="logo-file" onChange={(ev) => void pickLogo(ev.target.files?.[0])} />
+              <input ref={file} type="file" accept={IMAGE_ACCEPT} className="sr-only" id="logo-file" tabIndex={-1} aria-hidden onChange={(ev) => void pickLogo(ev.target.files?.[0])} />
               <Button type="button" variant="outline" disabled={busy} onClick={() => file.current?.click()}>
                 {busy ? <LoaderCircle className="animate-spin" aria-hidden /> : <ImagePlus aria-hidden />}
                 {v.logoUrl ? "Replace logo" : "Upload logo"}

@@ -2,7 +2,7 @@
 
 Billing and point-of-sale for restaurants, cafés and small shops. Built with Next.js (App Router), TypeScript, Tailwind CSS v4, shadcn/ui, Drizzle ORM and Neon Postgres.
 
-**Status:** milestone 7 of 8 done (Inventory: stock, adjustments, suppliers and purchases). See [Roadmap](#roadmap).
+**Status:** all 8 milestones done (reports, accessibility pass and docs added in milestone 8). See [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -122,6 +122,25 @@ Switch it on in Settings. Stock is only counted for items with **Track stock** t
 - **Suppliers & Purchases** (`/inventory/suppliers`): receiving a delivery adds stock, updates each item's cost price and writes ledger rows in one transaction. Deleting a supplier keeps its past purchases.
 - **Alerts**: the bell in the top bar and the dashboard list items at or under their reorder level.
 
+## Reports
+
+`/reports` (super admin and manager) has nine reports. Each has a chart, a table with totals, and CSV and PDF export that uses the same query as the page, so the file always matches the screen.
+
+| Report | What it shows |
+| ------ | ------------- |
+| Sales | Bills, items, subtotal, discount, tax and total per day, week or month |
+| By category / item / cashier / payment | Quantity, revenue and share for each, best first |
+| Tax | SGST and CGST collected per tax rate, reconciling to the bill totals |
+| Discounts | Every discounted bill with its cashier and percentage of subtotal |
+| Stock value | Tracked items valued at cost (a snapshot of today, so no date range) |
+| Stock movement | Received, sold, wasted and corrected quantities per item |
+
+The date range defaults to the last 30 days (Today, 7 days, 30 days or a custom range up to a year) and lives in the URL, so a view can be bookmarked. Figures count completed bills only; void, refunded and held bills are not sales. Tables stop at 500 rows and say so; narrow the range to see the rest. CSV files contain plain numbers and neutralise spreadsheet formulas. PDFs print amounts without a currency symbol (the built-in PDF fonts have no rupee glyph) and state the currency in the header. The two stock reports are hidden when Inventory is off.
+
+## Accessibility
+
+Targets WCAG 2.1 AA. Every page has one `h1`, a skip link and a `main` landmark; form fields have labels and inline error text; charts have a text summary and the same numbers in the table beside them; tables use real header cells; focus rings are visible; light and dark themes keep AA contrast (the accent colour setting checks this and picks readable text); motion respects `prefers-reduced-motion`; no page scrolls sideways at 390px. A scripted check of 17 pages for missing names, labels, duplicate ids and landmarks is clean.
+
 ## Architecture
 
 ```
@@ -176,8 +195,8 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 | Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock | 5 (done) |
 | Customers, Users & Roles, Audit log, Settings, Profile | 6 (done) |
 | Inventory: stock, movements, alerts, suppliers | 7 (done) |
-| Reports, accessibility pass, docs      | 8 |
+| Reports, accessibility pass, docs      | 8 (done) |
 
 ## Roadmap
 
-Built in milestones, each reviewed before the next begins. The sidebar already lists every page; pages that arrive later show a placeholder that still enforces permissions.
+All eight milestones are built. Not done: recipe and ingredient tracking (an optional stretch goal), and tax-inclusive pricing (prices are tax-exclusive by design). Deploying to Vercel needs your own project and environment variables; the app needs `DATABASE_URL`, `AUTH_SECRET` and `AUTH_URL` there, and `npm run db:migrate` run once against the production database.
