@@ -32,7 +32,7 @@ function useBreadcrumb(pathname: string): { group: string | null; page: string }
   return { group: null, page: "" };
 }
 
-export function TopBar({ user }: { user: SessionUser }) {
+export function TopBar({ user, features }: { user: SessionUser; features: { inventory: boolean } }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const pathname = usePathname();
   const { group, page } = useBreadcrumb(pathname);
@@ -95,7 +95,7 @@ export function TopBar({ user }: { user: SessionUser }) {
         <UserMenu user={user} />
       </div>
 
-      <CommandPalette role={user.role} open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <CommandPalette role={user.role} features={features} open={paletteOpen} onOpenChange={setPaletteOpen} />
     </header>
   );
 }

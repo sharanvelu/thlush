@@ -2,7 +2,7 @@
 
 Billing and point-of-sale for restaurants, cafés and small shops. Built with Next.js (App Router), TypeScript, Tailwind CSS v4, shadcn/ui, Drizzle ORM and Neon Postgres.
 
-**Status:** milestone 5 of 8 done (Dashboard and charts, on top of Bill History, POS billing, menu and the foundation). See [Roadmap](#roadmap).
+**Status:** milestone 6 of 8 done (Customers and Admin: users, audit log, settings and profile). See [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -102,6 +102,17 @@ Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58m
 
 Only completed bills count as sales. Days and hours follow the business timezone from settings. Cashiers see figures for their own bills only. Every chart has a data table for screen readers.
 
+## Customers
+
+`/customers` lists name, contact, orders, lifetime spend and last visit (completed bills only), with search (name, phone, email, tag) and sorting. The detail page shows the profile, stats and that customer's bills. Deleting a customer keeps their bills, which then show as walk-in. A phone number can belong to one customer. Typing a new name on the billing screen creates the customer once and reuses them next time.
+
+## Admin
+
+- **Users & Roles** (super admin only): add, edit, reset a password, change a role, delete. You can't delete yourself or change your own role, and the last super admin can't be removed or demoted. Passwords are hashed with bcrypt and need 8+ characters with a letter and a number. SSO accounts have no password and their name and email come from the identity provider.
+- **Audit log** (super admin and manager): who did what and when, filterable by user, record type, action and date. It records sign-ins, menu and category changes, bills, voids, stock, users and settings. Passwords are never written to it.
+- **Settings** (super admin only), saved one section at a time with an audit entry for each: business profile and logo, currency, locale and time zone, tax, receipt text and paper width, bill number prefix and digits, accent colour (live preview, auto-picked readable text, AA contrast check) and feature toggles. Turning Inventory off hides its navigation; Discounts and Order types hide those controls on the billing screen.
+- **Profile**: everyone can edit their own name and email, change their password (not for SSO accounts) and save a theme that follows them to other devices.
+
 ## Architecture
 
 ```
@@ -154,7 +165,7 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 | POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing | 3 (done) |
 | Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock | 4 (done) |
 | Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock | 5 (done) |
-| Customers, Users, Audit log, Settings  | 6 |
+| Customers, Users & Roles, Audit log, Settings, Profile | 6 (done) |
 | Inventory: stock, movements, alerts, suppliers | 7 |
 | Reports, accessibility pass, docs      | 8 |
 

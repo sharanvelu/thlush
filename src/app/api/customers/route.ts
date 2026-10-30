@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { buildPagination, paginated, parseQuery, withAuth } from "@/lib/api";
+import { buildPagination, ok, paginated, parseBody, parseQuery, withAuth } from "@/lib/api";
+import { customerSchema } from "@/lib/validation/customer";
 import * as CustomerService from "@/services/CustomerService";
 
 const querySchema = z.object({
@@ -16,4 +17,9 @@ export const GET = withAuth(
     return paginated(rows, buildPagination(page, pageSize, total));
   },
   { permission: "customers.view" },
+);
+
+export const POST = withAuth(
+  async (req, { user }) => ok(await CustomerService.createCustomer(await parseBody(req, customerSchema), user.id), { status: 201 }),
+  { permission: "customers.manage" },
 );

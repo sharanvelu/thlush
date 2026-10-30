@@ -17,12 +17,13 @@ import { hasPermission, type Role } from "@/config/permissions";
 
 interface CommandPaletteProps {
   role: Role;
+  features: { inventory: boolean };
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 /** Cmd/Ctrl+K palette: jump to any page the role can open, or run a quick action. */
-export function CommandPalette({ role, open, onOpenChange }: CommandPaletteProps) {
+export function CommandPalette({ role, features, open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export function CommandPalette({ role, open, onOpenChange }: CommandPaletteProps
     router.push(href);
   };
 
-  const groups = navForRole(role);
+  const groups = navForRole(role, features);
   const actions = [
     hasPermission(role, "bills.create") && { label: "New bill", href: "/billing", icon: ReceiptText },
     hasPermission(role, "menu.manage") && {

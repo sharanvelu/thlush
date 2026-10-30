@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { appConfig } from "@/config";
+import { accentCss } from "@/lib/color";
+import { getSettingsGroup } from "@/services/SettingsService";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,7 +33,18 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+/** The accent chosen in Settings. If the database is unreachable the built-in orange is used. */
+async function loadAccent(): Promise<string> {
+  try {
+    const { accent } = await getSettingsGroup("appearance");
+    return accent ? accentCss(accent) : "";
+  } catch {
+    return "";
+  }
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const accent = await loadAccent();
   return (
     <html
       lang="en"
@@ -39,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="min-h-full">
+        {accent ? <style id="accent-override" dangerouslySetInnerHTML={{ __html: accent }} /> : null}
         <ThemeProvider>
           <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
           <Toaster richColors closeButton />

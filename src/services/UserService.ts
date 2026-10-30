@@ -1,7 +1,11 @@
 import { eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { isRole } from "@/config/permissions";
-import { burnPasswordCheck, verifyPassword } from "@/lib/password";
+import { isUniqueViolation } from "@/lib/db-errors";
+import { HttpError } from "@/lib/errors";
+import { burnPasswordCheck, hashPassword, verifyPassword } from "@/lib/password";
+import type { ProfileInput } from "@/lib/validation/user";
+import * as AuditService from "@/services/AuditService";
 import type { SessionUser, UserProfile } from "@/types/user";
 import type { UserRow } from "@/db/schema";
 
@@ -30,11 +34,14 @@ export async function findSessionUser(id: string): Promise<SessionUser | null> {
       name: schema.users.name,
       email: schema.users.email,
       role: schema.users.role,
+      themePreference: schema.users.themePreference,
     })
     .from(schema.users)
     .where(eq(schema.users.id, id))
     .limit(1);
-  return row ? toSessionUser(row) : null;
+  if (!row) return null;
+  const theme = row.themePreference;
+  return { ...toSessionUser(row), themePreference: theme === "light" || theme === "dark" ? theme : "system" };
 }
 
 export async function getProfile(id: string): Promise<UserProfile | null> {
@@ -127,4 +134,42 @@ export async function listUserOptions(): Promise<UserOption[]> {
     .from(schema.users)
     .orderBy(sql`lower(${schema.users.name})`)
     .limit(500);
+}
+
+// ---------------------------------------------------------------------------
+// Own profile
+// ---------------------------------------------------------------------------
+
+/** Name, email and theme. SSO accounts get name and email from the identity provider, so those stay read-only. */
+export async function updateOwnProfile(userId: string, patch: ProfileInput): Promise<void> {
+  const [row] = await db.select({ password: schema.users.password }).from(schema.users).where(eq(schema.users.id, userId));
+  if (!row) throw HttpError.notFound("User not found.");
+  if (row.password === null && (patch.name !== undefined || patch.email !== undefined)) {
+    throw HttpError.badRequest("Your name and email come from single sign-on and can't be changed here.");
+  }
+  const values: Partial<typeof schema.users.$inferInsert> = {};
+  if (patch.name !== undefined) values.name = patch.name;
+  if (patch.email !== undefined) values.email = patch.email;
+  if (patch.themePreference !== undefined) values.themePreference = patch.themePreference;
+  if (Object.keys(values).length === 0) return;
+  try {
+    await db.update(schema.users).set(values).where(eq(schema.users.id, userId));
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new HttpError(409, "Another user already has this email.", { email: ["This email is already in use."] });
+    }
+    throw error;
+  }
+  await AuditService.log({ userId, action: "profile.update", entity: "user", entityId: userId, metadata: { fields: Object.keys(values) } });
+}
+
+export async function changeOwnPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  const [row] = await db.select({ password: schema.users.password }).from(schema.users).where(eq(schema.users.id, userId));
+  if (!row) throw HttpError.notFound("User not found.");
+  if (row.password === null) throw HttpError.badRequest("Your account uses single sign-on and has no password.");
+  if (!(await verifyPassword(currentPassword, row.password))) {
+    throw new HttpError(400, "Your current password is not correct.", { currentPassword: ["That isn't your current password."] });
+  }
+  await db.update(schema.users).set({ password: await hashPassword(newPassword) }).where(eq(schema.users.id, userId));
+  await AuditService.log({ userId, action: "profile.password_change", entity: "user", entityId: userId });
 }

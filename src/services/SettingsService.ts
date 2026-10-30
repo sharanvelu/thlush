@@ -1,4 +1,7 @@
 import { eq } from "drizzle-orm";
+import { settingsSchemas } from "@/lib/validation/settings";
+import * as AuditService from "@/services/AuditService";
+import { HttpError } from "@/lib/errors";
 import { db, schema, type DbExecutor } from "@/db";
 import { defaultSettings } from "@/config";
 import type { AppSettings, SettingsKey } from "@/types/settings";
@@ -67,4 +70,27 @@ export async function ensureDefaultSettings(executor: DbExecutor = db): Promise<
       })),
     )
     .onConflictDoNothing({ target: schema.settings.key });
+}
+
+/**
+ * Validates and saves one settings group, with its audit entry, in one transaction.
+ * Unknown fields are dropped, and a group is saved whole so partial forms cannot leave it half-set.
+ */
+export async function saveSettingsGroup<K extends SettingsKey>(key: K, values: unknown, userId: string): Promise<AppSettings[K]> {
+  const parsed = settingsSchemas[key].safeParse(values);
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) (fieldErrors[issue.path.join(".") || "_"] ??= []).push(issue.message);
+    const first = parsed.error.issues[0];
+    throw new HttpError(422, `${String(first?.path[0] ?? key)}: ${first?.message ?? "Invalid value"}`, fieldErrors);
+  }
+  return db.transaction(async (tx) => {
+    const before = await getSettingsGroup(key, tx);
+    const saved = await updateSettingsGroup(key, parsed.data as unknown as Partial<AppSettings[K]>, userId, tx);
+    const after = saved as unknown as Record<string, unknown>;
+    const prior = before as unknown as Record<string, unknown>;
+    const changed = Object.keys(after).filter((field) => JSON.stringify(after[field]) !== JSON.stringify(prior[field]));
+    await AuditService.record({ userId, action: "settings.update", entity: "settings", entityId: key, metadata: { group: key, changed } }, tx);
+    return saved;
+  });
 }

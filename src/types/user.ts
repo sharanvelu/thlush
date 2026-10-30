@@ -8,6 +8,8 @@ export interface SessionUser {
   name: string;
   email: string;
   role: Role;
+  /** Saved appearance choice; applied on devices that have not picked one yet. */
+  themePreference?: "light" | "dark" | "system";
 }
 
 /** Full profile as stored in the database, minus secrets. */

@@ -38,6 +38,10 @@ export function ReceiptView({ model }: { model: ReceiptModel }) {
       `}</style>
       <article className="receipt" aria-label={`Receipt ${model.billNo}`}>
         <header className="center">
+          {model.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a small logo saved in settings
+            <img src={model.logoUrl} alt="" style={{ maxHeight: 48, maxWidth: "60%", margin: "0 auto 4px", filter: "grayscale(1) contrast(1.2)" }} />
+          ) : null}
           <div className="name">{model.businessName}</div>
           {model.addressLines.map((line) => (
             <div key={line}>{line}</div>

@@ -119,7 +119,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
           <ChartCard title="Top 5 items" description="By quantity sold">
             <TopItems items={data.topItems} {...fmt} />
           </ChartCard>
-          {data.lowStock ? (
+          {data.lowStock && settings.features.inventory ? (
             <ChartCard title="Low stock" description={data.lowStock.total > 0 ? `${data.lowStock.total} to reorder` : undefined}>
               <LowStock data={data.lowStock} />
             </ChartCard>

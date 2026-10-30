@@ -44,11 +44,14 @@ const ORDER: Record<BillSort, (tie: SQL) => SQL[]> = {
 };
 
 /** A cashier can only ever see their own bills, whatever filters were asked for. */
-function scope(filters: BillFilters, user: SessionUser): BillFilters {
+function scope<F extends BillFilters>(filters: F, user: SessionUser): F {
   return hasPermission(user.role, "bills.view_all") ? filters : { ...filters, cashier: user.id };
 }
 
-function conditions(filters: BillFilters, timeZone: string): SQL[] {
+/** Filters from the URL, plus ones only the server may set. */
+export type ScopedBillFilters = BillFilters & { customerId?: number };
+
+function conditions(filters: ScopedBillFilters, timeZone: string): SQL[] {
   const out: SQL[] = [];
   const { start, end } = zonedDayRange(filters.from, filters.to, timeZone);
   if (start) out.push(gte(bills.createdAt, start));
@@ -67,11 +70,12 @@ function conditions(filters: BillFilters, timeZone: string): SQL[] {
   // Held bills are unfinished drafts, so they only show when asked for.
   out.push(filters.status ? eq(bills.status, filters.status) : ne(bills.status, "held"));
   if (filters.cashier) out.push(eq(bills.createdUserId, filters.cashier));
+  if (filters.customerId !== undefined) out.push(eq(bills.customerId, filters.customerId));
   return out;
 }
 
 export async function listBills(
-  filters: BillFilters,
+  filters: ScopedBillFilters,
   paging: { page: number; pageSize: number },
   user: SessionUser,
   timeZone: string,

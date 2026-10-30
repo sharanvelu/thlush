@@ -1,17 +1,20 @@
 import type { ReactNode } from "react";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppSidebar, type Brand } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
+import { ThemeSync } from "@/components/theme/theme-sync";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { SessionUser } from "@/types/user";
 
 interface AppShellProps {
   user: SessionUser;
   defaultSidebarOpen: boolean;
+  brand: Brand;
+  features: { inventory: boolean };
   children: ReactNode;
 }
 
 /** Sidebar + top bar + content area. On phones the sidebar becomes a drawer. */
-export function AppShell({ user, defaultSidebarOpen, children }: AppShellProps) {
+export function AppShell({ user, defaultSidebarOpen, brand, features, children }: AppShellProps) {
   return (
     <SidebarProvider defaultOpen={defaultSidebarOpen}>
       <a
@@ -20,9 +23,10 @@ export function AppShell({ user, defaultSidebarOpen, children }: AppShellProps) 
       >
         Skip to content
       </a>
-      <AppSidebar user={user} />
+      {user.themePreference ? <ThemeSync preference={user.themePreference} /> : null}
+      <AppSidebar user={user} brand={brand} features={features} />
       <SidebarInset>
-        <TopBar user={user} />
+        <TopBar user={user} features={features} />
         <main id="main-content" className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>

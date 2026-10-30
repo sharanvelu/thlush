@@ -184,12 +184,14 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-/** Groups and items visible to a role, with empty groups removed. */
-export function navForRole(role: Role | null | undefined): NavGroup[] {
-  return NAV_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => hasPermission(role, item.permission)),
-  })).filter((group) => group.items.length > 0);
+/** Groups and items visible to a role, with empty groups removed. Inventory hides when that feature is off. */
+export function navForRole(role: Role | null | undefined, features?: { inventory: boolean }): NavGroup[] {
+  return NAV_GROUPS.filter((group) => group.label !== "Inventory" || features?.inventory !== false)
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasPermission(role, item.permission)),
+    }))
+    .filter((group) => group.items.length > 0);
 }
 
 export function findNavItem(href: string): NavItem | undefined {

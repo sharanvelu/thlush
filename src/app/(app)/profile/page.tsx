@@ -1,11 +1,9 @@
-import { Clock, Mail, Palette, ShieldCheck } from "lucide-react";
+import { Clock, Mail, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { RoleBadge } from "@/components/layout/role-badge";
-import { ThemeDropdown } from "@/components/theme/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProfileForms } from "@/components/profile/profile-forms";
 import { formatDateTime } from "@/lib/format";
 import { requireUser } from "@/services/AuthService";
 import { getSettingsGroup } from "@/services/SettingsService";
@@ -18,60 +16,27 @@ export default async function ProfilePage() {
   const [profile, locale] = await Promise.all([getProfile(user.id), getSettingsGroup("locale")]);
   if (!profile) notFound();
 
-  const rows = [
+  const facts = [
     { icon: Mail, label: "Email", value: profile.email },
     { icon: ShieldCheck, label: "Role", value: <RoleBadge role={profile.role} /> },
-    {
-      icon: Clock,
-      label: "Last sign-in",
-      value: profile.lastLoginAt ? formatDateTime(profile.lastLoginAt, locale) : "Never",
-    },
+    { icon: Clock, label: "Last sign-in", value: profile.lastLoginAt ? formatDateTime(profile.lastLoginAt, { locale: locale.locale, timeZone: locale.timezone }) : "Never" },
   ];
 
   return (
     <>
       <PageHeader title="Profile" description="Your account details and preferences." />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>{profile.name}</CardTitle>
-            <CardDescription>
-              {profile.hasPassword ? "Signs in with email and password." : "Signs in with single sign-on."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <dl className="divide-y">
-              {rows.map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-center justify-between gap-4 py-3 text-sm">
-                  <dt className="flex items-center gap-2 text-muted-foreground">
-                    <Icon className="size-4" aria-hidden />
-                    {label}
-                  </dt>
-                  <dd className="min-w-0 truncate font-medium">{value}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Editing your name and email, and changing your password, arrive in a later milestone.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>Choose light, dark, or follow your device.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ThemeDropdown align="start">
-              <Button variant="outline" className="gap-2">
-                <Palette className="size-4" aria-hidden />
-                Change theme
-              </Button>
-            </ThemeDropdown>
-          </CardContent>
-        </Card>
-      </div>
+      <dl className="mb-6 grid gap-3 sm:grid-cols-3">
+        {facts.map(({ icon: Icon, label, value }) => (
+          <div key={label} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 shadow-card">
+            <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <div className="min-w-0">
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="truncate text-sm font-medium">{value}</dd>
+            </div>
+          </div>
+        ))}
+      </dl>
+      <ProfileForms name={profile.name} email={profile.email} hasPassword={profile.hasPassword} themePreference={profile.themePreference} />
     </>
   );
 }

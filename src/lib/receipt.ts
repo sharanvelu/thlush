@@ -72,6 +72,7 @@ export interface ReceiptModel {
   currency: string;
   locale: string;
   businessName: string;
+  logoUrl: string | null;
   addressLines: string[];
   phone: string;
   gstin: string;
@@ -115,6 +116,7 @@ export function buildReceiptModel(bill: BillDetail, settings: AppSettings): Rece
     currency: bill.currency || currency,
     locale,
     businessName: settings.business.name,
+    logoUrl: settings.business.logoUrl,
     addressLines: settings.business.address.split(/\r?\n/).map((l) => l.trim()).filter(Boolean),
     phone: settings.business.phone,
     gstin: settings.business.gstin,
