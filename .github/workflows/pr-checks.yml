@@ -1,0 +1,72 @@
+name: PR checks
+
+on:
+  pull_request:
+  push:
+    branches: [main, thlush-v2]
+
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z0-9._-]+\))?!?: .+'
+          if ! echo "$TITLE" | grep -Eq "$pattern"; then
+            echo "::error::PR title must look like 'feat: add thing' or 'fix(scope): fix thing'. Got: $TITLE"
+            exit 1
+          fi
+
+  checks:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Placeholders so the build can start. Nothing here connects to a database: pages render on demand
+      # and the tests use no network.
+      DATABASE_URL: postgresql://ci:ci@localhost/ci?sslmode=require
+      AUTH_SECRET: ci-only-secret-not-used-anywhere-else-000000
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_ENV: local
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Migrations match the schema
+        # Generating from the schema must produce nothing new. If this fails, run `npm run db:generate`
+        # and commit the new migration.
+        run: |
+          npm run db:generate
+          git diff --exit-code -- drizzle
+          test -z "$(git ls-files --others --exclude-standard -- drizzle)"
+
+      - name: Build
+        run: npm run build

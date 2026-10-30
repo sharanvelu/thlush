@@ -50,10 +50,15 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 | `npm run lint`        | ESLint (no `any` allowed).                                           |
 | `npm run typecheck`   | TypeScript in strict mode.                                           |
 | `npm test`            | Vitest unit tests.                                                   |
+| `npm run check`       | Lint, type check and tests in one go. Run before pushing.            |
 | `npm run db:generate` | Generate a new SQL migration in `drizzle/` after editing the schema. |
 | `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`.                          |
 | `npm run db:seed`     | Load demo data. Refuses to run in `production` unless `--force`.     |
 | `npm run db:studio`   | Browse the database in Drizzle Studio.                               |
+
+### Pull request checks
+
+`.github/workflows/pr-checks.yml` runs on every pull request (and on pushes to `main` and `thlush-v2`): the PR title must follow Conventional Commits, then lint, type check, unit tests, a migration drift check (the schema must not differ from the committed `drizzle/` files; run `npm run db:generate` and commit if it fails) and a production build. It needs no secrets or database. To block merging on failures, mark **PR title (Conventional Commits)** and **Lint, types, tests, build** as required checks in the branch protection rules.
 
 The seed is safe to re-run: users, categories, items and settings are only inserted when missing, and demo bills are only created when there are none.
 
