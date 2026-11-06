@@ -8,6 +8,7 @@ import { formatDateTime } from "@/lib/format";
 import { requireUser } from "@/services/AuthService";
 import { getSettingsGroup } from "@/services/SettingsService";
 import { getProfile } from "@/services/UserService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -24,7 +25,7 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Profile" description="Your account details and preferences." />
+      <PageHeader {...PAGE_COPY.profile} />
       <dl className="mb-6 grid gap-3 sm:grid-cols-3">
         {facts.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 shadow-card">

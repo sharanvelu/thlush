@@ -43,6 +43,7 @@ import { Switch } from "@/components/ui/switch";
 import { api, errorMessage } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { CategoryListItem } from "@/services/CategoryService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 interface RowProps {
   category: CategoryListItem;
@@ -199,8 +200,8 @@ export function CategoriesView({ categories }: { categories: CategoryListItem[] 
   return (
     <>
       <PageHeader
-        title="Categories"
-        description="Drag to set the order of the tabs on the billing screen. Disabled categories and their items are hidden there."
+        title={PAGE_COPY.categories.title}
+        description={PAGE_COPY.categories.description}
         actions={
           <Button onClick={openCreate}>
             <Plus aria-hidden /> Add category

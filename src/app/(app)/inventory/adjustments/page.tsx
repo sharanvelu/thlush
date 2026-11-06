@@ -9,6 +9,7 @@ import { movementQuerySchema } from "@/lib/validation/inventory";
 import { requireAccess } from "@/services/AuthService";
 import { getSettings } from "@/services/SettingsService";
 import { listMovements, listTrackedOptions } from "@/services/StockService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 export const metadata: Metadata = { title: "Stock Adjustments" };
 
@@ -20,7 +21,7 @@ export default async function AdjustmentsPage({ searchParams }: PageProps<"/inve
   if (!settings.features.inventory) {
     return (
       <>
-        <PageHeader title="Stock Adjustments" />
+        <PageHeader title={PAGE_COPY.adjustments.title} />
         <InventoryDisabled canChange={hasPermission(user.role, "settings.manage")} />
       </>
     );
@@ -32,7 +33,7 @@ export default async function AdjustmentsPage({ searchParams }: PageProps<"/inve
 
   return (
     <>
-      <PageHeader title="Stock Adjustments" description="Correct counts, record wastage and see every change to stock." />
+      <PageHeader {...PAGE_COPY.adjustments} />
       <AdjustForm items={items} />
       <MovementsView rows={rows} total={total} query={query} items={items} settings={{ locale: settings.locale.locale, timezone: settings.locale.timezone }} />
     </>

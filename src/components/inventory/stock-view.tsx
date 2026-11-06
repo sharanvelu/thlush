@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import type { StockListQuery } from "@/lib/validation/inventory";
 import type { CategoryOption } from "@/services/CategoryService";
 import type { StockRow, StockSummary } from "@/services/StockService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 const SORTS: Record<StockListQuery["sort"], string> = {
   name_asc: "Name: A to Z",
@@ -83,8 +84,8 @@ export function StockView({ rows, total, summary, query, categories, canAdjust, 
   return (
     <>
       <PageHeader
-        title="Stock Overview"
-        description="What you have, what's running low, and what it's worth."
+        title={PAGE_COPY.stock.title}
+        description={PAGE_COPY.stock.description}
         actions={
           canAdjust ? (
             <Button asChild variant="outline">

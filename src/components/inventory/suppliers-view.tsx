@@ -20,6 +20,7 @@ import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import type { PurchaseRow, SupplierRecord } from "@/services/PurchasingService";
 import type { TrackedOption } from "@/services/StockService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 interface SuppliersViewProps {
   tab: "purchases" | "suppliers";
@@ -80,8 +81,8 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
   return (
     <>
       <PageHeader
-        title="Suppliers & Purchases"
-        description="Record deliveries to add stock, and keep your suppliers in one place."
+        title={PAGE_COPY.suppliers.title}
+        description={PAGE_COPY.suppliers.description}
         actions={
           canManage ? (
             <div className="flex gap-2">

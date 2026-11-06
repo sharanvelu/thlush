@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import type { BillListRow } from "@/services/BillHistoryService";
 import type { UserOption } from "@/services/UserService";
 import { PAYMENT_METHOD_LABELS } from "@/types/bill";
+import { PAGE_COPY } from "@/config/page-copy";
 
 interface BillsViewProps {
   rows: BillListRow[];
@@ -121,7 +122,7 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
   return (
     <>
       <PageHeader
-        title="Bill History"
+        title={PAGE_COPY.bills.title}
         description={canVoid ? "Search, reprint, export, void or refund past bills." : "Your past bills."}
         actions={
           <DropdownMenu>

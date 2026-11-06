@@ -42,6 +42,7 @@ import { FLAT_PAGE_SIZE, GROUPED_PAGE_SIZE, type MenuListQuery, type MenuSortFie
 import { cn } from "@/lib/utils";
 import type { CategoryOption } from "@/services/CategoryService";
 import type { BulkResult, DeleteMode, MenuListItem } from "@/services/MenuService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 interface MenuViewProps {
   items: MenuListItem[];
@@ -247,7 +248,7 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
   return (
     <>
       <PageHeader
-        title="Menu"
+        title={PAGE_COPY.menu.title}
         description={canManage ? "Items, prices, tax rates and availability." : "The items available for billing."}
         actions={
           <>

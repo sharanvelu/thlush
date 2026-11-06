@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SettingsView } from "@/components/settings/settings-view";
 import { requireAccess } from "@/services/AuthService";
 import { getSettings } from "@/services/SettingsService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -13,7 +14,7 @@ export default async function SettingsPage() {
   const settings = await getSettings();
   return (
     <>
-      <PageHeader title="Settings" description="Business details, tax, receipts and what's switched on." />
+      <PageHeader {...PAGE_COPY.settings} />
       <SettingsView settings={settings} />
     </>
   );

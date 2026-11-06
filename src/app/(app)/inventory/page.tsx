@@ -9,6 +9,7 @@ import { requireAccess } from "@/services/AuthService";
 import { listCategoryOptions } from "@/services/CategoryService";
 import { getSettings } from "@/services/SettingsService";
 import { listStock } from "@/services/StockService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 export const metadata: Metadata = { title: "Stock Overview" };
 
@@ -20,7 +21,7 @@ export default async function InventoryPage({ searchParams }: PageProps<"/invent
   if (!settings.features.inventory) {
     return (
       <>
-        <PageHeader title="Stock Overview" />
+        <PageHeader title={PAGE_COPY.stock.title} />
         <InventoryDisabled canChange={hasPermission(user.role, "settings.manage")} />
       </>
     );

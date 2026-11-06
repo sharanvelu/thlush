@@ -1,20 +1,16 @@
+import { PageLoading, SkeletonHeader } from "@/components/layout/page-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PAGE_COPY } from "@/config/page-copy";
 
 export default function Loading() {
   return (
-    <div aria-busy="true" aria-label="Loading categories">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-40" />
-          <Skeleton className="h-4 w-80 max-w-full" />
-        </div>
-        <Skeleton className="h-8 w-32" />
-      </div>
+    <PageLoading label="Loading categories">
+      <SkeletonHeader {...PAGE_COPY.categories} actions={["w-32"]} />
       <div className="flex flex-col gap-2">
         {Array.from({ length: 6 }, (_, i) => (
           <Skeleton key={i} className="h-16 w-full rounded-xl" />
         ))}
       </div>
-    </div>
+    </PageLoading>
   );
 }
