@@ -43,8 +43,11 @@ function explain(error: unknown): UsbPrintError {
   if (error instanceof UsbPrintError) return error;
   const name = error instanceof DOMException ? error.name : "";
   if (name === "SecurityError" || name === "NetworkError" || /access denied|busy|claim/i.test(String(error))) {
+    const onWindows = typeof navigator !== "undefined" && /windows/i.test(navigator.userAgent);
     return new UsbPrintError(
-      "The printer is in use by another program or driver. On Windows it needs the WinUSB driver (see the printer setup guide). Close other apps that use the printer and try again.",
+      onWindows
+        ? "Windows is holding the printer with its own printer driver, so the browser cannot use it. Switch the printer to the WinUSB driver once (steps in the printer setup guide), or choose \"Print dialog\" in the printer menu at the top to print through the driver."
+        : "The printer is in use by another program or driver. Close other apps that use it, remove any print queue for it, and try again.",
     );
   }
   if (name === "NotFoundError") return new UsbPrintError("The printer was unplugged or switched off.");
