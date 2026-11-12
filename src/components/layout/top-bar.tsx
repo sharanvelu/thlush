@@ -17,7 +17,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NAV_GROUPS, navItemForPath } from "@/config/navigation";
 import { hasPermission } from "@/config/permissions";
@@ -40,9 +39,8 @@ export function TopBar({ user, features, alerts }: { user: SessionUser; features
   const canBill = hasPermission(user.role, "bills.create");
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:px-4">
+    <header className="sticky top-3 z-30 mx-3 mt-3 flex h-14 shrink-0 items-center gap-2 rounded-2xl border border-white/30 bg-background/40 px-3 shadow-lg shadow-black/5 ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 md:mx-4 md:px-4 dark:border-white/10 dark:bg-background/30 dark:ring-white/5">
       <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
-      <Separator orientation="vertical" className="mr-1 hidden h-5 sm:block" />
 
       <Breadcrumb className="hidden min-w-0 sm:block">
         <BreadcrumbList>

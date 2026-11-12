@@ -5,7 +5,7 @@ export default function Loading() {
   return (
     <div className="@container/pos" aria-busy="true" aria-label="Loading billing screen">
       <h1 className="sr-only">New bill</h1>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 @min-[1000px]/pos:h-[calc(100dvh-7.5rem)] @min-[1000px]/pos:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 @min-[1000px]/pos:h-[calc(100dvh-8.25rem)] @min-[1000px]/pos:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="flex min-h-0 flex-col gap-3">
           <Skeleton className="h-10 w-full rounded-xl" />
           <div className="flex gap-2 overflow-hidden">
