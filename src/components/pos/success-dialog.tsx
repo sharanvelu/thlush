@@ -48,8 +48,8 @@ export function SuccessDialog({ bill, settings, onNewBill }: SuccessDialogProps)
         ) : null}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" onClick={() => void printReceipt(bill.id)}>
-            <Printer aria-hidden /> Print receipt
+          <Button variant="outline" onClick={() => void printReceipt(bill.id, { kitchen: true })}>
+            <Printer aria-hidden /> Print receipt &amp; kitchen slip
           </Button>
           <Button variant="outline" asChild>
             <a href={`/api/bills/${bill.id}/pdf`} download>

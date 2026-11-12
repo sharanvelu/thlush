@@ -162,7 +162,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
           if (heldBillId) setHeldCount((n) => Math.max(0, n - 1));
           resetBill();
           setSaved(bill);
-          if (print) void printReceipt(bill.id);
+          if (print) void printReceipt(bill.id, { kitchen: true });
         }
         router.refresh(); // Stock levels on the item cards.
       } catch (error) {
@@ -293,7 +293,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
     <div className="@container/pos">
       <h1 className="sr-only">New bill</h1>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 @min-[1000px]/pos:h-[calc(100dvh-7.5rem)] @min-[1000px]/pos:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 @min-[1000px]/pos:h-[calc(100dvh-8.25rem)] @min-[1000px]/pos:grid-cols-[minmax(0,1fr)_24rem]">
         <ProductPanel items={items} categories={categories} lines={lines} settings={settings} searchRef={searchRef} onPick={pick} onDecrement={decrement} />
         <aside className="hidden min-h-0 @min-[1000px]/pos:block">{cart}</aside>
       </div>
