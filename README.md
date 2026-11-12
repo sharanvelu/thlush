@@ -50,6 +50,7 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 | `npm run lint`        | ESLint (no `any` allowed).                                           |
 | `npm run typecheck`   | TypeScript in strict mode.                                           |
 | `npm test`            | Vitest unit tests.                                                   |
+| `npm run print-agent` | Local agent that sends receipts to the thermal printer (see below).  |
 | `npm run check`       | Lint, type check and tests in one go. Run before pushing.            |
 | `npm run db:generate` | Generate a new SQL migration in `drizzle/` after editing the schema. |
 | `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`.                          |
@@ -125,6 +126,56 @@ How a bill is saved:
 Rounding: tax is rounded half-up to 2 decimals per component (SGST, CGST) per line, and totals are sums of the rounded lines, so every figure on a bill reconciles to the paisa.
 
 Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58mm from settings). `/api/bills/{id}/pdf` returns the same receipt as a narrow PDF; amounts there are plain numbers and the total names the currency code, because the PDF's built-in fonts have no rupee sign. WhatsApp and email links carry a plain-text copy of the receipt.
+
+## Thermal printer (ESC/POS)
+
+Receipts and kitchen slips print as raw ESC/POS bytes, so no printer driver is needed for printing and the paper is cut by the printer itself: a cut after the receipt, and another after the kitchen slip.
+
+Kitchen slip: always printed for a new bill (Save & print, and the print button on the "Bill saved" dialog). In Bill History the **With kitchen slip** checkbox is off by default.
+
+The server builds the bytes (`/api/bills/[id]/escpos`); the browser sends them to the printer the first way that works:
+
+1. **Straight over USB (WebUSB)**. Nothing to install. Chrome or Edge only.
+2. The optional local **print agent** (`npm run print-agent`, developer use).
+3. The browser's print dialog, if neither is available.
+
+### Choosing how a computer prints
+
+Click the **printer icon** in the top bar (every role can) and pick, for that computer:
+
+- **Thermal printer (direct)** (default): no driver, with a cut after the receipt and after the kitchen slip. If no printer is connected it falls back to the print dialog with a warning.
+- **Print dialog (printer driver)**: for computers that print through an installed driver. No warnings, one cut per bill.
+
+The choice is stored in that browser (not the database), so each computer keeps its own.
+
+### Cashier setup (one time per computer)
+
+1. Plug the printer in and switch it on.
+2. Open the app in **Chrome or Edge** and click the **printer icon** in the top bar.
+3. Choose the printer in the list and click Connect. The dot on the icon turns green.
+
+That is all. Chrome remembers the printer, so it reconnects by itself every day. If the dot is grey, the printer is off or unplugged.
+
+### Windows only: one-time technician step
+
+Windows attaches its own USB printer driver, which stops Chrome from using the printer. Switch the printer to the generic WinUSB driver once:
+
+1. Install [Zadig](https://zadig.akeo.ie/) and run it.
+2. Options, then **List All Devices**. Pick **KPC307-UEWB** (USB ID `4B43 3830`).
+3. Choose **WinUSB** as the driver and click **Replace Driver**.
+4. Reopen Chrome and connect the printer as above.
+
+After this, Windows' own "Printers & scanners" can no longer print to it; this app is its only way. Undo it by uninstalling the device in Device Manager and replugging. macOS, Linux and ChromeOS need no extra step.
+
+### Troubleshooting
+
+- *"The printer is in use by another program or driver"*: on Windows, do the WinUSB step. On macOS, remove any print queue for the printer in System Settings, Printers & Scanners.
+- *No printer icon in the top bar*: the browser has no WebUSB (Safari, Firefox). Use Chrome or Edge.
+- *Prints but does not cut, or cuts through the paper*: the cut command is in `src/lib/escpos.ts` (`cut()`).
+
+### Print agent (optional, developer use)
+
+`npm run print-agent` starts a small loopback-only server (`scripts/print-agent.mjs`) that writes the same bytes to the USB printer. Use `-- --list` to see the printer and `-- --test` to print a test slip. Environment: `PRINTER_USB` (hex `vendor:product`), `PRINT_AGENT_PORT` (default 9101), `PRINT_AGENT_ORIGINS` (allowed sites, default `http://localhost:3000,http://localhost:3001`). Needs `npm install` on that computer.
 
 ## Bill History
 

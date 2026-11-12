@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { PrinterButton } from "@/components/layout/printer-button";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import type { LowStockAlerts } from "@/services/StockService";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -89,6 +90,7 @@ export function TopBar({ user, features, alerts }: { user: SessionUser; features
           </Button>
         ) : null}
 
+        <PrinterButton />
         <ThemeToggle />
         <NotificationsBell alerts={alerts} />
         <UserMenu user={user} />
