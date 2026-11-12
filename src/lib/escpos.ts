@@ -8,6 +8,8 @@ import type { PaperSize } from "@/types/settings";
 const ESC = 0x1b;
 const GS = 0x1d;
 const LF = 0x0a;
+/** Width of one character of the standard font, in dots, on a 203 dpi printer. */
+const DOTS_PER_COLUMN = 12;
 
 /** Characters per line in the printer's standard font. */
 export function paperColumns(paperSize: PaperSize): number {
@@ -68,9 +70,14 @@ export class EscPosBuilder {
     return this;
   }
 
-  /** Resets the printer to its defaults. Starts every job. */
+  /**
+   * Resets the printer and fits its print area to the paper. Starts every job. Centering and right
+   * alignment work inside the print area, and a printer's default is its widest paper (80mm), so
+   * without this a 58mm slip is centered on an 80mm width and everything drifts right.
+   */
   init(): this {
-    return this.raw(ESC, 0x40);
+    const dots = this.columns * DOTS_PER_COLUMN;
+    return this.raw(ESC, 0x40, GS, 0x4c, 0, 0, GS, 0x57, dots & 0xff, dots >> 8);
   }
 
   align(side: "left" | "center" | "right"): this {

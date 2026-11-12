@@ -47,7 +47,18 @@ describe("EscPosBuilder", () => {
 
   it("emits init, alignment and cut commands", () => {
     const bytes = new EscPosBuilder(32).init().align("center").cut().build();
-    expect([...bytes]).toEqual([0x1b, 0x40, 0x1b, 0x61, 1, ...CUT]);
+    const initLength = new EscPosBuilder(32).init().build().length;
+    expect([...bytes].slice(0, 2)).toEqual([0x1b, 0x40]);
+    expect([...bytes].slice(initLength)).toEqual([0x1b, 0x61, 1, ...CUT]);
+  });
+
+  it.each([
+    ["58mm", 32, 384],
+    ["80mm", 48, 576],
+  ] as const)("fits the print area to %s paper", (_paper, columns, dots) => {
+    const bytes = [...new EscPosBuilder(columns).init().build()];
+    // ESC @, then GS L 0 0 (no left margin), then GS W <width in dots, little endian>.
+    expect(bytes).toEqual([0x1b, 0x40, 0x1d, 0x4c, 0, 0, 0x1d, 0x57, dots & 0xff, dots >> 8]);
   });
 
   it("uses 48 columns on 80mm paper and 32 on 58mm", () => {
