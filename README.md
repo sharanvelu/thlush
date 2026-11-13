@@ -131,7 +131,7 @@ Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58m
 
 Receipts and kitchen slips print as raw ESC/POS bytes, so no printer driver is needed for printing and the paper is cut by the printer itself: a cut after the receipt, and another after the kitchen slip.
 
-Kitchen slip: always printed for a new bill (Save & print, and the print button on the "Bill saved" dialog). In Bill History the **With kitchen slip** checkbox is off by default.
+Kitchen slip: printed after the receipt when a new bill is saved (Save & print, and the print button on the "Bill saved" dialog). On by default; turn it off under **Settings > Receipts > Print kitchen bill by default**. In Bill History the **With kitchen slip** checkbox is off by default.
 
 The server builds the bytes (`/api/bills/[id]/escpos`); the browser sends them to the printer the first way that works:
 
