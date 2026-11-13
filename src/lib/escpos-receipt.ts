@@ -2,7 +2,7 @@
  * Lays out a bill as ESC/POS bytes: the customer receipt and the kitchen slip,
  * each ending with its own paper cut so one print job yields two separate pieces of paper.
  */
-import { EscPosBuilder, paperColumns, wrapText } from "@/lib/escpos";
+import { concatBytes, EscPosBuilder, paperColumns, wrapText } from "@/lib/escpos";
 import { D } from "@/lib/money";
 import {
   buildKitchenSlipModel,
@@ -99,21 +99,11 @@ export function kitchenSlipToEscPos(model: KitchenSlipModel, columns: number): U
   return p.feed(2).cut().build();
 }
 
-function concat(parts: Uint8Array[]): Uint8Array {
-  const out = new Uint8Array(parts.reduce((n, part) => n + part.length, 0));
-  let offset = 0;
-  for (const part of parts) {
-    out.set(part, offset);
-    offset += part.length;
-  }
-  return out;
-}
-
 /** The whole print job for a bill: the receipt, then (optionally) the kitchen slip, each followed by a cut. */
 export function buildPrintJob(bill: BillDetail, settings: AppSettings, options: { kitchen: boolean }): Uint8Array {
   const parts = [receiptToEscPos(buildReceiptModel(bill, settings))];
   if (options.kitchen) {
     parts.push(kitchenSlipToEscPos(buildKitchenSlipModel(bill, settings), paperColumns(settings.receipt.paperSize)));
   }
-  return concat(parts);
+  return concatBytes(parts);
 }

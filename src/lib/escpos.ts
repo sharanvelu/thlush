@@ -60,6 +60,17 @@ export function wrapText(text: string, width: number): string[] {
   return out;
 }
 
+/** Joins byte arrays end to end, e.g. several slips into one print job. */
+export function concatBytes(parts: Uint8Array[]): Uint8Array {
+  const out = new Uint8Array(parts.reduce((n, part) => n + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
 export class EscPosBuilder {
   private readonly chunks: number[] = [];
 

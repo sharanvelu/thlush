@@ -36,16 +36,17 @@ export const PERMISSIONS = [
   "users.manage",
   "audit.view",
   "settings.manage",
+  "print.custom",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 const ALL: readonly Permission[] = PERMISSIONS;
 
-const MANAGER_EXCLUDED: readonly Permission[] = ["users.manage", "settings.manage"];
+const MANAGER_EXCLUDED: readonly Permission[] = ["users.manage", "settings.manage", "print.custom"];
 
 export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Permission>> = {
   super_admin: new Set(ALL),
-  // Everything except user management and settings.
+  // Everything except user management, settings and custom thermal printing.
   manager: new Set(ALL.filter((p) => !MANAGER_EXCLUDED.includes(p))),
   // Cashier: dashboard, new bill, own bill history, read-only menu and customer lookup.
   billing: new Set<Permission>([
@@ -90,6 +91,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<readonly [prefix: string, permissi
   ["/inventory/suppliers", "suppliers.manage"],
   ["/customers", "customers.view"],
   ["/reports", "reports.view"],
+  ["/thermal-print", "print.custom"],
   ["/profile", null],
   ["/forbidden", null],
   ["/admin", "users.manage"],
