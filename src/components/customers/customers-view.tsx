@@ -22,6 +22,7 @@ import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import type { CustomerListQuery } from "@/lib/validation/customer";
 import type { CustomerRecord } from "@/services/CustomerService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 const SORT_LABELS: Record<CustomerListQuery["sort"], string> = {
   name_asc: "Name: A to Z",
@@ -100,8 +101,8 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
   return (
     <>
       <PageHeader
-        title="Customers"
-        description="Who orders, how often and how much."
+        title={PAGE_COPY.customers.title}
+        description={PAGE_COPY.customers.description}
         actions={
           canManage ? (
             <Button

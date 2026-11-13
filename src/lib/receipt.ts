@@ -190,3 +190,33 @@ export function mailtoUrl(model: ReceiptModel, email: string | null): string {
   const subject = `Receipt ${model.billNo} from ${model.businessName}`;
   return `mailto:${email ?? ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(receiptText(model))}`;
 }
+
+export interface KitchenSlipModel {
+  billNo: string;
+  dateText: string;
+  orderLine: string | null;
+  notes: string | null;
+  items: Array<{ name: string; quantity: string; details: string[] }>;
+}
+
+/** What the kitchen needs: no prices, no customer details. Variants and add-ons are listed under each item. */
+export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings): KitchenSlipModel {
+  const { locale, timezone } = settings.locale;
+  const orderBits = [
+    bill.orderType ? ORDER_TYPE_LABELS[bill.orderType] : null,
+    bill.tableNo ? `Table ${bill.tableNo}` : null,
+  ].filter(Boolean);
+  return {
+    billNo: bill.billNo,
+    dateText: formatDateTime(bill.createdAt, { locale, timeZone: timezone }),
+    orderLine: orderBits.length > 0 ? orderBits.join(" · ") : null,
+    notes: bill.notes,
+    items: bill.items.map((item) => ({
+      name: item.name,
+      quantity: trimQty(item.quantity),
+      details: [item.options?.variant, ...(item.options?.addons?.map((a) => `+ ${a.name}`) ?? [])].filter(
+        (d): d is string => Boolean(d),
+      ),
+    })),
+  };
+}

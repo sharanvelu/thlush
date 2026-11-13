@@ -14,6 +14,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { ResolvedRange } from "@/lib/dashboard";
 import { GROUPS, REPORT_META, formatCell, type Group, type ReportData, type ReportKind } from "@/lib/reports";
 import { cn } from "@/lib/utils";
+import { PAGE_COPY } from "@/config/page-copy";
 
 const GROUP_LABELS: Record<Group, string> = { day: "Daily", week: "Weekly", month: "Monthly" };
 
@@ -51,8 +52,8 @@ export function ReportsView({ report, kinds, group, range, today, settings }: Re
   return (
     <>
       <PageHeader
-        title="Reports"
-        description="Sales, tax, discounts and stock, with the same figures in the table, the chart and the export."
+        title={PAGE_COPY.reports.title}
+        description={PAGE_COPY.reports.description}
         actions={meta.usesRange ? <RangeSelector range={range} today={today} defaultKey="30d" /> : null}
       />
 

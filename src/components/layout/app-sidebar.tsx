@@ -1,15 +1,11 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, Palette, Store, User as UserIcon } from "lucide-react";
+import { Store } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logoutAction } from "@/app/actions/auth";
-import { RoleBadge } from "@/components/layout/role-badge";
-import { ThemeDropdown } from "@/components/theme/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -91,40 +87,6 @@ export function AppSidebar({ user, brand, features }: { user: SessionUser; brand
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Profile" isActive={pathname === "/profile"}>
-              <Link href="/profile" onClick={closeDrawer}>
-                <UserIcon aria-hidden />
-                <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                  <span className="truncate">{user.name}</span>
-                  <RoleBadge role={user.role} className="shrink-0 group-data-[collapsible=icon]:hidden" />
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <ThemeDropdown side={isMobile ? "top" : "right"} align="end">
-              <SidebarMenuButton tooltip="Theme">
-                <Palette aria-hidden />
-                <span>Theme</span>
-                <ChevronsUpDown className="ml-auto size-4 opacity-60" aria-hidden />
-              </SidebarMenuButton>
-            </ThemeDropdown>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <form action={logoutAction}>
-              <SidebarMenuButton type="submit" tooltip="Log out">
-                <LogOut aria-hidden />
-                <span>Log out</span>
-              </SidebarMenuButton>
-            </form>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

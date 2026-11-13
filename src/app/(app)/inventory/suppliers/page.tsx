@@ -10,6 +10,7 @@ import { requireAccess } from "@/services/AuthService";
 import { listPurchases, listSupplierOptions, listSuppliers } from "@/services/PurchasingService";
 import { getSettings } from "@/services/SettingsService";
 import { listTrackedOptions } from "@/services/StockService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 export const metadata: Metadata = { title: "Suppliers & Purchases" };
 
@@ -27,7 +28,7 @@ export default async function SuppliersPage({ searchParams }: PageProps<"/invent
   if (!settings.features.inventory) {
     return (
       <>
-        <PageHeader title="Suppliers & Purchases" />
+        <PageHeader title={PAGE_COPY.suppliers.title} />
         <InventoryDisabled canChange={hasPermission(user.role, "settings.manage")} />
       </>
     );

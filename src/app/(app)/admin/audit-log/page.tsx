@@ -10,6 +10,7 @@ import { listAuditEntities, listAuditLogs } from "@/services/AuditLogService";
 import { requireAccess } from "@/services/AuthService";
 import { getSettingsGroup } from "@/services/SettingsService";
 import { listUserOptions } from "@/services/UserService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 export const metadata: Metadata = { title: "Audit Log" };
 
@@ -24,7 +25,7 @@ export default async function AuditLogPage({ searchParams }: PageProps<"/admin/a
 
   return (
     <>
-      <PageHeader title="Audit Log" description="Who did what, and when. Entries can't be edited or removed from here." />
+      <PageHeader {...PAGE_COPY.auditLog} />
       <AuditFilters key={JSON.stringify([query.user, query.entity, query.action, query.from, query.to])} query={query} users={users} entities={entities} total={total} />
       {rows.length === 0 ? (
         <EmptyState icon={ScrollText} title="Nothing to show" description="No activity matches these filters." />

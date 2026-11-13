@@ -50,6 +50,7 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 | `npm run lint`        | ESLint (no `any` allowed).                                           |
 | `npm run typecheck`   | TypeScript in strict mode.                                           |
 | `npm test`            | Vitest unit tests.                                                   |
+| `npm run print-agent` | Local agent that sends receipts to the thermal printer (see below).  |
 | `npm run check`       | Lint, type check and tests in one go. Run before pushing.            |
 | `npm run db:generate` | Generate a new SQL migration in `drizzle/` after editing the schema. |
 | `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`.                          |
@@ -61,6 +62,44 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 `.github/workflows/pr-checks.yml` runs on every pull request (and on pushes to `main` and `thlush-v2`): the PR title must follow Conventional Commits, then lint, type check, unit tests, a migration drift check (the schema must not differ from the committed `drizzle/` files; run `npm run db:generate` and commit if it fails) and a production build. It needs no secrets or database. To block merging on failures, mark **PR title (Conventional Commits)** and **Lint, types, tests, build** as required checks in the branch protection rules.
 
 The seed is safe to re-run: users, categories, items and settings are only inserted when missing, and demo bills are only created when there are none.
+
+## Deploying to Vercel
+
+1. **Database.** In Neon, use a separate project or branch for production. Copy its connection string (with `sslmode=require`).
+2. **Import the repo.** In Vercel choose **Add New, Project**, pick `sharanvelu/thlush` and keep the detected Next.js settings. Set the production branch to `main`.
+3. **Environment variables** (Project Settings, Environment Variables):
+
+   | Variable | Production | Preview |
+   | -------- | ---------- | ------- |
+   | `DATABASE_URL` | production Neon URL | a separate Neon branch, never the production URL |
+   | `AUTH_SECRET` | a fresh `openssl rand -base64 32` | a different secret |
+   | `NEXT_PUBLIC_BASE_URL` | your public URL, e.g. `https://pos.example.com` | the preview URL, or the same placeholder |
+   | `NEXT_PUBLIC_APP_ENV` | `production` | `staging` |
+   | `OIDC_*` | optional, see above | optional |
+
+   `NEXT_PUBLIC_*` values are baked in at build time, so set them before the first deploy and redeploy after changing them. You do not need `AUTH_TRUST_HOST` on Vercel.
+4. **Create the tables.** Migrations are not run by the build. From your machine, once per database and again after any new file appears in `drizzle/`:
+
+   ```bash
+   DATABASE_URL='<that environment's URL>' npm run db:migrate
+   ```
+
+   Do this before the deploy that needs the new schema.
+5. **First admin.** The seed refuses to run against a production environment unless forced. To load the demo users (and demo data) into a new database:
+
+   ```bash
+   DATABASE_URL='<production URL>' NEXT_PUBLIC_APP_ENV=production npm run db:seed -- --force
+   ```
+
+   Then sign in as `admin@thlush.local`, change the password, and delete the demo users in **Users & Roles**. Never leave the default `Password@123` on a public deployment. Set `SEED_PASSWORD` in that command to use a different one from the start.
+6. **Deploy.** Push to `main`. Every pull request also gets a preview deployment.
+7. **Check it.** Sign in, open **Reports** and download a PDF, and print a receipt. PDF export uses `pdfkit`, which reads font files at run time, so confirm it once on the first deployment.
+
+**Region.** Set the function region (Project Settings, Functions) close to your Neon region to keep queries fast.
+
+**Sharing previews.** Vercel protects previews by default, so only people signed in to your Vercel team can open them. To share one with reviewers, open Project Settings, Deployment Protection and change **Vercel Authentication**. Preview deployments then need no Vercel login, but anyone with the URL can open the app, so keep preview data fake and never point previews at the production database.
+
+**Custom domain.** Add it under Domains, then update `NEXT_PUBLIC_BASE_URL` and redeploy. If you use SSO, add `<your URL>/api/auth/callback/oidc` as a redirect URI at the identity provider.
 
 ## Billing screen
 
@@ -87,6 +126,56 @@ How a bill is saved:
 Rounding: tax is rounded half-up to 2 decimals per component (SGST, CGST) per line, and totals are sums of the rounded lines, so every figure on a bill reconciles to the paisa.
 
 Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58mm from settings). `/api/bills/{id}/pdf` returns the same receipt as a narrow PDF; amounts there are plain numbers and the total names the currency code, because the PDF's built-in fonts have no rupee sign. WhatsApp and email links carry a plain-text copy of the receipt.
+
+## Thermal printer (ESC/POS)
+
+Receipts and kitchen slips print as raw ESC/POS bytes, so no printer driver is needed for printing and the paper is cut by the printer itself: a cut after the receipt, and another after the kitchen slip.
+
+Kitchen slip: always printed for a new bill (Save & print, and the print button on the "Bill saved" dialog). In Bill History the **With kitchen slip** checkbox is off by default.
+
+The server builds the bytes (`/api/bills/[id]/escpos`); the browser sends them to the printer the first way that works:
+
+1. **Straight over USB (WebUSB)**. Nothing to install. Chrome or Edge only.
+2. The optional local **print agent** (`npm run print-agent`, developer use).
+3. The browser's print dialog, if neither is available.
+
+### Choosing how a computer prints
+
+Click the **printer icon** in the top bar (every role can) and pick, for that computer:
+
+- **Thermal printer (direct)** (default): no driver, with a cut after the receipt and after the kitchen slip. If no printer is connected it falls back to the print dialog with a warning.
+- **Print dialog (printer driver)**: for computers that print through an installed driver. No warnings, one cut per bill.
+
+The choice is stored in that browser (not the database), so each computer keeps its own.
+
+### Cashier setup (one time per computer)
+
+1. Plug the printer in and switch it on.
+2. Open the app in **Chrome or Edge** and click the **printer icon** in the top bar.
+3. Choose the printer in the list and click Connect. The dot on the icon turns green.
+
+That is all. Chrome remembers the printer, so it reconnects by itself every day. If the dot is grey, the printer is off or unplugged.
+
+### Windows only: one-time technician step
+
+Windows attaches its own USB printer driver, which stops Chrome from using the printer. Switch the printer to the generic WinUSB driver once:
+
+1. Install [Zadig](https://zadig.akeo.ie/) and run it.
+2. Options, then **List All Devices**. Pick **KPC307-UEWB** (USB ID `4B43 3830`).
+3. Choose **WinUSB** as the driver and click **Replace Driver**.
+4. Reopen Chrome and connect the printer as above.
+
+After this, Windows' own "Printers & scanners" can no longer print to it; this app is its only way. Undo it by uninstalling the device in Device Manager and replugging. macOS, Linux and ChromeOS need no extra step.
+
+### Troubleshooting
+
+- *"The printer is in use by another program or driver"*: on Windows, do the WinUSB step. On macOS, remove any print queue for the printer in System Settings, Printers & Scanners.
+- *No printer icon in the top bar*: the browser has no WebUSB (Safari, Firefox). Use Chrome or Edge.
+- *Prints but does not cut, or cuts through the paper*: the cut command is in `src/lib/escpos.ts` (`cut()`).
+
+### Print agent (optional, developer use)
+
+`npm run print-agent` starts a small loopback-only server (`scripts/print-agent.mjs`) that writes the same bytes to the USB printer. Use `-- --list` to see the printer and `-- --test` to print a test slip. Environment: `PRINTER_USB` (hex `vendor:product`), `PRINT_AGENT_PORT` (default 9101), `PRINT_AGENT_ORIGINS` (allowed sites, default `http://localhost:3000,http://localhost:3001`). Needs `npm install` on that computer.
 
 ## Bill History
 
@@ -204,4 +293,4 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 
 ## Roadmap
 
-All eight milestones are built. Not done: recipe and ingredient tracking (an optional stretch goal), and tax-inclusive pricing (prices are tax-exclusive by design). Deploying to Vercel needs your own project and environment variables; the app needs `DATABASE_URL`, `AUTH_SECRET` and `AUTH_URL` there, and `npm run db:migrate` run once against the production database.
+All eight milestones are built. Not done: recipe and ingredient tracking (an optional stretch goal), and tax-inclusive pricing (prices are tax-exclusive by design). See [Deploying to Vercel](#deploying-to-vercel).

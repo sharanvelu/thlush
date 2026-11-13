@@ -22,6 +22,7 @@ import { api, errorMessage } from "@/lib/api-client";
 import { formatDate, formatDateTime } from "@/lib/format";
 import type { UserListQuery } from "@/lib/validation/user";
 import type { AdminUser } from "@/services/UserAdminService";
+import { PAGE_COPY } from "@/config/page-copy";
 
 interface UsersViewProps {
   rows: AdminUser[];
@@ -90,8 +91,8 @@ export function UsersView({ rows, total, query, currentUserId, settings }: Users
   return (
     <>
       <PageHeader
-        title="Users & Roles"
-        description="Who can sign in, and what they can do."
+        title={PAGE_COPY.users.title}
+        description={PAGE_COPY.users.description}
         actions={
           <Button onClick={openCreate}>
             <Plus aria-hidden /> Add user

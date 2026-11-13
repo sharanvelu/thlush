@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { BillStatusBadge } from "@/components/bills/bill-status-badge";
 import { ReverseDialog } from "@/components/bills/reverse-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { api, errorMessage } from "@/lib/api-client";
 import { formatDateTime } from "@/lib/format";
@@ -47,6 +49,8 @@ function Body({ billId, canVoid, settings, onChanged }: Omit<BillDetailSheetProp
   const [bill, setBill] = useState<BillDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reversing, setReversing] = useState(false);
+  // Off by default: a reprint from history is usually just the customer's copy.
+  const [withKitchen, setWithKitchen] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -173,9 +177,13 @@ function Body({ billId, canVoid, settings, onChanged }: Omit<BillDetailSheetProp
       </div>
 
       <div className="flex flex-wrap gap-2 border-t p-4">
-        <Button variant="outline" onClick={() => void printReceipt(bill.id)}>
+        <Button variant="outline" onClick={() => void printReceipt(bill.id, { kitchen: withKitchen })}>
           <Printer aria-hidden /> Reprint
         </Button>
+        <div className="flex items-center gap-2">
+          <Checkbox id="with-kitchen-slip" checked={withKitchen} onCheckedChange={(v) => setWithKitchen(v === true)} />
+          <Label htmlFor="with-kitchen-slip">With kitchen slip</Label>
+        </div>
         <Button variant="outline" asChild>
           <a href={`/api/bills/${bill.id}/pdf`} download>
             <Download aria-hidden /> PDF
