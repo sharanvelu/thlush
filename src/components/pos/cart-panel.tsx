@@ -405,7 +405,7 @@ export function CartPanel(props: CartPanelProps) {
           {pending ? <Loader2 className="animate-spin" aria-hidden /> : <Printer aria-hidden />}
           Save &amp; print
         </Button>
-        <Button variant="ghost" size="sm" disabled={empty || pending} onClick={onHold} aria-keyshortcuts="Alt+H" className="w-full">
+        <Button variant="ghost" size="sm" disabled={empty || pending} onClick={onHold} aria-keyshortcuts="Alt+H" className="p-4 w-full">
           <Archive aria-hidden /> {resumedFromHold ? "Update held bill" : "Hold bill"}
         </Button>
       </footer>
