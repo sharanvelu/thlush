@@ -188,6 +188,7 @@ function ReceiptForm({ initial }: GroupProps<"receipt">) {
           </ToggleGroup>
           <FieldDescription>58 mm drops the unit price column to fit.</FieldDescription>
         </Field>
+        <ToggleRow id="rc-kitchen" label="Print kitchen bill by default" hint="When a bill is saved, also print the kitchen slip after the receipt. Reprints from bill history have their own checkbox." checked={v.printKitchenByDefault} onChange={(on) => set({ printKitchenByDefault: on })} />
       </FieldGroup>
     </Section>
   );

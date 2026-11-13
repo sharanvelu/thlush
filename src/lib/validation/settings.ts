@@ -39,6 +39,7 @@ export const settingsSchemas = {
     header: text(200, "Header"),
     footer: text(200, "Footer"),
     paperSize: z.enum(["58mm", "80mm"]),
+    printKitchenByDefault: z.boolean(),
   }),
   billing: z.object({
     billPrefix: z.string().trim().regex(/^[A-Za-z0-9_-]{0,10}$/, "Up to 10 letters, numbers, dashes or underscores"),

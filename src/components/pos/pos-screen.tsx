@@ -171,7 +171,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
           if (heldBillId) setHeld((list) => list.filter((b) => b.id !== heldBillId));
           resetBill();
           setSaved(bill);
-          void printReceipt(bill.id, { kitchen: true });
+          void printReceipt(bill.id, { kitchen: appSettings.receipt.printKitchenByDefault });
         }
         router.refresh(); // Stock levels on the item cards.
       } catch (error) {
@@ -182,7 +182,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         setPending(false);
       }
     },
-    [pending, lines, problem, paymentResult, details, heldBillId, billDiscount, settings.orderTypesEnabled, resetBill, refreshHeld, router],
+    [pending, lines, problem, paymentResult, details, heldBillId, billDiscount, settings.orderTypesEnabled, resetBill, refreshHeld, router, appSettings.receipt.printKitchenByDefault],
   );
 
   const resume = useCallback(

@@ -33,6 +33,8 @@ export interface ReceiptSettings {
   header: string;
   footer: string;
   paperSize: PaperSize;
+  /** Print the kitchen slip after the receipt when a bill is saved. */
+  printKitchenByDefault: boolean;
 }
 
 export interface BillingSettings {
