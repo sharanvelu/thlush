@@ -46,11 +46,9 @@ interface CartPanelProps {
   totals: BillTotals;
   settings: PosSettings;
   pending: boolean;
-  heldCount: number;
   resumedFromHold: boolean;
   /** Something typed on the bill is invalid (e.g. a discount). Blocks saving. */
   problem: string | null;
-  onOpenHeld: () => void;
   onSave: () => void;
   onHold: () => void;
   onClear: () => void;
@@ -70,10 +68,8 @@ export function CartPanel(props: CartPanelProps) {
     totals,
     settings,
     pending,
-    heldCount,
     resumedFromHold,
     problem,
-    onOpenHeld,
     onSave,
     onHold,
     onClear,
@@ -124,10 +120,6 @@ export function CartPanel(props: CartPanelProps) {
           {resumedFromHold ? <Badge variant="secondary">Resumed</Badge> : null}
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={onOpenHeld} aria-label={`Held bills, ${heldCount}`}>
-            <Archive aria-hidden /> Held
-            {heldCount > 0 ? <Badge className="ml-0.5 tabular-nums">{heldCount}</Badge> : null}
-          </Button>
           <Button
             variant="ghost"
             size="sm"

@@ -50,7 +50,7 @@ export default async function BillingPage() {
     <PosScreen
       items={items}
       categories={categories}
-      initialHeldCount={held.length}
+      initialHeld={held}
       appSettings={appSettings}
       settings={{
         currency: appSettings.locale.currency,

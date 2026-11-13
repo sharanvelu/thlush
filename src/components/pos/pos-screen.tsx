@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { CartPanel } from "@/components/pos/cart-panel";
-import { HeldBillsSheet } from "@/components/pos/held-bills-sheet";
+import { HeldBillsPanel } from "@/components/pos/held-bills-panel";
 import { OptionDialog } from "@/components/pos/option-dialog";
 import {
   cartReducer,
@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { api, ApiClientError, errorMessage } from "@/lib/api-client";
 import { D, formatMoney, toDecimal } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
-import type { BillDetail } from "@/types/bill";
+import type { BillDetail, HeldBillSummary } from "@/types/bill";
 import type { AppSettings } from "@/types/settings";
 
 interface PosScreenProps {
@@ -33,7 +33,7 @@ interface PosScreenProps {
   categories: PosCategory[];
   settings: PosSettings & { timezone: string };
   appSettings: AppSettings;
-  initialHeldCount: number;
+  initialHeld: HeldBillSummary[];
 }
 
 const INITIAL_PAYMENT: PaymentState = { split: false, method: "cash", received: "", reference: "", rows: [] };
@@ -51,7 +51,7 @@ function isTyping(target: EventTarget | null): boolean {
   return Boolean(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable));
 }
 
-export function PosScreen({ items, categories, settings, appSettings, initialHeldCount }: PosScreenProps) {
+export function PosScreen({ items, categories, settings, appSettings, initialHeld }: PosScreenProps) {
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const attempt = useRef({ signature: "", ref: "" });
@@ -60,12 +60,11 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   const [details, setDetails] = useState<BillDetailsDraft>(EMPTY_DETAILS);
   const [payment, setPayment] = useState<PaymentState>(INITIAL_PAYMENT);
   const [heldBillId, setHeldBillId] = useState<number | null>(null);
-  const [heldCount, setHeldCount] = useState(initialHeldCount);
+  const [held, setHeld] = useState(initialHeld);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState<BillDetail | null>(null);
 
   const [optionItem, setOptionItem] = useState<PosItem | null>(null);
-  const [heldOpen, setHeldOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [resumeId, setResumeId] = useState<number | null>(null);
@@ -101,6 +100,15 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
     setHeldBillId(null);
     attempt.current = { signature: "", ref: "" };
     setCartOpen(false);
+  }, []);
+
+  const refreshHeld = useCallback(async () => {
+    try {
+      const { data } = await api.get<HeldBillSummary[]>("/api/bills/held");
+      setHeld(data);
+    } catch {
+      // The list is a convenience; the next hold or reload brings it back in step.
+    }
   }, []);
 
   const pick = useCallback((item: PosItem) => {
@@ -157,10 +165,10 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         const bill = response.data;
         if (action === "hold") {
           toast.success(heldBillId ? "Held bill updated" : "Bill held. Resume it from Held bills.");
-          if (!heldBillId) setHeldCount((n) => n + 1);
+          void refreshHeld();
           resetBill();
         } else {
-          if (heldBillId) setHeldCount((n) => Math.max(0, n - 1));
+          if (heldBillId) setHeld((list) => list.filter((b) => b.id !== heldBillId));
           resetBill();
           setSaved(bill);
           void printReceipt(bill.id, { kitchen: true });
@@ -174,7 +182,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         setPending(false);
       }
     },
-    [pending, lines, problem, paymentResult, details, heldBillId, billDiscount, settings.orderTypesEnabled, resetBill, router],
+    [pending, lines, problem, paymentResult, details, heldBillId, billDiscount, settings.orderTypesEnabled, resetBill, refreshHeld, router],
   );
 
   const resume = useCallback(
@@ -222,7 +230,6 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         setPayment(INITIAL_PAYMENT);
         setHeldBillId(id);
         attempt.current = { signature: "", ref: "" };
-        setHeldOpen(false);
         if (skipped.length > 0) toast.warning(`No longer available, so left out: ${skipped.join(", ")}`);
       } catch (error) {
         toast.error(errorMessage(error));
@@ -266,6 +273,23 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   const itemCount = lines.reduce((acc, l) => acc.plus(l.quantity), new D(0));
   const money = (v: string) => formatMoney(v, { currency: settings.currency, locale: settings.locale });
 
+  const heldPanel = (
+    <HeldBillsPanel
+      bills={held}
+      activeId={heldBillId}
+      settings={settings}
+      onResume={(id) => void resume(id)}
+      onDiscarded={(id) => {
+        setHeld((list) => list.filter((b) => b.id !== id));
+        // Discarding the bill on screen leaves its items as an ordinary new bill.
+        if (id === heldBillId) {
+          setHeldBillId(null);
+          attempt.current = { signature: "", ref: "" };
+        }
+      }}
+    />
+  );
+
   const cart = (
     <CartPanel
       lines={lines}
@@ -278,10 +302,8 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       totals={totals}
       settings={settings}
       pending={pending}
-      heldCount={heldCount}
       resumedFromHold={heldBillId !== null}
       problem={problem}
-      onOpenHeld={() => setHeldOpen(true)}
       onSave={() => void submit("complete")}
       onHold={() => void submit("hold")}
       onClear={() => (lines.length > 0 ? setConfirmClear(true) : resetBill())}
@@ -296,7 +318,10 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 @min-[1000px]/pos:h-[calc(100dvh-8.25rem)] @min-[1000px]/pos:grid-cols-[minmax(0,1fr)_24rem]">
         <ProductPanel items={items} categories={categories} lines={lines} settings={settings} searchRef={searchRef} onPick={pick} onDecrement={decrement} />
-        <aside className="hidden min-h-0 @min-[1000px]/pos:block">{cart}</aside>
+        <aside className="hidden min-h-0 flex-col gap-3 @min-[1000px]/pos:flex">
+          {heldPanel}
+          <div className="min-h-0 flex-1">{cart}</div>
+        </aside>
       </div>
 
       {/* Narrower: the bill opens in a drawer from a bar that stays at the bottom of this area. */}
@@ -315,7 +340,8 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
             <SheetTitle>Current bill</SheetTitle>
             <SheetDescription>Review the bill, take payment and save it.</SheetDescription>
           </SheetHeader>
-          {cart}
+          {heldPanel}
+          <div className="mt-2 min-h-0 flex-1">{cart}</div>
         </SheetContent>
       </Sheet>
 
@@ -329,8 +355,6 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
           setOptionItem(null);
         }}
       />
-
-      <HeldBillsSheet open={heldOpen} onOpenChange={setHeldOpen} settings={settings} onResume={(id) => void resume(id)} onCount={setHeldCount} />
 
       <ConfirmDialog
         open={confirmClear}
