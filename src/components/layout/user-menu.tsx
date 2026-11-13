@@ -5,6 +5,7 @@ import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
 import { RoleBadge } from "@/components/layout/role-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { GLASS_MENU } from "@/components/layout/glass";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { SessionUser } from "@/types/user";
+import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -34,7 +36,7 @@ export function UserMenu({ user }: { user: SessionUser }) {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuContent align="end" className={cn("w-60", GLASS_MENU)}>
         <DropdownMenuLabel className="flex flex-col gap-1 font-normal">
           <span className="truncate text-sm font-medium">{user.name}</span>
           <span className="truncate text-xs text-muted-foreground">{user.email}</span>

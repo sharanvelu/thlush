@@ -3,6 +3,7 @@
 import { Check, Printer, Usb } from "lucide-react";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
+import { GLASS_MENU } from "@/components/layout/glass";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -94,7 +95,7 @@ export function PrinterButton() {
         <TooltipContent>{label}</TooltipContent>
       </Tooltip>
 
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent align="end" className={cn("w-72", GLASS_MENU)}>
         <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Print method (this computer)</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={method} onValueChange={(v) => setPrintMethod(v === "dialog" ? "dialog" : "direct")}>
           <DropdownMenuRadioItem value="direct" className="items-start">
