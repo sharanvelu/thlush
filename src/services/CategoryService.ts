@@ -1,5 +1,6 @@
 import { and, asc, eq, getTableColumns, ilike, inArray, isNull, max, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { invalidatePosCatalog } from "@/lib/catalog-cache";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { HttpError } from "@/lib/errors";
 import type { CategoryData, CategoryListQuery, CategoryPatch } from "@/lib/validation/category";
@@ -139,6 +140,7 @@ export async function createCategory(input: CategoryData, userId: string): Promi
       );
       return created.id;
     });
+    invalidatePosCatalog();
     return getCategory(id);
   } catch (error) {
     if (isUniqueViolation(error)) throw nameTaken();
@@ -170,6 +172,7 @@ export async function updateCategory(id: number, patch: CategoryPatch, userId: s
     if (isUniqueViolation(error)) throw nameTaken();
     throw error;
   }
+  invalidatePosCatalog();
   return getCategory(id);
 }
 
@@ -207,6 +210,7 @@ export async function deleteCategory(id: number, userId: string): Promise<void> 
       tx,
     );
   });
+  invalidatePosCatalog();
 }
 
 /** Stores the order shown in the POS tabs: position in `ids` becomes the sort order. */
@@ -231,4 +235,5 @@ export async function reorderCategories(ids: number[], userId: string): Promise<
       tx,
     );
   });
+  invalidatePosCatalog();
 }
