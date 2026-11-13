@@ -117,7 +117,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   );
 
   const submit = useCallback(
-    async (action: "complete" | "hold", print = false) => {
+    async (action: "complete" | "hold") => {
       if (pending || lines.length === 0) return;
       if (problem) return void toast.error(problem);
       if (action === "complete" && !paymentResult.valid) {
@@ -162,7 +162,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
           if (heldBillId) setHeldCount((n) => Math.max(0, n - 1));
           resetBill();
           setSaved(bill);
-          if (print) void printReceipt(bill.id, { kitchen: true });
+          void printReceipt(bill.id, { kitchen: true });
         }
         router.refresh(); // Stock levels on the item cards.
       } catch (error) {
@@ -236,7 +236,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       const mod = event.ctrlKey || event.metaKey;
       if (mod && event.key === "Enter") {
         event.preventDefault();
-        void submit("complete", event.shiftKey);
+        void submit("complete");
       } else if (event.altKey && event.code === "KeyH") {
         event.preventDefault();
         void submit("hold");
@@ -281,7 +281,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       resumedFromHold={heldBillId !== null}
       problem={problem}
       onOpenHeld={() => setHeldOpen(true)}
-      onSave={(print) => void submit("complete", print)}
+      onSave={() => void submit("complete")}
       onHold={() => void submit("hold")}
       onClear={() => (lines.length > 0 ? setConfirmClear(true) : resetBill())}
     />

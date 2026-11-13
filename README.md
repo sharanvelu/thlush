@@ -110,7 +110,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 | `/`                      | Focus the search box                             |
 | `Enter` in search        | Add the exact SKU match, or the only result      |
 | `Esc` in search          | Clear the search                                 |
-| `Ctrl/⌘ + Enter`         | Save bill                                        |
+| `Ctrl/⌘ + Enter`         | Save & print                                     |
 | `Ctrl/⌘ + Shift + Enter` | Save and print                                   |
 | `Alt + H`                | Hold bill                                        |
 | `Alt + Backspace`        | Clear the bill                                   |

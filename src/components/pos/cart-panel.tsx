@@ -10,7 +10,6 @@ import {
   Plus,
   Printer,
   ReceiptText,
-  Save,
   Tag,
   Trash2,
 } from "lucide-react";
@@ -52,7 +51,7 @@ interface CartPanelProps {
   /** Something typed on the bill is invalid (e.g. a discount). Blocks saving. */
   problem: string | null;
   onOpenHeld: () => void;
-  onSave: (print: boolean) => void;
+  onSave: () => void;
   onHold: () => void;
   onClear: () => void;
 }
@@ -404,28 +403,16 @@ export function CartPanel(props: CartPanelProps) {
           </p>
         ) : null}
 
-        <div className="grid grid-cols-[1fr_auto] gap-2">
-          <Button
-            size="lg"
-            className="h-11 text-base"
-            disabled={!canSave}
-            onClick={() => onSave(false)}
-            aria-keyshortcuts="Control+Enter Meta+Enter"
-          >
-            {pending ? <Loader2 className="animate-spin" aria-hidden /> : <Save aria-hidden />}
-            Save bill
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="h-11"
-            disabled={!canSave}
-            onClick={() => onSave(true)}
-            aria-keyshortcuts="Control+Shift+Enter"
-          >
-            <Printer aria-hidden /> Save &amp; print
-          </Button>
-        </div>
+        <Button
+          size="lg"
+          className="h-11 w-full text-base"
+          disabled={!canSave}
+          onClick={() => onSave()}
+          aria-keyshortcuts="Control+Enter Meta+Enter"
+        >
+          {pending ? <Loader2 className="animate-spin" aria-hidden /> : <Printer aria-hidden />}
+          Save &amp; print
+        </Button>
         <Button variant="ghost" size="sm" disabled={empty || pending} onClick={onHold} aria-keyshortcuts="Alt+H" className="w-full">
           <Archive aria-hidden /> {resumedFromHold ? "Update held bill" : "Hold bill"}
         </Button>
