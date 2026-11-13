@@ -110,7 +110,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 | `/`                      | Focus the search box                             |
 | `Enter` in search        | Add the exact SKU match, or the only result      |
 | `Esc` in search          | Clear the search                                 |
-| `Ctrl/⌘ + Enter`         | Save bill                                        |
+| `Ctrl/⌘ + Enter`         | Save & print                                     |
 | `Ctrl/⌘ + Shift + Enter` | Save and print                                   |
 | `Alt + H`                | Hold bill                                        |
 | `Alt + Backspace`        | Clear the bill                                   |
@@ -138,6 +138,10 @@ The server builds the bytes (`/api/bills/[id]/escpos`); the browser sends them t
 1. **Straight over USB (WebUSB)**. Nothing to install. Chrome or Edge only.
 2. The optional local **print agent** (`npm run print-agent`, developer use).
 3. The browser's print dialog, if neither is available.
+
+### Custom Print page
+
+`/thermal-print/custom` (sidebar: Tools, Custom Print) prints free text. Each **text field** is its own slip, and the printer cuts after every one; **Add text field** adds another. Each field has alignment, bold and large-text options, and empty fields are skipped. It uses the same print engine as bills (USB, the print agent, or the print dialog, following the computer's print method). Only the Super Admin can open it; the `print.custom` permission in `src/config/permissions.ts` controls who (give it to another role there, and remove it from `MANAGER_EXCLUDED` for managers).
 
 ### Choosing how a computer prints
 

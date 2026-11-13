@@ -3,10 +3,12 @@
 import { Bell, CircleCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { GLASS_MENU } from "@/components/layout/glass";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { api } from "@/lib/api-client";
 import type { LowStockAlerts } from "@/services/StockService";
+import { cn } from "@/lib/utils";
 
 interface NotificationsBellProps {
   /** Low-stock alerts from the server render. Null when the viewer has no inventory alerts to see. */
@@ -44,7 +46,7 @@ export function NotificationsBell({ alerts: initial }: NotificationsBellProps) {
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80">
+      <PopoverContent align="end" className={cn("w-80", GLASS_MENU)}>
         <p className="text-sm font-medium">Notifications</p>
         {alerts && alerts.total > 0 ? (
           <div className="mt-3">

@@ -39,6 +39,7 @@ export const defaultSettings: AppSettings = {
     header: "",
     footer: "Thank you! Visit again.",
     paperSize: "80mm",
+    printKitchenByDefault: true,
   },
   billing: {
     billPrefix: "INV-",

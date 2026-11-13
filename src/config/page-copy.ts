@@ -20,5 +20,6 @@ export const PAGE_COPY = {
   users: { title: "Users & Roles", description: "Who can sign in, and what they can do." },
   auditLog: { title: "Audit Log", description: "Who did what, and when. Entries can't be edited or removed from here." },
   settings: { title: "Settings", description: "Business details, tax, receipts and what's switched on." },
+  customPrint: { title: "Custom Print", description: "Type free text and print it on the thermal printer. Each text field is cut off as its own slip." },
   profile: { title: "Profile", description: "Your account details and preferences." },
 } as const satisfies Record<string, PageCopy>;

@@ -28,6 +28,7 @@ export function SuccessDialog({ bill, settings, onNewBill }: SuccessDialogProps)
   const model = buildReceiptModel(bill, settings);
   const money = (v: string) => formatMoney(v, { currency: bill.currency, locale: settings.locale.locale });
   const change = new D(bill.changeDue);
+  const kitchen = settings.receipt.printKitchenByDefault;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onNewBill()}>
@@ -48,8 +49,8 @@ export function SuccessDialog({ bill, settings, onNewBill }: SuccessDialogProps)
         ) : null}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" onClick={() => void printReceipt(bill.id, { kitchen: true })}>
-            <Printer aria-hidden /> Print receipt &amp; kitchen slip
+          <Button variant="outline" onClick={() => void printReceipt(bill.id, { kitchen })}>
+            <Printer aria-hidden /> {kitchen ? "Print receipt & kitchen slip" : "Print receipt"}
           </Button>
           <Button variant="outline" asChild>
             <a href={`/api/bills/${bill.id}/pdf`} download>

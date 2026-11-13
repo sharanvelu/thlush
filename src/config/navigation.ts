@@ -3,6 +3,7 @@ import {
   ChartColumn,
   History,
   LayoutDashboard,
+  Printer,
   ReceiptText,
   ScrollText,
   Settings,
@@ -147,6 +148,20 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Sales, tax, discount and inventory reports.",
         milestone: 8,
         keywords: ["analytics", "gst", "tax report"],
+      },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      {
+        label: "Custom Print",
+        href: "/thermal-print/custom",
+        icon: Printer,
+        permission: "print.custom",
+        description: "Type free text and print it on the thermal printer, cut after each block.",
+        milestone: 9,
+        keywords: ["thermal", "slip", "label", "note", "text"],
       },
     ],
   },

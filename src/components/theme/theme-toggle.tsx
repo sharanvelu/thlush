@@ -3,6 +3,7 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { ComponentProps, ReactNode } from "react";
+import { GLASS_MENU } from "@/components/layout/glass";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +12,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 type MenuContentProps = Pick<ComponentProps<typeof DropdownMenuContent>, "side" | "align">;
 
@@ -24,7 +26,7 @@ export function ThemeDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent side={side} align={align} className="min-w-36">
+      <DropdownMenuContent side={side} align={align} className={cn("min-w-36", GLASS_MENU)}>
         <DropdownMenuRadioGroup value={theme ?? "system"} onValueChange={setTheme}>
           <DropdownMenuRadioItem value="light">
             <Sun aria-hidden /> Light

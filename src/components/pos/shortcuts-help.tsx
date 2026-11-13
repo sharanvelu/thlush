@@ -8,7 +8,7 @@ const SHORTCUTS: Array<[keys: string, action: string]> = [
   ["/", "Search items or scan a barcode"],
   ["Enter (in search)", "Add the exact SKU match, or the only result"],
   ["Esc (in search)", "Clear the search"],
-  ["Ctrl/⌘ + Enter", "Save bill"],
+  ["Ctrl/⌘ + Enter", "Save & print"],
   ["Ctrl/⌘ + Shift + Enter", "Save and print"],
   ["Alt + H", "Hold bill"],
   ["Alt + Backspace", "Clear the bill"],

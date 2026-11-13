@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm";
 import { db, schema, type DbExecutor } from "@/db";
 import { toCsv, parseCsv, unescapeCell } from "@/lib/csv";
+import { invalidatePosCatalog } from "@/lib/catalog-cache";
 import { isForeignKeyViolation, isUniqueViolation } from "@/lib/db-errors";
 import { HttpError } from "@/lib/errors";
 import { D, parseMoney, parseQuantity } from "@/lib/money";
@@ -286,6 +287,7 @@ export async function createMenuItem(input: MenuItemData, userId: string): Promi
       );
       return created.id;
     });
+    invalidatePosCatalog();
     return getMenuItem(id);
   } catch (error) {
     if (isUniqueViolation(error)) throw skuTaken();
@@ -332,6 +334,7 @@ export async function updateMenuItem(id: number, patch: MenuItemPatch, userId: s
     if (isForeignKeyViolation(error)) throw badCategory();
     throw error;
   }
+  invalidatePosCatalog();
   return getMenuItem(id);
 }
 
@@ -374,6 +377,7 @@ export async function duplicateMenuItem(id: number, userId: string): Promise<Men
     );
     return copy.id;
   });
+  invalidatePosCatalog();
   return getMenuItem(newId);
 }
 
@@ -434,6 +438,7 @@ async function removeItems(
 
 export async function deleteMenuItem(id: number, userId: string): Promise<{ mode: DeleteMode }> {
   const result = await db.transaction((tx) => removeItems([id], userId, tx));
+  invalidatePosCatalog();
   if (result.deleted + result.archived === 0) throw HttpError.notFound("Menu item not found.");
   return { mode: result.archived > 0 ? "archived" : "deleted" };
 }
@@ -448,6 +453,7 @@ export async function bulkUpdateMenuItems(input: MenuBulkInput, userId: string):
 
   if (input.action === "delete") {
     const result = await db.transaction((tx) => removeItems(ids, userId, tx));
+    invalidatePosCatalog();
     return { affected: result.deleted + result.archived, archived: result.archived };
   }
 
@@ -472,6 +478,7 @@ export async function bulkUpdateMenuItems(input: MenuBulkInput, userId: string):
       );
       return updated.length;
     });
+    invalidatePosCatalog();
     return { affected, archived: 0 };
   } catch (error) {
     if (isForeignKeyViolation(error)) throw badCategory();
@@ -717,5 +724,6 @@ export async function importMenuCsv(
     }
     throw error;
   }
+  invalidatePosCatalog();
   return { ...result, committed: true };
 }
