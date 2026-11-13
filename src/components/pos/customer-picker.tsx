@@ -39,7 +39,10 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
   const typed = search.trim();
   const exact = results.some((c) => c.name.toLowerCase() === typed.toLowerCase());
   const label =
-    value.kind === "walkin" ? walkInLabel : value.kind === "existing" ? value.name : `${value.name} (new)`;
+    value.kind === "walkin" ? walkInLabel : value.kind === "existing" ? value.name : `${value.name || value.phone || "New customer"} (new)`;
+
+  // A cashier searches by phone first, so digits typed before "Add new" belong in the phone field.
+  const looksLikePhone = /^\+?[\d\s-]{3,}$/.test(typed);
 
   const choose = (choice: CustomerChoice) => {
     onChange(choice);
@@ -82,7 +85,7 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
                     </CommandItem>
                   ))}
                   {typed && !exact ? (
-                    <CommandItem value="__new" onSelect={() => choose({ kind: "new", name: typed, phone: "" })}>
+                    <CommandItem value="__new" onSelect={() => choose(looksLikePhone ? { kind: "new", name: "", phone: typed } : { kind: "new", name: typed, phone: "" })}>
                       <Plus aria-hidden /> Add &quot;{typed}&quot; as a new customer
                     </CommandItem>
                   ) : null}
@@ -99,16 +102,27 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
       </div>
 
       {value.kind === "new" ? (
-        <Input
-          type="tel"
-          inputMode="tel"
-          value={value.phone}
-          onChange={(e) => onChange({ ...value, phone: e.target.value })}
-          placeholder="Phone (optional)"
-          aria-label="New customer's phone number"
-          maxLength={20}
-          className="h-9"
-        />
+        <>
+          <Input
+            type="tel"
+            inputMode="tel"
+            value={value.phone}
+            onChange={(e) => onChange({ ...value, phone: e.target.value })}
+            placeholder="Phone (optional)"
+            aria-label="New customer's phone number"
+            maxLength={20}
+            className="h-9"
+          />
+          <Input
+            value={value.name}
+            onChange={(e) => onChange({ ...value, name: e.target.value })}
+            placeholder="Name"
+            aria-label="New customer's name"
+            maxLength={100}
+            autoFocus={value.name === ""}
+            className="h-9"
+          />
+        </>
       ) : null}
     </div>
   );

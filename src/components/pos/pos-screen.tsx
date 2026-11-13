@@ -85,12 +85,13 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
 
   const problem = useMemo(() => {
     const value = details.discountValue.trim();
+    if (details.customer.kind === "new" && details.customer.name.trim() === "") return "Enter the new customer's name.";
     if (value !== "" && !MONEY_PATTERN.test(value)) return "The bill discount must be a number like 10 or 10.50.";
     if (lines.some((l) => l.discount.trim() !== "" && !MONEY_PATTERN.test(l.discount.trim()))) {
       return "A line discount must be a number like 10 or 10.50.";
     }
     return null;
-  }, [details.discountValue, lines]);
+  }, [details.discountValue, details.customer, lines]);
 
   // ---- Actions ----------------------------------------------------------------
   const resetBill = useCallback(() => {
