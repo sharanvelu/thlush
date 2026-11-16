@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -18,11 +19,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: { default: appConfig.appName, template: `%s · ${appConfig.appName}` },
-  description: "Billing and point-of-sale for restaurants, cafés and small shops.",
-  applicationName: appConfig.appName,
-};
+/** Tab and home-screen icon: the logo from Settings (see `brand-icon/route.ts`), else the built-in one. */
+export async function generateMetadata(): Promise<Metadata> {
+  let version = "default";
+  try {
+    const { logoUrl } = await getSettingsGroup("business");
+    // Changes whenever the logo does, so browsers fetch the new icon instead of keeping the old one.
+    if (logoUrl) version = createHash("sha1").update(logoUrl).digest("hex").slice(0, 10);
+  } catch {
+    // Database unreachable: keep the built-in icon.
+  }
+  return {
+    title: { default: appConfig.appName, template: `%s · ${appConfig.appName}` },
+    description: "Billing and point-of-sale for restaurants, cafés and small shops.",
+    applicationName: appConfig.appName,
+    icons: {
+      icon: `/brand-icon?v=${version}`,
+      apple: `/brand-icon?kind=apple&v=${version}`,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
