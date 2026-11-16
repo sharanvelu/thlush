@@ -88,3 +88,36 @@ describe("kitchen slip for one send of a running order", () => {
     expect(text(buildPrintJob(bill, defaultSettings, { kot: 7, receipt: false }))).toBe("");
   });
 });
+
+describe("KOT line", () => {
+  it("puts the time and the KOT number on one line", () => {
+    const job = text(buildPrintJob(bill, defaultSettings, { kot: 2, receipt: false }));
+    const line = job.split("\n").find((l) => l.includes("KOT #2"));
+    expect(line).toBeDefined();
+    // The date comes first and the number follows on the same line (size commands sit between the two).
+    expect(line).toMatch(/20\d\d[^\n]*KOT #2/);
+  });
+});
+
+describe("order number on the kitchen slip", () => {
+  const done = { ...bill, billNo: "INV-20261116-0007", status: "completed" as const };
+  const slip = (b: BillDetail) => text(buildPrintJob(b, defaultSettings, { kitchen: true, receipt: false }));
+
+  it("shows only the short counter, never the whole invoice number", () => {
+    for (const orderType of ["dine_in", "takeaway", "delivery"] as const) {
+      const job = slip({ ...done, orderType, tableNo: orderType === "dine_in" ? "4" : null });
+      expect(job).toContain("#0007");
+      expect(job).not.toContain("INV-");
+    }
+  });
+
+  it("puts the order type first and the number after it on one line", () => {
+    const line = slip(done).split("\n").find((l) => l.includes("Dine-in"));
+    expect(line).toMatch(/Dine-in - Table 4[^\n]*#0007/);
+  });
+
+  it("shows nothing for a running order's temporary number", () => {
+    const job = text(buildPrintJob(bill, defaultSettings, { kot: 1, receipt: false }));
+    expect(job).not.toMatch(/#\d{4}|HOLD-/);
+  });
+});

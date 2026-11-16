@@ -192,14 +192,24 @@ export function mailtoUrl(model: ReceiptModel, email: string | null): string {
 }
 
 export interface KitchenSlipModel {
-  /** Null on a running order, whose number is only temporary. */
-  billNo: string | null;
+  /** The day's counter from the bill number ("#0007"), to match food to its bill. Null on a running order. */
+  orderNo: string | null;
   /** "KOT #2" when this slip is one send of a running order. */
   kotLabel: string | null;
   dateText: string;
   orderLine: string | null;
   notes: string | null;
   items: Array<{ name: string; quantity: string; details: string[] }>;
+}
+
+/**
+ * What identifies the bill on a kitchen slip: just the day's counter, not the whole invoice number. A
+ * running order has only a temporary number, so it shows none.
+ */
+function kitchenOrderNo(bill: BillDetail): string | null {
+  if (bill.billNo.startsWith("HOLD-")) return null;
+  const counter = bill.billNo.split("-").pop();
+  return counter ? `#${counter}` : null;
 }
 
 /** What the kitchen needs: no prices, no customer details. Variants and add-ons are listed under each item. */
@@ -213,7 +223,7 @@ export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings, k
     ? kot.items.map((item) => ({ name: item.name, quantity: trimQty(item.quantity), details: item.details }))
     : null;
   return {
-    billNo: kot && bill.billNo.startsWith("HOLD-") ? null : bill.billNo,
+    orderNo: kitchenOrderNo(bill),
     kotLabel: kot ? `KOT #${kot.seq}` : null,
     dateText: formatDateTime(kot?.createdAt ?? bill.createdAt, { locale, timeZone: timezone }),
     orderLine: orderBits.length > 0 ? orderBits.join(" · ") : null,
