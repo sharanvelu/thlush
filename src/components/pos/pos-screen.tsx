@@ -395,7 +395,6 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
 
       <SuccessDialog
         bill={saved}
-        kotSeq={saved?.newKotSeq ?? null}
         settings={appSettings}
         onNewBill={() => {
           setSaved(null);
