@@ -25,7 +25,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { api, ApiClientError, errorMessage } from "@/lib/api-client";
 import { D, formatMoney, toDecimal } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
-import type { BillDetail, HeldBillSummary } from "@/types/bill";
+import type { HeldBillSummary, SavedBill } from "@/types/bill";
+import type { BillDetail } from "@/types/bill";
 import type { AppSettings } from "@/types/settings";
 
 interface PosScreenProps {
@@ -62,7 +63,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   const [heldBillId, setHeldBillId] = useState<number | null>(null);
   const [held, setHeld] = useState(initialHeld);
   const [pending, setPending] = useState(false);
-  const [saved, setSaved] = useState<BillDetail | null>(null);
+  const [saved, setSaved] = useState<SavedBill | null>(null);
 
   const [optionItem, setOptionItem] = useState<PosItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -126,7 +127,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   );
 
   const submit = useCallback(
-    async (action: "complete" | "hold") => {
+    async (action: "complete" | "hold" | "kot") => {
       if (pending || lines.length === 0) return;
       if (problem) return void toast.error(problem);
       if (action === "complete" && !paymentResult.valid) {
@@ -151,6 +152,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         tableNo: details.orderType === "dine_in" ? details.tableNo.trim() || null : null,
         notes: details.notes.trim() || null,
         payments: action === "complete" ? paymentResult.payments : [],
+        sendRemainder: action === "complete" && appSettings.receipt.printKitchenByDefault,
         cashTendered: action === "complete" ? paymentResult.cashTendered : null,
       };
 
@@ -161,9 +163,14 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
 
       setPending(true);
       try {
-        const response = await api.post<BillDetail>("/api/bills", { ...body, clientRef: attempt.current.ref });
+        const response = await api.post<SavedBill>("/api/bills", { ...body, clientRef: attempt.current.ref });
         const bill = response.data;
-        if (action === "hold") {
+        if (action === "kot") {
+          toast.success(`Sent to the kitchen (KOT #${bill.newKotSeq ?? bill.kots.length}). The order stays open under Held bills.`);
+          if (bill.newKotSeq !== null) void printReceipt(bill.id, { kot: bill.newKotSeq, receipt: false });
+          void refreshHeld();
+          resetBill();
+        } else if (action === "hold") {
           toast.success(heldBillId ? "Held bill updated" : "Bill held. Resume it from Held bills.");
           void refreshHeld();
           resetBill();
@@ -171,7 +178,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
           if (heldBillId) setHeld((list) => list.filter((b) => b.id !== heldBillId));
           resetBill();
           setSaved(bill);
-          void printReceipt(bill.id, { kitchen: appSettings.receipt.printKitchenByDefault });
+          void printReceipt(bill.id, { kot: bill.newKotSeq ?? undefined });
         }
         router.refresh(); // Stock levels on the item cards.
       } catch (error) {
@@ -213,6 +220,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
             addons,
             quantity: new D(row.quantity).toString(),
             discount: new D(row.discount).isZero() ? "" : new D(row.discount).toFixed(2),
+            sentQty: new D(row.sentQty).toString(),
           });
         }
 
@@ -245,6 +253,9 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       if (mod && event.key === "Enter") {
         event.preventDefault();
         void submit("complete");
+      } else if (event.altKey && event.code === "KeyK") {
+        event.preventDefault();
+        void submit("kot");
       } else if (event.altKey && event.code === "KeyH") {
         event.preventDefault();
         void submit("hold");
@@ -306,6 +317,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       problem={problem}
       onSave={() => void submit("complete")}
       onHold={() => void submit("hold")}
+      onSendKitchen={() => void submit("kot")}
       onClear={() => (lines.length > 0 ? setConfirmClear(true) : resetBill())}
     />
   );
@@ -383,6 +395,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
 
       <SuccessDialog
         bill={saved}
+        kotSeq={saved?.newKotSeq ?? null}
         settings={appSettings}
         onNewBill={() => {
           setSaved(null);

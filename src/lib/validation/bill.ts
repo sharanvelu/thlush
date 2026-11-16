@@ -35,7 +35,8 @@ export const billCustomerSchema = z
   .nullable();
 
 export const billSaveSchema = z.object({
-  action: z.enum(["complete", "hold"]),
+  /** "kot" parks the bill and sends only the items not yet sent to the kitchen. */
+  action: z.enum(["complete", "hold", "kot"]),
   /** One id per save attempt, so retries and double-clicks cannot create two bills. */
   clientRef: z.string().trim().min(8).max(64),
   /** Set when this save finishes a bill that was put on hold earlier. */
@@ -52,6 +53,8 @@ export const billSaveSchema = z.object({
   payments: z.array(billPaymentSchema).max(6).default([]),
   /** Cash handed over, when it is more than the cash applied (the difference is change). */
   cashTendered: moneyString("Cash received").nullish().transform((v) => v ?? null),
+  /** With "complete": also send items the kitchen has not had yet (a kitchen slip for them). */
+  sendRemainder: z.boolean().default(false),
 });
 
 export type BillSaveInput = z.output<typeof billSaveSchema>;

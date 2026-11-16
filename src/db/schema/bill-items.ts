@@ -31,6 +31,8 @@ export const billItems = table(
     /** Final line amount including tax. */
     total: numeric("total", { precision: 12, scale: 2 }).notNull(),
     options: jsonb("options").$type<BillItemOptions>(),
+    /** How much of `quantity` the kitchen has already been sent. The rest is still to send. */
+    sentQty: numeric("sent_qty", { precision: 10, scale: 3 }).notNull().default("0"),
   },
   (t) => [
     index(ix("bill_items_bill_idx")).on(t.billId),

@@ -16,6 +16,8 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   other: "Other",
 };
 
+import type { KotItem } from "@/db/schema";
+
 export interface BillDetailItem {
   id: number;
   menuItemId: number | null;
@@ -31,6 +33,15 @@ export interface BillDetailItem {
   total: string;
   /** The variant and add-ons chosen on the billing screen, if any. */
   options: { variant?: string; addons?: Array<{ name: string; price: string }> } | null;
+  /** How much of `quantity` has been sent to the kitchen. */
+  sentQty: string;
+}
+
+/** One time items were sent to the kitchen for a bill. */
+export interface BillKot {
+  seq: number;
+  createdAt: string;
+  items: KotItem[];
 }
 
 export interface BillDetailPayment {
@@ -63,7 +74,11 @@ export interface BillDetail {
   cashier: { id: string; name: string } | null;
   items: BillDetailItem[];
   payments: BillDetailPayment[];
+  kots: BillKot[];
 }
+
+/** What saving returns: the bill, and the number of the kitchen slip this save created (if any). */
+export type SavedBill = BillDetail & { newKotSeq: number | null };
 
 export interface HeldBillSummary {
   id: number;
@@ -72,4 +87,6 @@ export interface HeldBillSummary {
   tableNo: string | null;
   itemCount: number;
   total: string;
+  /** How many times items have been sent to the kitchen for this bill. */
+  kotCount: number;
 }

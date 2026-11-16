@@ -6,7 +6,7 @@ import { formatDateTime } from "@/lib/format";
 import { D, formatMoney, round2 } from "@/lib/money";
 import { unitPriceInclTax } from "@/services/calculations";
 import type { AppSettings, PaperSize } from "@/types/settings";
-import { ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS, type BillDetail } from "@/types/bill";
+import { ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS, type BillDetail, type BillKot } from "@/types/bill";
 
 export interface ReceiptTotals {
   /** Sum of price x quantity, before discounts and tax. */
@@ -192,7 +192,10 @@ export function mailtoUrl(model: ReceiptModel, email: string | null): string {
 }
 
 export interface KitchenSlipModel {
-  billNo: string;
+  /** Null on a running order, whose number is only temporary. */
+  billNo: string | null;
+  /** "KOT #2" when this slip is one send of a running order. */
+  kotLabel: string | null;
   dateText: string;
   orderLine: string | null;
   notes: string | null;
@@ -200,18 +203,22 @@ export interface KitchenSlipModel {
 }
 
 /** What the kitchen needs: no prices, no customer details. Variants and add-ons are listed under each item. */
-export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings): KitchenSlipModel {
+export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings, kot?: BillKot): KitchenSlipModel {
   const { locale, timezone } = settings.locale;
   const orderBits = [
     bill.orderType ? ORDER_TYPE_LABELS[bill.orderType] : null,
     bill.tableNo ? `Table ${bill.tableNo}` : null,
   ].filter(Boolean);
+  const slipItems = kot
+    ? kot.items.map((item) => ({ name: item.name, quantity: trimQty(item.quantity), details: item.details }))
+    : null;
   return {
-    billNo: bill.billNo,
-    dateText: formatDateTime(bill.createdAt, { locale, timeZone: timezone }),
+    billNo: kot && bill.billNo.startsWith("HOLD-") ? null : bill.billNo,
+    kotLabel: kot ? `KOT #${kot.seq}` : null,
+    dateText: formatDateTime(kot?.createdAt ?? bill.createdAt, { locale, timeZone: timezone }),
     orderLine: orderBits.length > 0 ? orderBits.join(" · ") : null,
     notes: bill.notes,
-    items: bill.items.map((item) => ({
+    items: slipItems ?? bill.items.map((item) => ({
       name: item.name,
       quantity: trimQty(item.quantity),
       details: [item.options?.variant, ...(item.options?.addons?.map((a) => `+ ${a.name}`) ?? [])].filter(

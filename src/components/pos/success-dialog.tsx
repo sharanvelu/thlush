@@ -18,17 +18,19 @@ import type { BillDetail } from "@/types/bill";
 
 interface SuccessDialogProps {
   bill: BillDetail | null;
+  /** The kitchen slip this save sent, if any. The print button reprints it with the receipt. */
+  kotSeq: number | null;
   settings: AppSettings;
   onNewBill: () => void;
 }
 
 /** Shown after a bill is saved: the bill number, and everything you might do with the receipt. */
-export function SuccessDialog({ bill, settings, onNewBill }: SuccessDialogProps) {
+export function SuccessDialog({ bill, kotSeq, settings, onNewBill }: SuccessDialogProps) {
   if (!bill) return null;
   const model = buildReceiptModel(bill, settings);
   const money = (v: string) => formatMoney(v, { currency: bill.currency, locale: settings.locale.locale });
   const change = new D(bill.changeDue);
-  const kitchen = settings.receipt.printKitchenByDefault;
+  const kitchen = kotSeq !== null;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onNewBill()}>
@@ -49,7 +51,7 @@ export function SuccessDialog({ bill, settings, onNewBill }: SuccessDialogProps)
         ) : null}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" onClick={() => void printReceipt(bill.id, { kitchen })}>
+          <Button variant="outline" onClick={() => void printReceipt(bill.id, { kot: kotSeq ?? undefined })}>
             <Printer aria-hidden /> {kitchen ? "Print receipt & kitchen slip" : "Print receipt"}
           </Button>
           <Button variant="outline" asChild>

@@ -79,7 +79,9 @@ export function kitchenSlipToEscPos(model: KitchenSlipModel, columns: number): U
 
   p.init().align("center").bold(true).size(2, 2).line("KITCHEN").size(1, 1).bold(false);
   p.align("left").rule();
-  p.bold(true).size(1, 2).line(model.billNo);
+  if (model.kotLabel) p.bold(true).size(2, 2).line(model.kotLabel).size(1, 2);
+  else p.bold(true).size(1, 2);
+  if (model.billNo) p.line(model.billNo);
   if (model.orderLine) for (const l of wrapText(model.orderLine, columns)) p.line(l);
   p.size(1, 1).bold(false).line(model.dateText);
   p.rule();
@@ -99,11 +101,25 @@ export function kitchenSlipToEscPos(model: KitchenSlipModel, columns: number): U
   return p.feed(2).cut().build();
 }
 
-/** The whole print job for a bill: the receipt, then (optionally) the kitchen slip, each followed by a cut. */
-export function buildPrintJob(bill: BillDetail, settings: AppSettings, options: { kitchen: boolean }): Uint8Array {
-  const parts = [receiptToEscPos(buildReceiptModel(bill, settings))];
-  if (options.kitchen) {
-    parts.push(kitchenSlipToEscPos(buildKitchenSlipModel(bill, settings), paperColumns(settings.receipt.paperSize)));
+export interface PrintJobOptions {
+  /** The kitchen slip for the whole bill (a reprint from history). */
+  kitchen?: boolean;
+  /** The kitchen slip for one send of a running order, by its number. */
+  kot?: number;
+  /** Set false to leave the customer receipt out (a kitchen-only print). Defaults to true. */
+  receipt?: boolean;
+}
+
+/** The whole print job for a bill: the receipt, then (optionally) a kitchen slip, each followed by a cut. */
+export function buildPrintJob(bill: BillDetail, settings: AppSettings, options: PrintJobOptions): Uint8Array {
+  const columns = paperColumns(settings.receipt.paperSize);
+  const parts: Uint8Array[] = [];
+  if (options.receipt !== false) parts.push(receiptToEscPos(buildReceiptModel(bill, settings)));
+  if (options.kot !== undefined) {
+    const kot = bill.kots.find((k) => k.seq === options.kot);
+    if (kot) parts.push(kitchenSlipToEscPos(buildKitchenSlipModel(bill, settings, kot), columns));
+  } else if (options.kitchen) {
+    parts.push(kitchenSlipToEscPos(buildKitchenSlipModel(bill, settings), columns));
   }
   return concatBytes(parts);
 }

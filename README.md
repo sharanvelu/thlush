@@ -111,7 +111,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 | `Enter` in search        | Add the exact SKU match, or the only result      |
 | `Esc` in search          | Clear the search                                 |
 | `Ctrl/⌘ + Enter`         | Save & print                                     |
-| `Ctrl/⌘ + Shift + Enter` | Save and print                                   |
+| `Alt + K`                | Send new items to the kitchen                    |
 | `Alt + H`                | Hold bill                                        |
 | `Alt + Backspace`        | Clear the bill                                   |
 
@@ -132,6 +132,8 @@ Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58m
 Receipts and kitchen slips print as raw ESC/POS bytes, so no printer driver is needed for printing and the paper is cut by the printer itself: a cut after the receipt, and another after the kitchen slip.
 
 Kitchen slip: printed after the receipt when a new bill is saved (Save & print, and the print button on the "Bill saved" dialog). On by default; turn it off under **Settings > Receipts > Print kitchen bill by default**. In Bill History the **With kitchen slip** checkbox is off by default.
+
+Running orders (customer orders in rounds): **Send to kitchen** (`Alt + K`) saves the bill as a held order and prints a kitchen slip with only the items the kitchen has not had yet ("KOT #1", "KOT #2"...). Resume the order from **Held bills**, add more, and send again. When the customer pays, **Save & print** prints the customer receipt, plus a kitchen slip only for anything never sent. **Hold bill** parks a bill without sending anything. Items already sent cannot be removed or reduced. This needs the `0002_bill_kots` migration (`npm run db:migrate`).
 
 The server builds the bytes (`/api/bills/[id]/escpos`); the browser sends them to the printer the first way that works:
 

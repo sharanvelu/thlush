@@ -37,8 +37,9 @@ function billFrom(overrides: Record<string, unknown>, ignoreTax = false): BillDe
     totalAmount: paid.totals.grandTotal, discountType: paid.discount?.type ?? null, discountValue: paid.discount?.value ?? "0.00",
     amountPaid: paid.amountPaid, changeDue: paid.changeDue, orderType: null, tableNo: null, notes: null, voidReason: null,
     customer: { id: 1, name: "Asha", phone: "98450 10001", email: "asha@example.com" }, cashier: { id: "u", name: "Charu" },
-    items: paid.lines.map((l, i) => ({ id: i + 1, menuItemId: l.menuItemId, name: l.name, price: l.price, sgst: l.sgst, cgst: l.cgst, quantity: l.quantity, discount: l.discount, total: l.total, options: l.options })),
+    items: paid.lines.map((l, i) => ({ id: i + 1, menuItemId: l.menuItemId, name: l.name, price: l.price, sgst: l.sgst, cgst: l.cgst, quantity: l.quantity, discount: l.discount, total: l.total, options: l.options, sentQty: "0.000" })),
     payments: paid.payments.map((p, i) => ({ id: i + 1, method: p.method, amount: p.amount, reference: p.reference })),
+    kots: [],
   };
 }
 

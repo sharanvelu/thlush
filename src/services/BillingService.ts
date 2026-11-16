@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, max, sql } from "drizzle-orm";
 import { db, schema, type DbExecutor, type Transaction } from "@/db";
 import { hasPermission } from "@/config/permissions";
 import { businessDayKey } from "@/lib/dates";
@@ -9,13 +9,14 @@ import { D, parseMoney } from "@/lib/money";
 import type { BillSaveInput } from "@/lib/validation/bill";
 import * as AuditService from "@/services/AuditService";
 import { planBill, type BillPlan, type PlanItem } from "@/services/bill-plan";
+import { allocateSent } from "@/services/kot-plan";
 import * as CustomerService from "@/services/CustomerService";
 import { getSettings } from "@/services/SettingsService";
 import type { AppSettings } from "@/types/settings";
-import type { BillDetail, HeldBillSummary } from "@/types/bill";
+import type { BillDetail, HeldBillSummary, SavedBill } from "@/types/bill";
 import type { SessionUser } from "@/types/user";
 
-const { bills, billItems, payments, menuItems, categories, customers, users, stockMovements } = schema;
+const { bills, billItems, billKots, payments, menuItems, categories, customers, users, stockMovements } = schema;
 
 // ---------------------------------------------------------------------------
 // Reading
@@ -40,9 +41,10 @@ export async function getBill(id: number, user: SessionUser, executor: DbExecuto
   // Someone else's bill is reported as missing rather than forbidden, so ids cannot be probed.
   if (!row || !canSee(user, row.bill.createdUserId)) throw HttpError.notFound("Bill not found.");
 
-  const [items, paymentRows] = await Promise.all([
+  const [items, paymentRows, kotRows] = await Promise.all([
     executor.select().from(billItems).where(eq(billItems.billId, id)).orderBy(asc(billItems.id)),
     executor.select().from(payments).where(eq(payments.billId, id)).orderBy(asc(payments.id)),
+    executor.select().from(billKots).where(eq(billKots.billId, id)).orderBy(asc(billKots.seq)),
   ]);
 
   const { bill } = row;
@@ -77,8 +79,10 @@ export async function getBill(id: number, user: SessionUser, executor: DbExecuto
       discount: i.discount,
       total: i.total,
       options: i.options,
+      sentQty: i.sentQty,
     })),
     payments: paymentRows.map((p) => ({ id: p.id, method: p.method, amount: p.amount, reference: p.reference })),
+    kots: kotRows.map((k) => ({ seq: k.seq, createdAt: k.createdAt.toISOString(), items: k.items })),
   };
 }
 
@@ -92,6 +96,7 @@ export async function listHeldBills(user: SessionUser): Promise<HeldBillSummary[
       total: bills.totalAmount,
       customerName: customers.name,
       itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id})`.mapWith(Number),
+      kotCount: sql<number>`(select count(*) from ${billKots} where ${billKots.billId} = ${bills.id})`.mapWith(Number),
     })
     .from(bills)
     .leftJoin(customers, eq(customers.id, bills.customerId))
@@ -105,6 +110,7 @@ export async function listHeldBills(user: SessionUser): Promise<HeldBillSummary[
     tableNo: r.tableNo,
     itemCount: r.itemCount,
     total: r.total,
+    kotCount: r.kotCount,
   }));
 }
 
@@ -180,18 +186,19 @@ async function findByClientRef(clientRef: string) {
  * Calling it again with the same `clientRef` returns the bill that save created,
  * so a double-click or a retry after a dropped connection never makes a second bill.
  */
-export async function saveBill(input: BillSaveInput, user: SessionUser): Promise<BillDetail> {
+export async function saveBill(input: BillSaveInput, user: SessionUser): Promise<SavedBill> {
   const replay = await findByClientRef(input.clientRef);
   if (replay) {
     if (replay.createdUserId !== user.id) throw HttpError.conflict("This save reference is already in use.");
-    return getBill(replay.id, user);
+    return withKotSeq(await getBill(replay.id, user), input);
   }
 
   const settings = await getSettings();
 
   try {
-    const billId = await db.transaction(async (tx) => {
+    const saved = await db.transaction(async (tx) => {
       const completing = input.action === "complete";
+      const sending = input.action === "kot" || (completing && input.sendRemainder);
       const now = new Date();
 
       // A bill being finished from hold keeps its row but gets its real number now.
@@ -238,6 +245,22 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
       });
 
       let id: number;
+      // What the kitchen already has, read before the lines are rewritten.
+      const previous = held
+        ? await tx
+            .select({ menuItemId: billItems.menuItemId, name: billItems.name, options: billItems.options, sentQty: billItems.sentQty })
+            .from(billItems)
+            .where(eq(billItems.billId, held.id))
+        : [];
+      const allocation = allocateSent(
+        previous,
+        plan.lines.map((l) => ({ menuItemId: l.menuItemId, options: l.options, quantity: l.quantity })),
+        sending ? "send" : "keep",
+      );
+      if (input.action === "kot" && allocation.fresh.length === 0) {
+        throw HttpError.badRequest("Nothing new to send to the kitchen.");
+      }
+
       if (held) {
         await tx.delete(billItems).where(eq(billItems.billId, held.id));
         await tx.update(bills).set(header).where(eq(bills.id, held.id));
@@ -249,7 +272,7 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
       }
 
       await tx.insert(billItems).values(
-        plan.lines.map((line) => ({
+        plan.lines.map((line, index) => ({
           billId: id,
           menuItemId: line.menuItemId,
           name: line.name,
@@ -260,8 +283,32 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
           discount: line.discount,
           total: line.total,
           options: line.options,
+          sentQty: allocation.sentQty[index] ?? "0.000",
         })),
       );
+
+      let newKotSeq: number | null = null;
+      if (allocation.fresh.length > 0) {
+        const [last] = await tx.select({ seq: max(billKots.seq) }).from(billKots).where(eq(billKots.billId, id));
+        newKotSeq = (last?.seq ?? 0) + 1;
+        await tx.insert(billKots).values({
+          billId: id,
+          seq: newKotSeq,
+          userId: user.id,
+          createdAt: now,
+          items: allocation.fresh.map(({ index, quantity }) => {
+            const line = plan.lines[index];
+            if (!line) throw new Error("Kitchen line missing");
+            return {
+              name: line.name,
+              quantity,
+              details: [line.options?.variant, ...(line.options?.addons?.map((a) => `+ ${a.name}`) ?? [])].filter(
+                (d): d is string => Boolean(d),
+              ),
+            };
+          }),
+        });
+      }
 
       if (plan.payments.length > 0) {
         await tx.insert(payments).values(plan.payments.map((p) => ({ billId: id, ...p, createdAt: now })));
@@ -272,24 +319,33 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
       await AuditService.record(
         {
           userId: user.id,
-          action: completing ? "bill.create" : "bill.hold",
+          action: completing ? "bill.create" : input.action === "kot" ? "bill.kot" : "bill.hold",
           entity: "bill",
           entityId: id,
-          metadata: { billNo, total: plan.totals.grandTotal, items: plan.lines.length, fromHold: held?.id ?? null },
+          metadata: { billNo, total: plan.totals.grandTotal, items: plan.lines.length, fromHold: held?.id ?? null, kot: newKotSeq },
         },
         tx,
       );
-      return id;
+      return { id, newKotSeq };
     });
-    return await getBill(billId, user);
+    return { ...(await getBill(saved.id, user)), newKotSeq: saved.newKotSeq };
   } catch (error) {
     // Two identical saves raced: the second hits the unique client reference. Hand back the first bill.
     if (isUniqueViolation(error, "client_ref")) {
       const winner = await findByClientRef(input.clientRef);
-      if (winner && winner.createdUserId === user.id) return getBill(winner.id, user);
+      if (winner && winner.createdUserId === user.id) return withKotSeq(await getBill(winner.id, user), input);
     }
     throw error;
   }
+}
+
+/**
+ * A replayed save returns the same bill without the transient slip number, so work it out again:
+ * the latest slip is the one this save created when the save asked for the kitchen.
+ */
+function withKotSeq(bill: BillDetail, input: BillSaveInput): SavedBill {
+  const sending = input.action === "kot" || (input.action === "complete" && input.sendRemainder);
+  return { ...bill, newKotSeq: sending ? (bill.kots.at(-1)?.seq ?? null) : null };
 }
 
 function billHeader(

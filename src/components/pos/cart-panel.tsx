@@ -7,6 +7,7 @@ import {
   Percent,
   Plus,
   Printer,
+  ChefHat,
   ReceiptText,
   Tag,
   Trash2,
@@ -16,6 +17,7 @@ import { VegMark } from "@/components/menu/menu-primitives";
 import { CustomerPicker } from "@/components/pos/customer-picker";
 import { PaymentPanel } from "@/components/pos/payment-panel";
 import {
+  stepFor,
   unitPriceOf,
   type CartAction,
   type CartLine,
@@ -48,6 +50,8 @@ interface CartPanelProps {
   problem: string | null;
   onSave: () => void;
   onHold: () => void;
+  /** Parks the bill and prints a kitchen slip with only the items not sent before. */
+  onSendKitchen: () => void;
   onClear: () => void;
 }
 
@@ -69,6 +73,7 @@ export function CartPanel(props: CartPanelProps) {
     problem,
     onSave,
     onHold,
+    onSendKitchen,
     onClear,
   } = props;
   const baseId = useId();
@@ -82,6 +87,9 @@ export function CartPanel(props: CartPanelProps) {
   const empty = lines.length === 0;
   const total = totals.grandTotal;
   const canSave = !empty && !pending && paymentResult.valid && !problem;
+  // Items beyond what the kitchen already has. Nothing new means nothing to send.
+  const hasNewItems = lines.some((l) => new D(l.quantity).greaterThan(l.sentQty));
+  const canSend = !empty && !pending && !problem && hasNewItems;
 
   const toggleDiscount = (key: string) =>
     setDiscountOpen((set) => {
@@ -135,6 +143,11 @@ export function CartPanel(props: CartPanelProps) {
                         <span className="truncate">{line.item.name}</span>
                       </p>
                       {optionText ? <p className="truncate text-xs text-muted-foreground">{optionText}</p> : null}
+                      {new D(line.sentQty).greaterThan(0) ? (
+                        <p className="flex items-center gap-1 text-xs font-medium text-warning">
+                          <ChefHat className="size-3" aria-hidden /> {new D(line.sentQty).toString()} sent to kitchen
+                        </p>
+                      ) : null}
                       <p className="text-xs text-muted-foreground tabular-nums">
                         {money(unit.toFixed(2))}
                         {line.item.unit !== "pcs" ? ` / ${line.item.unit}` : ""}
@@ -150,6 +163,7 @@ export function CartPanel(props: CartPanelProps) {
                         variant="outline"
                         size="icon"
                         className="size-9"
+                        disabled={new D(line.quantity).minus(stepFor(line.item)).lessThan(line.sentQty)}
                         onClick={() => dispatch({ type: "step", key: line.key, direction: -1 })}
                         aria-label={`Remove one ${line.item.name}`}
                       >
@@ -363,9 +377,20 @@ export function CartPanel(props: CartPanelProps) {
           {pending ? <Loader2 className="animate-spin" aria-hidden /> : <Printer aria-hidden />}
           Save &amp; print
         </Button>
-        <Button variant="ghost" size="sm" disabled={empty || pending} onClick={onHold} aria-keyshortcuts="Alt+H" className="p-4 w-full">
-          <Archive aria-hidden /> {resumedFromHold ? "Update held bill" : "Hold bill"}
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            disabled={!canSend}
+            onClick={onSendKitchen}
+            aria-keyshortcuts="Alt+K"
+            title="Print a kitchen slip with the new items and keep the order open"
+          >
+            <ChefHat aria-hidden /> Send to kitchen
+          </Button>
+          <Button variant="ghost" disabled={empty || pending} onClick={onHold} aria-keyshortcuts="Alt+H" className="border">
+            <Archive aria-hidden /> {resumedFromHold ? "Update held" : "Hold bill"}
+          </Button>
+        </div>
       </footer>
     </section>
   );

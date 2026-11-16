@@ -5,7 +5,7 @@ import type { KitchenSlipModel } from "@/lib/receipt";
  * (`break-before: page`), so a thermal printer set to cut at the end of each page
  * cuts the receipt off before the slip and the slip off at its end.
  */
-export function KitchenSlip({ model, paperSize }: { model: KitchenSlipModel; paperSize: string }) {
+export function KitchenSlip({ model, paperSize, standalone = false }: { model: KitchenSlipModel; paperSize: string; standalone?: boolean }) {
   return (
     <>
       <style>{`
@@ -21,12 +21,14 @@ export function KitchenSlip({ model, paperSize }: { model: KitchenSlipModel; pap
         .kitchen-slip .detail { padding-left: calc(3ch + 10px); font-size: 13px; font-weight: 400; }
         @media print {
           .kitchen-slip { width: auto; max-width: none; margin: 0; padding: 0; break-before: page; page-break-before: always; }
+          .kitchen-slip.standalone { break-before: auto; page-break-before: auto; }
         }
       `}</style>
-      <article className="kitchen-slip" aria-label={`Kitchen slip ${model.billNo}`}>
+      <article className={standalone ? "kitchen-slip standalone" : "kitchen-slip"} aria-label={`Kitchen slip ${model.kotLabel ?? model.billNo ?? ""}`}>
         <div className="center title">KITCHEN</div>
         <hr />
-        <div className="big">{model.billNo}</div>
+        {model.kotLabel ? <div className="title center">{model.kotLabel}</div> : null}
+        {model.billNo ? <div className="big">{model.billNo}</div> : null}
         {model.orderLine ? <div className="big">{model.orderLine}</div> : null}
         <div>{model.dateText}</div>
         <hr />

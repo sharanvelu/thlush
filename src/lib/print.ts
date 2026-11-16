@@ -8,8 +8,21 @@ import type { PaperSize } from "@/types/settings";
 const AGENT_URL = process.env.NEXT_PUBLIC_PRINT_AGENT_URL ?? "http://127.0.0.1:9101";
 
 export interface PrintOptions {
-  /** Print the kitchen slip after the receipt. */
+  /** Print the kitchen slip for the whole bill after the receipt. */
   kitchen?: boolean;
+  /** Print the kitchen slip for one send of a running order (by number) instead. */
+  kot?: number;
+  /** Set false for a kitchen-only print. Defaults to true. */
+  receipt?: boolean;
+}
+
+/** The query string that tells the server (and the receipt page) what to print. */
+function printQuery(options: PrintOptions): URLSearchParams {
+  const query = new URLSearchParams();
+  if (options.kot !== undefined) query.set("kot", String(options.kot));
+  else if (options.kitchen) query.set("kitchen", "1");
+  if (options.receipt === false) query.set("receipt", "0");
+  return query;
 }
 
 class AgentUnreachableError extends Error {}
@@ -52,17 +65,17 @@ async function deliver(bytes: Uint8Array): Promise<void> {
  *   3. the browser's print dialog, so a bill can still be printed.
  */
 export async function printReceipt(billId: number, options: PrintOptions = {}): Promise<void> {
-  const kitchen = options.kitchen ?? false;
   // This computer prints through its printer driver: no raw bytes, and no warning about the thermal printer.
-  if (getPrintMethod() === "dialog") return printInBrowser(billId, { kitchen });
+  if (getPrintMethod() === "dialog") return printInBrowser(billId, options);
   try {
-    const response = await fetch(`/api/bills/${billId}/escpos${kitchen ? "?kitchen=1" : ""}`, { credentials: "same-origin" });
+    const query = printQuery(options).toString();
+    const response = await fetch(`/api/bills/${billId}/escpos${query ? `?${query}` : ""}`, { credentials: "same-origin" });
     if (!response.ok) throw new Error("Could not prepare the receipt for printing.");
     await deliver(new Uint8Array(await response.arrayBuffer()));
   } catch (error) {
     if (error instanceof AgentUnreachableError) {
       toast.warning("No printer connected. Use the printer button at the top to connect it. Using the print dialog for now.");
-      return printInBrowser(billId, { kitchen });
+      return printInBrowser(billId, options);
     }
     toast.error(error instanceof UsbPrintError || error instanceof Error ? error.message : "Printing failed.");
   }
@@ -79,7 +92,7 @@ export function printInBrowser(billId: number, options: PrintOptions = {}): Prom
     frame.setAttribute("aria-hidden", "true");
     frame.tabIndex = -1;
     Object.assign(frame.style, { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" });
-    frame.src = `/receipt/${billId}?print=1${options.kitchen ? "&kitchen=1" : ""}`;
+    frame.src = `/receipt/${billId}?print=1&${printQuery(options).toString()}`;
 
     const finish = () => {
       window.removeEventListener("message", onMessage);

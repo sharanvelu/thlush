@@ -39,6 +39,8 @@ export interface CartLine {
   quantity: string;
   /** Flat amount off this line, as typed. Empty means none. */
   discount: string;
+  /** How much the kitchen already has. The quantity can go up from here, never below it. */
+  sentQty: string;
 }
 
 export function lineKey(itemId: number, variant: string | null, addons: string[]): string {
@@ -84,27 +86,29 @@ export function cartReducer(state: CartLine[], action: CartAction): CartLine[] {
       }
       return [
         ...state,
-        { key, item: action.item, variant, addons, quantity: action.item.unit === "pcs" ? "1" : "1", discount: "" },
+        { key, item: action.item, variant, addons, quantity: "1", discount: "", sentQty: "0" },
       ];
     }
     case "step":
       return state.flatMap((l) => {
         if (l.key !== action.key) return [l];
         const next = new D(l.quantity).plus(stepFor(l.item).times(action.direction));
+        if (next.lessThan(l.sentQty)) return [l]; // Already with the kitchen: cannot go lower.
         return next.lessThanOrEqualTo(0) ? [] : [{ ...l, quantity: next.toString() }];
       });
     case "setQuantity":
       return state.flatMap((l) => {
         if (l.key !== action.key) return [l];
+        const sent = new D(l.sentQty);
         const typed = toDecimal(action.quantity);
-        if (typed.lessThanOrEqualTo(0)) return []; // Zero (or junk) removes the line.
-        const next = normalizeQuantity(l.item, typed);
+        if (typed.lessThanOrEqualTo(0)) return sent.greaterThan(0) ? [{ ...l, quantity: sent.toString() }] : []; // Zero (or junk) removes the line.
+        const next = D.max(normalizeQuantity(l.item, typed), sent);
         return next.lessThanOrEqualTo(0) ? [] : [{ ...l, quantity: next.toString() }];
       });
     case "setDiscount":
       return state.map((l) => (l.key === action.key ? { ...l, discount: action.discount } : l));
     case "remove":
-      return state.filter((l) => l.key !== action.key);
+      return state.filter((l) => l.key !== action.key || new D(l.sentQty).greaterThan(0));
     case "replace":
       return action.lines;
     case "clear":
