@@ -133,6 +133,8 @@ Receipts and kitchen slips print as raw ESC/POS bytes, so no printer driver is n
 
 Kitchen slip: printed after the receipt when a new bill is saved (Save & print, and the print button on the "Bill saved" dialog). On by default; turn it off under **Settings > Receipts > Print kitchen bill by default**. In Bill History the **With kitchen slip** checkbox is off by default.
 
+Packaging charge: give a menu item a **Packaging charge** (menu item form, under Pricing). Under **Settings > Billing > Packaging charge** choose the order types that get it (none turns it off), how it is counted (**per unit**: charge x quantity, with weighed items counted once per line; **per item line**: once per line; **once per bill**: the highest charge on the bill) and whether it is taxed (at the item's SGST and CGST). It appears as its own "Packaging" line on the bill and receipt, and a bill discount never reduces it. It needs the `0003_packaging` migration (`npm run db:migrate`).
+
 Running orders (customer orders in rounds): **Send to kitchen** (`Alt + K`) saves the bill as a held order and prints a kitchen slip with only the items the kitchen has not had yet ("KOT #1", "KOT #2"...). Resume the order from **Held bills**, add more, and send again. When the customer pays, **Save & print** prints the customer receipt, plus a kitchen slip only for anything never sent. **Hold bill** parks a bill without sending anything. Items already sent cannot be removed or reduced. This needs the `0002_bill_kots` migration (`npm run db:migrate`).
 
 The server builds the bytes (`/api/bills/[id]/escpos`); the browser sends them to the printer the first way that works:

@@ -80,6 +80,7 @@ export async function getBill(id: number, user: SessionUser, executor: DbExecuto
       total: i.total,
       options: i.options,
       sentQty: i.sentQty,
+      isPackaging: i.isPackaging,
     })),
     payments: paymentRows.map((p) => ({ id: p.id, method: p.method, amount: p.amount, reference: p.reference })),
     kots: kotRows.map((k) => ({ seq: k.seq, createdAt: k.createdAt.toISOString(), items: k.items })),
@@ -95,7 +96,7 @@ export async function listHeldBills(user: SessionUser): Promise<HeldBillSummary[
       tableNo: bills.tableNo,
       total: bills.totalAmount,
       customerName: customers.name,
-      itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id})`.mapWith(Number),
+      itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(Number),
       kotCount: sql<number>`(select count(*) from ${billKots} where ${billKots.billId} = ${bills.id})`.mapWith(Number),
     })
     .from(bills)
@@ -162,6 +163,7 @@ async function loadPlanItems(tx: Transaction, ids: number[], lock: boolean): Pro
       stockQty: menuItems.stockQty,
       variants: menuItems.variants,
       addons: menuItems.addons,
+      packagingCharge: menuItems.packagingCharge,
     })
     .from(menuItems)
     .innerJoin(categories, eq(categories.id, menuItems.categoryId))
@@ -222,6 +224,7 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
         orderTypesEnabled: settings.features.orderTypes,
         blockOutOfStock: settings.billing.blockOutOfStock,
         inventoryEnabled: settings.features.inventory,
+        packaging: settings.packaging,
       });
 
       // Customer: an existing one by id, a typed name (find or create), or walk-in.
@@ -252,9 +255,11 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
             .from(billItems)
             .where(eq(billItems.billId, held.id))
         : [];
+      // Packaging lines come after the ordered items and never go to the kitchen.
+      const ordered = plan.lines.filter((l) => !l.isPackaging);
       const allocation = allocateSent(
         previous,
-        plan.lines.map((l) => ({ menuItemId: l.menuItemId, options: l.options, quantity: l.quantity })),
+        ordered.map((l) => ({ menuItemId: l.menuItemId ?? 0, options: l.options, quantity: l.quantity })),
         sending ? "send" : "keep",
       );
       if (input.action === "kot" && allocation.fresh.length === 0) {
@@ -283,6 +288,7 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
           discount: line.discount,
           total: line.total,
           options: line.options,
+          isPackaging: line.isPackaging,
           sentQty: allocation.sentQty[index] ?? "0.000",
         })),
       );

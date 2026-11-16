@@ -78,8 +78,13 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   }, [details.discountKind, details.discountValue, settings.discountsEnabled]);
 
   const totals = useMemo(
-    () => cartTotals(lines, { ignoreTax: settings.ignoreTax, billDiscount }),
-    [lines, settings.ignoreTax, billDiscount],
+    () =>
+      cartTotals(lines, {
+        ignoreTax: settings.ignoreTax,
+        billDiscount,
+        packaging: { orderType: settings.orderTypesEnabled ? details.orderType : null, settings: settings.packaging },
+      }),
+    [lines, settings.ignoreTax, settings.orderTypesEnabled, settings.packaging, details.orderType, billDiscount],
   );
   const paymentResult = useMemo(() => resolvePayment(payment, totals.grandTotal), [payment, totals.grandTotal]);
 
@@ -201,6 +206,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         const restored: CartLine[] = [];
         const skipped: string[] = [];
         for (const row of bill.items) {
+          if (row.isPackaging) continue; // Added again from the settings when the bill is saved.
           const item = items.find((i) => i.id === row.menuItemId);
           const variant = row.options?.variant ?? null;
           const addons = row.options?.addons?.map((a) => a.name) ?? [];

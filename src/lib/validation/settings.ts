@@ -47,6 +47,11 @@ export const settingsSchemas = {
     defaultCustomerName: text(60, "Name"),
     blockOutOfStock: z.boolean(),
   }),
+  packaging: z.object({
+    orderTypes: z.array(z.enum(["dine_in", "takeaway", "delivery"])).max(3).transform((v) => [...new Set(v)]),
+    mode: z.enum(["per_unit", "per_line", "per_bill"]),
+    taxed: z.boolean(),
+  }),
   appearance: z.object({ accent: z.string().refine(isHexColor, "Use a colour like #cc3300").nullable() }),
   features: z.object({ inventory: z.boolean(), discounts: z.boolean(), orderTypes: z.boolean() }),
 } satisfies Record<SettingsKey, z.ZodType>;

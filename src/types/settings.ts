@@ -48,6 +48,18 @@ export interface BillingSettings {
   blockOutOfStock: boolean;
 }
 
+/** How a menu item's packaging charge is added to a bill. */
+export type PackagingMode = "per_unit" | "per_line" | "per_bill";
+
+export interface PackagingSettings {
+  /** Order types that get packaging charges ("dine_in", "takeaway", "delivery"). Empty turns the charge off. */
+  orderTypes: Array<"dine_in" | "takeaway" | "delivery">;
+  /** per_unit: charge x quantity. per_line: the charge once per item line. per_bill: once for the whole bill. */
+  mode: PackagingMode;
+  /** Charge SGST and CGST on packaging, at the rates of the item it belongs to. */
+  taxed: boolean;
+}
+
 export interface AppearanceSettings {
   /** Accent colour as a CSS colour value; null keeps the built-in warm orange. */
   accent: string | null;
@@ -65,6 +77,7 @@ export interface AppSettings {
   tax: TaxSettings;
   receipt: ReceiptSettings;
   billing: BillingSettings;
+  packaging: PackagingSettings;
   appearance: AppearanceSettings;
   features: FeatureToggles;
 }

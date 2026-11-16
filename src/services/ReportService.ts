@@ -82,7 +82,7 @@ async function sales(ctx: ReportContext): Promise<ReportData> {
       .groupBy(sql`1`)
       .orderBy(sql`1`),
     db
-      .select({ key: sql<string>`${bucket}`, qty: sql<string>`coalesce(sum(${billItems.quantity}), 0)` })
+      .select({ key: sql<string>`${bucket}`, qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)` })
       .from(billItems)
       .innerJoin(bills, eq(bills.id, billItems.billId))
       .where(where)
@@ -139,7 +139,7 @@ async function byCategory(ctx: ReportContext): Promise<ReportData> {
   const data = await db
     .select({
       name: sql<string>`coalesce(${categories.name}, 'Other')`,
-      qty: sql<string>`coalesce(sum(${billItems.quantity}), 0)`,
+      qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)`,
       revenue: sql<string>`coalesce(sum(${billItems.total}), 0)`,
     })
     .from(billItems)
@@ -171,7 +171,7 @@ async function byItem(ctx: ReportContext): Promise<ReportData> {
     .select({
       name,
       category: sql<string>`coalesce(${categories.name}, 'Other')`,
-      qty: sql<string>`coalesce(sum(${billItems.quantity}), 0)`,
+      qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)`,
       revenue: sql<string>`coalesce(sum(${billItems.total}), 0)`,
     })
     .from(billItems)

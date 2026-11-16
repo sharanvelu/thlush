@@ -228,7 +228,7 @@ export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings, k
     dateText: formatDateTime(kot?.createdAt ?? bill.createdAt, { locale, timeZone: timezone }),
     orderLine: orderBits.length > 0 ? orderBits.join(" · ") : null,
     notes: bill.notes,
-    items: slipItems ?? bill.items.map((item) => ({
+    items: slipItems ?? bill.items.filter((item) => !item.isPackaging).map((item) => ({
       name: item.name,
       quantity: trimQty(item.quantity),
       details: [item.options?.variant, ...(item.options?.addons?.map((a) => `+ ${a.name}`) ?? [])].filter(

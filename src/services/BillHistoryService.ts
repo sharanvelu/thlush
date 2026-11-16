@@ -92,7 +92,7 @@ export async function listBills(
         total: bills.totalAmount,
         customerName: customers.name,
         cashierName: users.name,
-        itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id})`.mapWith(Number),
+        itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(Number),
         methods: sql<string | null>`(select string_agg(distinct ${payments.method}::text, ',') from ${payments} where ${payments.billId} = ${bills.id})`,
       })
       .from(bills)

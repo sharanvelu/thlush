@@ -51,7 +51,7 @@ interface MenuItemSheetProps {
 
 type ImageChange = { kind: "keep" } | { kind: "remove" } | { kind: "set"; dataUrl: string };
 
-const FIELD_KEYS = ["name", "description", "categoryId", "price", "sgst", "cgst", "currency", "sku", "status", "reorderLevel", "costPrice", "openingStock"] as const;
+const FIELD_KEYS = ["name", "description", "categoryId", "price", "sgst", "cgst", "currency", "sku", "status", "reorderLevel", "costPrice", "packagingCharge", "openingStock"] as const;
 
 function emptyValues(defaults: MenuFormDefaults, categoryId?: number): MenuItemInput {
   return {
@@ -72,6 +72,7 @@ function emptyValues(defaults: MenuFormDefaults, categoryId?: number): MenuItemI
     unit: "pcs",
     reorderLevel: "0",
     costPrice: "0",
+    packagingCharge: "0",
     openingStock: "",
   };
 }
@@ -95,6 +96,7 @@ function valuesFor(item: MenuListItem): MenuItemInput {
     unit: item.unit as "pcs" | "kg" | "l",
     reorderLevel: new Decimal(item.reorderLevel).toString(),
     costPrice: item.costPrice,
+    packagingCharge: item.packagingCharge,
     openingStock: "",
   };
 }
@@ -274,6 +276,12 @@ export function MenuItemSheet({
                       <FieldLabel htmlFor="item-currency">Currency</FieldLabel>
                       <Input id="item-currency" maxLength={3} className="uppercase" aria-invalid={Boolean(errors.currency)} {...register("currency")} />
                       <FieldError errors={[errors.currency]} />
+                    </Field>
+                    <Field data-invalid={Boolean(errors.packagingCharge)} className="col-span-2">
+                      <FieldLabel htmlFor="item-packaging">Packaging charge</FieldLabel>
+                      <Input id="item-packaging" inputMode="decimal" placeholder="0.00" aria-invalid={Boolean(errors.packagingCharge)} {...register("packagingCharge")} />
+                      <FieldDescription>Added to the bill as its own line for the order types chosen under Settings &gt; Billing. 0 means none.</FieldDescription>
+                      <FieldError errors={[errors.packagingCharge]} />
                     </Field>
                   </div>
                   <FieldDescription>Prices are before tax. Tax is added at billing.</FieldDescription>

@@ -1,0 +1,2 @@
+ALTER TABLE "app_menu_items" ADD COLUMN "packaging_charge" numeric(12, 2) DEFAULT '0' NOT NULL;--> statement-breakpoint
+ALTER TABLE "app_bill_items" ADD COLUMN "is_packaging" boolean DEFAULT false NOT NULL;

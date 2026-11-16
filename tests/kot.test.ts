@@ -56,8 +56,8 @@ const bill: BillDetail = {
   amountPaid: "0.00", changeDue: "0.00", orderType: "dine_in", tableNo: "4", notes: null, voidReason: null,
   customer: null, cashier: null,
   items: [
-    { id: 1, menuItemId: 1, name: "Dosa", price: "90.00", sgst: "0", cgst: "0", quantity: "3", discount: "0.00", total: "270.00", options: null, sentQty: "3.000" },
-    { id: 2, menuItemId: 2, name: "Idli", price: "40.00", sgst: "0", cgst: "0", quantity: "1", discount: "0.00", total: "40.00", options: null, sentQty: "1.000" },
+    { id: 1, menuItemId: 1, name: "Dosa", price: "90.00", sgst: "0", cgst: "0", quantity: "3", discount: "0.00", total: "270.00", options: null, sentQty: "3.000", isPackaging: false },
+    { id: 2, menuItemId: 2, name: "Idli", price: "40.00", sgst: "0", cgst: "0", quantity: "1", discount: "0.00", total: "40.00", options: null, sentQty: "1.000", isPackaging: false },
   ],
   payments: [],
   kots: [
@@ -119,5 +119,17 @@ describe("order number on the kitchen slip", () => {
   it("shows nothing for a running order's temporary number", () => {
     const job = text(buildPrintJob(bill, defaultSettings, { kot: 1, receipt: false }));
     expect(job).not.toMatch(/#\d{4}|HOLD-/);
+  });
+});
+
+describe("packaging on the kitchen slip", () => {
+  it("leaves the system's packaging line off the full-bill slip", () => {
+    const withPackaging = {
+      ...bill,
+      items: [...bill.items, { id: 9, menuItemId: null, name: "Packaging", price: "20.00", sgst: "0", cgst: "0", quantity: "1", discount: "0.00", total: "20.00", options: null, sentQty: "0.000", isPackaging: true }],
+    };
+    const job = text(buildPrintJob(withPackaging, defaultSettings, { kitchen: true, receipt: false }));
+    expect(job).toContain("3 x Dosa");
+    expect(job).not.toContain("Packaging");
   });
 });

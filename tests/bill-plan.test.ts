@@ -17,6 +17,7 @@ const dosa: PlanItem = {
   stockQty: "0.000",
   variants: [],
   addons: [],
+  packagingCharge: "0.00",
 };
 
 const coffee: PlanItem = {
@@ -36,7 +37,13 @@ const rice: PlanItem = { ...dosa, id: 4, name: "Basmati", price: "200.00", unit:
 
 const catalog = (...items: PlanItem[]) => new Map(items.map((i) => [i.id, i]));
 
-const settings: PlanSettings = { ignoreTax: false, discountsEnabled: true, orderTypesEnabled: true, blockOutOfStock: false };
+const settings: PlanSettings = {
+  ignoreTax: false,
+  discountsEnabled: true,
+  orderTypesEnabled: true,
+  blockOutOfStock: false,
+  packaging: { orderTypes: ["takeaway"], mode: "per_unit", taxed: true },
+};
 
 const request = (overrides: Partial<BillSaveRequest> = {}) =>
   billSaveSchema.parse({

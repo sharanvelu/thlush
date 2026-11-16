@@ -8,7 +8,9 @@
 import type { MenuAddon, MenuVariant } from "@/db/schema";
 import { D, parseMoney, parseQuantity, toDecimal, type Dec } from "@/lib/money";
 import { calculateBill, type BillDiscountInput, type BillTotals } from "@/services/calculations";
-import type { PaymentMethod } from "@/types/bill";
+import { packagingLines, type PackagingLine } from "@/services/packaging";
+import type { OrderType, PaymentMethod } from "@/types/bill";
+import type { PackagingSettings } from "@/types/settings";
 
 /** A menu item as the billing screen sees it. */
 export interface PosItem {
@@ -28,6 +30,8 @@ export interface PosItem {
   trackStock: boolean;
   stockQty: string;
   status: "active" | "disabled";
+  /** Packaging charge per unit, added per the Packaging settings. */
+  packagingCharge: string;
 }
 
 export interface CartLine {
@@ -119,19 +123,35 @@ export function cartReducer(state: CartLine[], action: CartAction): CartLine[] {
 export interface CartTotalsOptions {
   ignoreTax: boolean;
   billDiscount: BillDiscountInput | null;
+  /** The bill's order type and the Packaging settings. Left out, no packaging is added. */
+  packaging?: { orderType: OrderType | null; settings: PackagingSettings };
 }
 
-export function cartTotals(lines: CartLine[], options: CartTotalsOptions): BillTotals {
-  return calculateBill(
-    lines.map((l) => ({
-      price: unitPriceOf(l.item, l.variant, l.addons),
-      quantity: l.quantity,
-      sgst: l.item.sgst,
-      cgst: l.item.cgst,
-      discount: l.discount || "0",
-    })),
+/** Bill totals, plus the packaging charges included in them. Their results follow the cart lines in `lines`. */
+export type CartTotals = BillTotals & { packaging: PackagingLine[] };
+
+export function cartTotals(lines: CartLine[], options: CartTotalsOptions): CartTotals {
+  const packaging = options.packaging
+    ? packagingLines(
+        lines.map((l) => ({ charge: l.item.packagingCharge, quantity: l.quantity, unit: l.item.unit, sgst: l.item.sgst, cgst: l.item.cgst })),
+        options.packaging.orderType,
+        options.packaging.settings,
+      )
+    : [];
+  const totals = calculateBill(
+    [
+      ...lines.map((l) => ({
+        price: unitPriceOf(l.item, l.variant, l.addons),
+        quantity: l.quantity,
+        sgst: l.item.sgst,
+        cgst: l.item.cgst,
+        discount: l.discount || "0",
+      })),
+      ...packaging.map((p) => ({ price: p.price, quantity: 1, sgst: p.sgst, cgst: p.cgst, excludeFromBillDiscount: true })),
+    ],
     { ignoreTax: options.ignoreTax, billDiscount: options.billDiscount },
   );
+  return { ...totals, packaging };
 }
 
 /** Units of a tracked item already in the cart (all of its lines). */

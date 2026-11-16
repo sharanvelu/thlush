@@ -35,6 +35,8 @@ export interface BillDetailItem {
   options: { variant?: string; addons?: Array<{ name: string; price: string }> } | null;
   /** How much of `quantity` has been sent to the kitchen. */
   sentQty: string;
+  /** A packaging charge line added by the system. */
+  isPackaging: boolean;
 }
 
 /** One time items were sent to the kitchen for a bill. */

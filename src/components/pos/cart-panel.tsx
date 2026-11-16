@@ -4,6 +4,7 @@ import {
   Archive,
   Loader2,
   Minus,
+  Package,
   Percent,
   Plus,
   Printer,
@@ -21,6 +22,7 @@ import {
   unitPriceOf,
   type CartAction,
   type CartLine,
+  type CartTotals,
   type PaymentResult,
   type PaymentState,
 } from "@/components/pos/pos-cart";
@@ -31,7 +33,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { D, formatMoney } from "@/lib/money";
-import type { BillTotals } from "@/services/calculations";
 import { ORDER_TYPE_LABELS, type OrderType } from "@/types/bill";
 
 interface CartPanelProps {
@@ -42,7 +43,7 @@ interface CartPanelProps {
   payment: PaymentState;
   onPayment: (state: PaymentState) => void;
   paymentResult: PaymentResult;
-  totals: BillTotals;
+  totals: CartTotals;
   settings: PosSettings;
   pending: boolean;
   resumedFromHold: boolean;
@@ -241,6 +242,15 @@ export function CartPanel(props: CartPanelProps) {
                 </li>
               );
             })}
+            {totals.packaging.map((_, index) => (
+              <li key={`packaging-${index}`} className="flex items-baseline justify-between gap-3 py-3 text-sm">
+                <span className="flex items-center gap-1.5">
+                  <Package className="size-4 text-muted-foreground" aria-hidden /> Packaging
+                  <span className="text-xs text-muted-foreground">added automatically</span>
+                </span>
+                <span className="font-semibold tabular-nums">{money(totals.lines[lines.length + index]?.total ?? "0.00")}</span>
+              </li>
+            ))}
           </ul>
         )}
 
