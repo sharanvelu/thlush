@@ -97,6 +97,8 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 
 **Region.** Set the function region (Project Settings, Functions) close to your Neon region to keep queries fast.
 
+**Region.** `vercel.json` runs the functions in `sin1` (Singapore), next to the Neon database in ap-southeast-1. Every page and API call makes several database round trips, so keeping the two close matters. If your database is in another region, change `regions` in `vercel.json` to the nearest Vercel region.
+
 **Sharing previews.** Vercel protects previews by default, so only people signed in to your Vercel team can open them. To share one with reviewers, open Project Settings, Deployment Protection and change **Vercel Authentication**. Preview deployments then need no Vercel login, but anyone with the URL can open the app, so keep preview data fake and never point previews at the production database.
 
 **Custom domain.** Add it under Domains, then update `NEXT_PUBLIC_BASE_URL` and redeploy. If you use SSO, add `<your URL>/api/auth/callback/oidc` as a redirect URI at the identity provider.
