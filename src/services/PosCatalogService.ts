@@ -44,10 +44,11 @@ export const getCachedPosCatalog = unstable_cache(
         unit: i.unit,
         trackStock: i.trackStock,
         status: i.status,
+        packagingCharge: i.packagingCharge,
       })),
     };
   },
-  ["pos-catalog-v1"],
+  ["pos-catalog-v2"],
   { tags: [POS_CATALOG_TAG], revalidate: 3600 },
 );
 

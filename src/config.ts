@@ -47,6 +47,12 @@ export const defaultSettings: AppSettings = {
     defaultCustomerName: "Walk-in Customer",
     blockOutOfStock: false,
   },
+  packaging: {
+    orderTypes: ["takeaway"],
+    mode: "per_unit",
+    taxed: true,
+    billAmount: "0.00",
+  },
   appearance: {
     accent: null,
   },

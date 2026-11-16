@@ -61,7 +61,7 @@ export async function getDashboard(range: ResolvedRange, user: SessionUser, time
         .from(bills)
         .where(where),
       db
-        .select({ qty: sql<string>`coalesce(sum(${billItems.quantity}), 0)` })
+        .select({ qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)` })
         .from(billItems)
         .innerJoin(bills, eq(bills.id, billItems.billId))
         .where(where),
@@ -121,13 +121,13 @@ export async function getDashboard(range: ResolvedRange, user: SessionUser, time
     db
       .select({
         name: sql<string>`max(coalesce(${menuItems.name}, ${billItems.name}))`,
-        quantity: sql<string>`sum(${billItems.quantity})`,
+        quantity: sql<string>`sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end)`,
         revenue: sql<string>`sum(${billItems.total})`,
       })
       .from(billItems)
       .innerJoin(bills, eq(bills.id, billItems.billId))
       .leftJoin(menuItems, eq(menuItems.id, billItems.menuItemId))
-      .where(where)
+      .where(and(where, eq(billItems.isPackaging, false)))
       // Variants of one menu item count together; deleted items fall back to their saved name.
       .groupBy(sql`coalesce(${billItems.menuItemId}::text, ${billItems.name})`)
       .orderBy(desc(sql`2`), desc(sql`3`))

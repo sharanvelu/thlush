@@ -13,7 +13,7 @@ import {
 
 const dosa: PosItem = {
   id: 1, name: "Masala Dosa", price: "100.00", sgst: "2.50", cgst: "2.50", categoryId: 1, categoryName: "South Indian",
-  sku: "SIN-001", isVeg: true, imageSrc: null, variants: [], addons: [], unit: "pcs", trackStock: false, stockQty: "0.000", status: "active",
+  sku: "SIN-001", isVeg: true, imageSrc: null, variants: [], addons: [], unit: "pcs", trackStock: false, stockQty: "0.000", status: "active", packagingCharge: "0.00",
 };
 const coffee: PosItem = {
   ...dosa, id: 2, name: "Cold Coffee", price: "90.00", sku: "BEV-003",

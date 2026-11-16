@@ -23,9 +23,10 @@ const bill: BillDetail = {
   amountPaid: "200.00", changeDue: "11.00", orderType: "dine_in", tableNo: "4", notes: "Less spicy", voidReason: null,
   customer: null, cashier: { id: "u", name: "Charu" },
   items: [
-    { id: 1, menuItemId: 1, name: "Masala Dosa with a really long name that must wrap", price: "90.00", sgst: "2.5", cgst: "2.5", quantity: "2", discount: "0.00", total: "189.00", options: { variant: "Large", addons: [{ name: "Extra cheese", price: "10.00" }] } },
+    { id: 1, menuItemId: 1, name: "Masala Dosa with a really long name that must wrap", price: "90.00", sgst: "2.5", cgst: "2.5", quantity: "2", discount: "0.00", total: "189.00", options: { variant: "Large", addons: [{ name: "Extra cheese", price: "10.00" }] }, sentQty: "0.000", isPackaging: false },
   ],
   payments: [{ id: 1, method: "cash", amount: "200.00", reference: null }],
+  kots: [],
 };
 
 describe("toPrinterText / wrapText", () => {

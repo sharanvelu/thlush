@@ -2,7 +2,7 @@
  * Lays out a bill as ESC/POS bytes: the customer receipt and the kitchen slip,
  * each ending with its own paper cut so one print job yields two separate pieces of paper.
  */
-import { concatBytes, EscPosBuilder, paperColumns, wrapText } from "@/lib/escpos";
+import { concatBytes, EscPosBuilder, paperColumns, toPrinterText, wrapText } from "@/lib/escpos";
 import { D } from "@/lib/money";
 import {
   buildKitchenSlipModel,
@@ -74,19 +74,37 @@ export function receiptToEscPos(model: ReceiptModel): Uint8Array {
 
 export function kitchenSlipToEscPos(model: KitchenSlipModel, columns: number): Uint8Array {
   const p = new EscPosBuilder(columns);
-  // Items print at double width, so they get half as many characters per line.
-  const bigWidth = Math.floor(columns / 2);
+  // Items print at normal width and double height: easy to read, and a full line of characters.
 
   p.init().align("center").bold(true).size(2, 2).line("KITCHEN").size(1, 1).bold(false);
   p.align("left").rule();
-  p.bold(true).size(1, 2).line(model.billNo);
-  if (model.orderLine) for (const l of wrapText(model.orderLine, columns)) p.line(l);
-  p.size(1, 1).bold(false).line(model.dateText);
+  // On a running order's slip the time shares the "KOT #" line: plain receipt text at the left, the large
+  // number at the right; otherwise it gets its own line below. Width is unchanged by the taller size, so the
+  // gap is counted in ordinary characters.
+  if (model.kotLabel) {
+    const date = toPrinterText(model.dateText);
+    const gap = Math.max(1, columns - model.kotLabel.length - date.length);
+    p.size(1, 1).bold(false).text(`${date}${" ".repeat(gap)}`).bold(true).size(1, 2).line(model.kotLabel);
+  }
+  // Order type and table in the plain text the receipt footer uses, then the short order number in bold on
+  // the same line (the last line, if the order type wraps).
+  p.size(1, 1).bold(false);
+  const orderNo = model.orderNo ?? "";
+  const orderLines = model.orderLine ? wrapText(model.orderLine, Math.max(1, columns - (orderNo ? orderNo.length + 1 : 0))) : [];
+  if (orderLines.length === 0 && orderNo) p.bold(true).line(orderNo).bold(false);
+  orderLines.forEach((l, i) => {
+    if (orderNo && i === orderLines.length - 1) {
+      p.text(`${l}${" ".repeat(Math.max(1, columns - l.length - orderNo.length))}`).bold(true).line(orderNo).bold(false);
+    } else {
+      p.line(l);
+    }
+  });
+  if (!model.kotLabel) p.line(model.dateText);
   p.rule();
 
   for (const item of model.items) {
-    const lines = wrapText(`${item.quantity} x ${item.name}`, bigWidth);
-    p.bold(true).size(2, 2);
+    const lines = wrapText(`${item.quantity} x ${item.name}`, columns);
+    p.bold(true).size(1, 2);
     for (const l of lines) p.line(l);
     p.size(1, 1).bold(false);
     for (const detail of item.details) for (const l of wrapText(detail, columns - 4)) p.line(`    ${l}`);
@@ -99,11 +117,25 @@ export function kitchenSlipToEscPos(model: KitchenSlipModel, columns: number): U
   return p.feed(2).cut().build();
 }
 
-/** The whole print job for a bill: the receipt, then (optionally) the kitchen slip, each followed by a cut. */
-export function buildPrintJob(bill: BillDetail, settings: AppSettings, options: { kitchen: boolean }): Uint8Array {
-  const parts = [receiptToEscPos(buildReceiptModel(bill, settings))];
-  if (options.kitchen) {
-    parts.push(kitchenSlipToEscPos(buildKitchenSlipModel(bill, settings), paperColumns(settings.receipt.paperSize)));
+export interface PrintJobOptions {
+  /** The kitchen slip for the whole bill (a reprint from history). */
+  kitchen?: boolean;
+  /** The kitchen slip for one send of a running order, by its number. */
+  kot?: number;
+  /** Set false to leave the customer receipt out (a kitchen-only print). Defaults to true. */
+  receipt?: boolean;
+}
+
+/** The whole print job for a bill: the receipt, then (optionally) a kitchen slip, each followed by a cut. */
+export function buildPrintJob(bill: BillDetail, settings: AppSettings, options: PrintJobOptions): Uint8Array {
+  const columns = paperColumns(settings.receipt.paperSize);
+  const parts: Uint8Array[] = [];
+  if (options.receipt !== false) parts.push(receiptToEscPos(buildReceiptModel(bill, settings)));
+  if (options.kot !== undefined) {
+    const kot = bill.kots.find((k) => k.seq === options.kot);
+    if (kot) parts.push(kitchenSlipToEscPos(buildKitchenSlipModel(bill, settings, kot), columns));
+  } else if (options.kitchen) {
+    parts.push(kitchenSlipToEscPos(buildKitchenSlipModel(bill, settings), columns));
   }
   return concatBytes(parts);
 }

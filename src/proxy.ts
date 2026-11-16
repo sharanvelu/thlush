@@ -13,7 +13,7 @@ import type { ApiFailure } from "@/types/api";
 const { auth } = NextAuth(authConfig);
 
 /** Reachable without a session. `/login` redirects signed-in users itself. */
-const PUBLIC_PREFIXES = ["/login", "/api/auth", "/api/health"];
+const PUBLIC_PREFIXES = ["/login", "/api/auth", "/api/health", "/brand-icon"];
 
 const isPublic = (pathname: string) =>
   PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

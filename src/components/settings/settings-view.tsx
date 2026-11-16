@@ -16,7 +16,7 @@ import { accentCss, contrastRatio, DEFAULT_ACCENT, isHexColor, readableOn } from
 import { errorMessage } from "@/lib/api-client";
 import { fileToResizedDataUrl, IMAGE_ACCEPT } from "@/lib/image";
 import { formatMoney } from "@/lib/money";
-import type { AppSettings } from "@/types/settings";
+import type { AppSettings, PackagingSettings } from "@/types/settings";
 
 const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD", "AUD", "CAD", "JPY"];
 const LOCALES = ["en-IN", "en-US", "en-GB", "en-AU", "en-CA", "hi-IN", "ta-IN", "de-DE", "fr-FR"];
@@ -219,6 +219,58 @@ function BillingForm({ initial }: GroupProps<"billing">) {
   );
 }
 
+const PACKAGING_ORDER_TYPES = [
+  ["dine_in", "Dine-in"],
+  ["takeaway", "Takeaway"],
+  ["delivery", "Delivery"],
+] as const;
+
+function PackagingForm({ initial, orderTypesEnabled }: GroupProps<"packaging"> & { orderTypesEnabled: boolean }) {
+  const f = useGroupForm("packaging", initial);
+  const { values: v, set } = f;
+  return (
+    <Section title="Packaging charge" description="Items with a packaging charge (set on each menu item) add it to the bill as its own line. Discounts never reduce it." dirty={f.dirty} saving={f.saving} onSave={f.save} onDiscard={f.discard}>
+      <FieldGroup>
+        {orderTypesEnabled ? null : (
+          <p role="note" className="rounded-lg bg-warning/10 px-3 py-2 text-sm">Order types are switched off under Features, so no bill has an order type and no packaging charge is added.</p>
+        )}
+        <Field>
+          <FieldLabel id="pk-types">Charge on these order types</FieldLabel>
+          <ToggleGroup type="multiple" variant="outline" value={v.orderTypes} onValueChange={(types) => set({ orderTypes: types as PackagingSettings["orderTypes"] })} aria-labelledby="pk-types">
+            {PACKAGING_ORDER_TYPES.map(([value, label]) => (
+              <ToggleGroupItem key={value} value={value} className="px-4">{label}</ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          <FieldDescription>Select none to turn packaging charges off.</FieldDescription>
+        </Field>
+        <Field>
+          <FieldLabel id="pk-mode">How the charge is counted</FieldLabel>
+          <ToggleGroup type="single" variant="outline" value={v.mode} onValueChange={(m) => m && set({ mode: m as PackagingSettings["mode"] })} aria-labelledby="pk-mode">
+            <ToggleGroupItem value="per_unit" className="px-4">Per unit</ToggleGroupItem>
+            <ToggleGroupItem value="per_line" className="px-4">Per item line</ToggleGroupItem>
+            <ToggleGroupItem value="per_bill" className="px-4">Once per bill</ToggleGroupItem>
+          </ToggleGroup>
+          <FieldDescription>
+            {v.mode === "per_unit"
+              ? "The charge is added for every unit: 3 dosas with a ₹10 charge add ₹30. Weighed items count once per line."
+              : v.mode === "per_line"
+                ? "The charge is added once per item on the bill, however many units: 3 dosas with a ₹10 charge add ₹10."
+                : v.billAmount !== "" && Number(v.billAmount) > 0
+                  ? "One charge for the whole bill: the amount below, whatever the items are."
+                  : "One charge for the whole bill: the highest charge among the items that have one."}
+          </FieldDescription>
+        </Field>
+        {v.mode === "per_bill" ? (
+          <Text id="pk-amount" label="Charge per bill" error={f.errors.billAmount} hint="Used instead of the charges set on individual items, for every bill of the order types above. Leave 0 to use the highest item charge.">
+            <Input id="pk-amount" inputMode="decimal" placeholder="0.00" value={v.billAmount} onChange={(ev) => set({ billAmount: ev.target.value })} aria-invalid={Boolean(f.errors.billAmount)} className="max-w-40" />
+          </Text>
+        ) : null}
+        <ToggleRow id="pk-tax" label="Charge tax on packaging" hint="Adds SGST and CGST to the packaging charge at the same rates as the item (for the per-bill amount: the highest rates on the bill). Off, packaging is untaxed. Has no effect while tax is switched off." checked={v.taxed} onChange={(on) => set({ taxed: on })} />
+      </FieldGroup>
+    </Section>
+  );
+}
+
 function AppearanceForm({ initial }: GroupProps<"appearance">) {
   const f = useGroupForm("appearance", initial);
   const { values: v, errors: e, set } = f;
@@ -302,7 +354,10 @@ export function SettingsView({ settings }: { settings: AppSettings }) {
           <TaxForm initial={settings.tax} />
         </TabsContent>
         <TabsContent value="receipt"><ReceiptForm initial={settings.receipt} /></TabsContent>
-        <TabsContent value="billing"><BillingForm initial={settings.billing} /></TabsContent>
+        <TabsContent value="billing" className="flex flex-col gap-6">
+          <BillingForm initial={settings.billing} />
+          <PackagingForm initial={settings.packaging} orderTypesEnabled={settings.features.orderTypes} />
+        </TabsContent>
         <TabsContent value="appearance"><AppearanceForm initial={settings.appearance} /></TabsContent>
         <TabsContent value="features"><FeaturesForm initial={settings.features} /></TabsContent>
       </div>

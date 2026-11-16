@@ -97,6 +97,8 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 
 **Region.** Set the function region (Project Settings, Functions) close to your Neon region to keep queries fast.
 
+**Region.** `vercel.json` runs the functions in `sin1` (Singapore), next to the Neon database in ap-southeast-1. Every page and API call makes several database round trips, so keeping the two close matters. If your database is in another region, change `regions` in `vercel.json` to the nearest Vercel region.
+
 **Sharing previews.** Vercel protects previews by default, so only people signed in to your Vercel team can open them. To share one with reviewers, open Project Settings, Deployment Protection and change **Vercel Authentication**. Preview deployments then need no Vercel login, but anyone with the URL can open the app, so keep preview data fake and never point previews at the production database.
 
 **Custom domain.** Add it under Domains, then update `NEXT_PUBLIC_BASE_URL` and redeploy. If you use SSO, add `<your URL>/api/auth/callback/oidc` as a redirect URI at the identity provider.
@@ -111,7 +113,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 | `Enter` in search        | Add the exact SKU match, or the only result      |
 | `Esc` in search          | Clear the search                                 |
 | `Ctrl/⌘ + Enter`         | Save & print                                     |
-| `Ctrl/⌘ + Shift + Enter` | Save and print                                   |
+| `Alt + K`                | Send new items to the kitchen                    |
 | `Alt + H`                | Hold bill                                        |
 | `Alt + Backspace`        | Clear the bill                                   |
 
@@ -132,6 +134,10 @@ Receipts: `/receipt/{id}` is the printable page (`@page size: 80mm auto`, or 58m
 Receipts and kitchen slips print as raw ESC/POS bytes, so no printer driver is needed for printing and the paper is cut by the printer itself: a cut after the receipt, and another after the kitchen slip.
 
 Kitchen slip: printed after the receipt when a new bill is saved (Save & print, and the print button on the "Bill saved" dialog). On by default; turn it off under **Settings > Receipts > Print kitchen bill by default**. In Bill History the **With kitchen slip** checkbox is off by default.
+
+Packaging charge: give a menu item a **Packaging charge** (menu item form, under Pricing). Under **Settings > Billing > Packaging charge** choose the order types that get it (none turns it off), how it is counted (**per unit**: charge x quantity, with weighed items counted once per line; **per item line**: once per line; **once per bill**: one charge for the whole bill, the **Charge per bill** amount from Settings, which replaces the per-item charges and is taxed at the highest rates on the bill; at 0 the highest item charge is used) and whether it is taxed (at the item's SGST and CGST). It appears as its own "Packaging" line on the bill and receipt, and a bill discount never reduces it. It needs the `0003_packaging` migration (`npm run db:migrate`).
+
+Running orders (customer orders in rounds): **Send to kitchen** (`Alt + K`) saves the bill as a held order and prints a kitchen slip with only the items the kitchen has not had yet ("KOT #1", "KOT #2"...). Resume the order from **Held bills**, add more, and send again. When the customer pays, **Save & print** prints the customer receipt, plus a kitchen slip only for anything never sent. **Hold bill** parks a bill without sending anything. Items already sent cannot be removed or reduced. This needs the `0002_bill_kots` migration (`npm run db:migrate`).
 
 The server builds the bytes (`/api/bills/[id]/escpos`); the browser sends them to the printer the first way that works:
 

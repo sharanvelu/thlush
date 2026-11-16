@@ -7,14 +7,14 @@ import type { BillDetail } from "@/types/bill";
 
 const item = (id: number, name: string, price: string, rate: string): PlanItem => ({
   id, name, price, sgst: rate, cgst: rate, status: "active", categoryStatus: "active", deleted: false,
-  unit: "pcs", trackStock: false, stockQty: "0", variants: [], addons: [],
+  unit: "pcs", trackStock: false, stockQty: "0", variants: [], addons: [], packagingCharge: "0.00",
 });
 const catalog = new Map([
   [1, item(1, "Masala Dosa", "90.00", "2.5")],
   [2, item(2, "Packaged Water 1L", "20.00", "9")],
   [3, item(3, "Cake Slice", "33.33", "6")],
 ]);
-const PLAN_SETTINGS = { ignoreTax: false, discountsEnabled: true, orderTypesEnabled: true, blockOutOfStock: false };
+const PLAN_SETTINGS = { ignoreTax: false, discountsEnabled: true, orderTypesEnabled: true, blockOutOfStock: false, packaging: { orderTypes: [] as Array<"dine_in" | "takeaway" | "delivery">, mode: "per_unit" as const, taxed: true, billAmount: "0.00" } };
 
 /** Saves a bill through the real planner and returns it the way `getBill` would. */
 function billFrom(overrides: Record<string, unknown>, ignoreTax = false): BillDetail {
@@ -37,8 +37,9 @@ function billFrom(overrides: Record<string, unknown>, ignoreTax = false): BillDe
     totalAmount: paid.totals.grandTotal, discountType: paid.discount?.type ?? null, discountValue: paid.discount?.value ?? "0.00",
     amountPaid: paid.amountPaid, changeDue: paid.changeDue, orderType: null, tableNo: null, notes: null, voidReason: null,
     customer: { id: 1, name: "Asha", phone: "98450 10001", email: "asha@example.com" }, cashier: { id: "u", name: "Charu" },
-    items: paid.lines.map((l, i) => ({ id: i + 1, menuItemId: l.menuItemId, name: l.name, price: l.price, sgst: l.sgst, cgst: l.cgst, quantity: l.quantity, discount: l.discount, total: l.total, options: l.options })),
+    items: paid.lines.map((l, i) => ({ id: i + 1, menuItemId: l.menuItemId, name: l.name, price: l.price, sgst: l.sgst, cgst: l.cgst, quantity: l.quantity, discount: l.discount, total: l.total, options: l.options, sentQty: "0.000", isPackaging: l.isPackaging })),
     payments: paid.payments.map((p, i) => ({ id: i + 1, method: p.method, amount: p.amount, reference: p.reference })),
+    kots: [],
   };
 }
 

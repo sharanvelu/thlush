@@ -62,6 +62,7 @@ const menuItemShape = {
   unit: unitSchema,
   reorderLevel: quantityField("Reorder level"),
   costPrice: moneyString("Cost price"),
+  packagingCharge: moneyString("Packaging charge"),
 };
 
 export const menuItemSchema = z.object({
@@ -73,6 +74,7 @@ export const menuItemSchema = z.object({
   unit: menuItemShape.unit.default("pcs"),
   reorderLevel: menuItemShape.reorderLevel.default("0"),
   costPrice: menuItemShape.costPrice.default("0"),
+  packagingCharge: menuItemShape.packagingCharge.default("0"),
   /** Stock on hand when the item is created. Later changes go through stock adjustments. */
   openingStock: z
     .union([z.literal(""), quantityField("Opening stock")])

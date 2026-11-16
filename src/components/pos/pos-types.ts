@@ -1,4 +1,5 @@
 import type { OrderType } from "@/types/bill";
+import type { PackagingSettings } from "@/types/settings";
 
 export type CustomerChoice =
   | { kind: "walkin" }
@@ -32,6 +33,7 @@ export interface PosSettings {
   discountsEnabled: boolean;
   orderTypesEnabled: boolean;
   blockOutOfStock: boolean;
+  packaging: PackagingSettings;
   /** Label for a bill with no customer. */
   walkInLabel: string;
 }

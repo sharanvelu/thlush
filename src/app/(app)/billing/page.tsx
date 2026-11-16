@@ -43,6 +43,7 @@ export default async function BillingPage() {
         discountsEnabled: appSettings.features.discounts,
         orderTypesEnabled: appSettings.features.orderTypes,
         blockOutOfStock: appSettings.billing.blockOutOfStock,
+        packaging: appSettings.packaging,
         walkInLabel: appSettings.billing.defaultCustomerName || "Walk-in customer",
       }}
     />

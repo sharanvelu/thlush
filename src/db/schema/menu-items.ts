@@ -51,6 +51,8 @@ export const menuItems = table(
     stockQty: numeric("stock_qty", { precision: 12, scale: 3 }).notNull().default("0"),
     reorderLevel: numeric("reorder_level", { precision: 12, scale: 3 }).notNull().default("0"),
     costPrice: numeric("cost_price", { precision: 12, scale: 2 }).notNull().default("0"),
+    /** Packaging charge added to a bill (per the Packaging settings) for the order types that have one. 0 = none. */
+    packagingCharge: numeric("packaging_charge", { precision: 12, scale: 2 }).notNull().default("0"),
     createdUserId: uuid("created_user_id").references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

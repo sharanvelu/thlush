@@ -10,8 +10,10 @@ import { HttpError } from "@/lib/errors";
 import { D, parseMoney, parseQuantity, round2, type Dec } from "@/lib/money";
 import type { BillSaveInput } from "@/lib/validation/bill";
 import { calculateBill, type BillTotals } from "@/services/calculations";
+import { PACKAGING_LINE_NAME, packagingLines } from "@/services/packaging";
 import type { BillItemOptions, MenuAddon, MenuVariant } from "@/db/schema";
 import type { DiscountKind, OrderType, PaymentMethod } from "@/types/bill";
+import type { PackagingSettings } from "@/types/settings";
 
 /** The slice of a menu item the plan needs. */
 export interface PlanItem {
@@ -29,6 +31,8 @@ export interface PlanItem {
   stockQty: string;
   variants: MenuVariant[];
   addons: MenuAddon[];
+  /** Packaging charge per unit (see the Packaging settings). */
+  packagingCharge: string;
 }
 
 export interface PlanSettings {
@@ -38,10 +42,14 @@ export interface PlanSettings {
   blockOutOfStock: boolean;
   /** When the Inventory feature is off, stock is neither deducted nor checked. Defaults to on. */
   inventoryEnabled?: boolean;
+  packaging: PackagingSettings;
 }
 
 export interface PlannedLine {
-  menuItemId: number;
+  /** Null on a packaging line, which is not a menu item. */
+  menuItemId: number | null;
+  /** A packaging charge the system added. Always after the ordered items. */
+  isPackaging: boolean;
   /** Snapshot name, including the chosen variant and add-ons. */
   name: string;
   /** Tax-exclusive unit price including variant and add-ons. */
@@ -138,22 +146,40 @@ export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanIt
     return { line, item, quantity, unitPrice, label, options };
   });
 
-  const totals = calculateBill(
+  // Packaging charges follow the order type. They are lines of their own and the bill discount skips them.
+  const orderType = settings.orderTypesEnabled ? input.orderType : null;
+  const packaging = packagingLines(
     resolved.map((r) => ({
-      price: r.unitPrice,
+      charge: r.item.packagingCharge,
       quantity: r.quantity,
+      unit: r.item.unit,
       sgst: r.item.sgst,
       cgst: r.item.cgst,
-      discount: r.line.discount,
     })),
+    orderType,
+    settings.packaging,
+  );
+
+  const totals = calculateBill(
+    [
+      ...resolved.map((r) => ({
+        price: r.unitPrice,
+        quantity: r.quantity,
+        sgst: r.item.sgst,
+        cgst: r.item.cgst,
+        discount: r.line.discount,
+      })),
+      ...packaging.map((p) => ({ price: p.price, quantity: 1, sgst: p.sgst, cgst: p.cgst, excludeFromBillDiscount: true })),
+    ],
     { ignoreTax: settings.ignoreTax, billDiscount: input.discount },
   );
 
-  const lines: PlannedLine[] = resolved.map((r, index) => {
+  const itemLines: PlannedLine[] = resolved.map((r, index) => {
     const result = totals.lines[index];
     if (!result) throw new Error("Line total missing");
     return {
       menuItemId: r.item.id,
+      isPackaging: false,
       name: r.label,
       price: parseMoney(r.unitPrice),
       sgst: r.item.sgst,
@@ -164,6 +190,23 @@ export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanIt
       options: r.options,
     };
   });
+  const packagingPlanned: PlannedLine[] = packaging.map((p, index) => {
+    const result = totals.lines[resolved.length + index];
+    if (!result) throw new Error("Packaging total missing");
+    return {
+      menuItemId: null,
+      isPackaging: true,
+      name: PACKAGING_LINE_NAME,
+      price: parseMoney(p.price),
+      sgst: p.sgst,
+      cgst: p.cgst,
+      quantity: parseQuantity(1),
+      discount: "0.00",
+      total: result.total,
+      options: null,
+    };
+  });
+  const lines = [...itemLines, ...packagingPlanned];
 
   // ---- Stock (only a completed sale takes stock) -------------------------
   const stockUse = new Map<number, string>();
@@ -227,7 +270,7 @@ export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanIt
     amountPaid: amountPaid.toFixed(2),
     changeDue: changeDue.toFixed(2),
     discount: input.discount ? { type: input.discount.type, value: parseMoney(input.discount.value) } : null,
-    orderType: settings.orderTypesEnabled ? input.orderType : null,
+    orderType,
     tableNo: settings.orderTypesEnabled && input.orderType === "dine_in" ? input.tableNo : null,
     notes: input.notes,
     stockUse,

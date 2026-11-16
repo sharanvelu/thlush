@@ -7,7 +7,7 @@
  * 2. gross      = price x quantity
  * 3. A line discount is a flat amount, capped at the line's gross.
  * 4. The bill discount (percent or flat) applies to the sum of lines after line
- *    discounts. It is capped at that sum, rounded to 2 dp, and spread across the
+ *    discounts, leaving out lines marked `excludeFromBillDiscount` (packaging). It is capped at that sum, rounded to 2 dp, and spread across the
  *    lines in proportion to their post-line-discount amounts using the
  *    largest-remainder method, so the shares add up exactly to the discount.
  * 5. taxable    = gross - line discount - bill-discount share
@@ -30,6 +30,8 @@ export interface LineInput {
   cgst?: Numeric;
   /** Flat amount taken off this line before tax. */
   discount?: Numeric;
+  /** The bill discount neither counts this line nor takes anything off it. Used for packaging charges. */
+  excludeFromBillDiscount?: boolean;
 }
 
 export interface BillDiscountInput {
@@ -147,11 +149,12 @@ export function calculateBill(lines: LineInput[], options: CalculationOptions = 
   });
 
   // Step 4: bill discount, spread over post-line-discount amounts.
-  const afterLineSum = stage1.reduce((acc, s) => acc.plus(s.afterLine), ZERO);
+  const discountable = (s: (typeof stage1)[number]): Dec => (s.line.excludeFromBillDiscount ? ZERO : s.afterLine);
+  const afterLineSum = stage1.reduce((acc, s) => acc.plus(discountable(s)), ZERO);
   const billDiscountAmount = resolveBillDiscount(afterLineSum, billDiscount);
   const shares = allocateProportionally(
     billDiscountAmount,
-    stage1.map((s) => s.afterLine),
+    stage1.map(discountable),
   );
 
   // Steps 5-7: tax per line on the discounted taxable amount.

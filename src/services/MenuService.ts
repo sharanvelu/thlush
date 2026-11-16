@@ -57,6 +57,7 @@ export interface MenuListItem {
   stockQty: string;
   reorderLevel: string;
   costPrice: string;
+  packagingCharge: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -138,6 +139,7 @@ function toListItem(row: ListRow): MenuListItem {
     stockQty: row.stockQty,
     reorderLevel: row.reorderLevel,
     costPrice: row.costPrice,
+    packagingCharge: row.packagingCharge,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -266,6 +268,7 @@ export async function createMenuItem(input: MenuItemData, userId: string): Promi
           unit: input.unit,
           reorderLevel: parseQuantity(input.reorderLevel),
           costPrice: parseMoney(input.costPrice),
+          packagingCharge: parseMoney(input.packagingCharge),
           stockQty: opening,
           createdUserId: userId,
         })
@@ -315,6 +318,7 @@ export async function updateMenuItem(id: number, patch: MenuItemPatch, userId: s
   if (patch.unit !== undefined) values.unit = patch.unit;
   if (patch.reorderLevel !== undefined) values.reorderLevel = parseQuantity(patch.reorderLevel);
   if (patch.costPrice !== undefined) values.costPrice = parseMoney(patch.costPrice);
+  if (patch.packagingCharge !== undefined) values.packagingCharge = parseMoney(patch.packagingCharge);
 
   try {
     await db.transaction(async (tx) => {
@@ -367,6 +371,7 @@ export async function duplicateMenuItem(id: number, userId: string): Promise<Men
         trackStock: source.trackStock,
         reorderLevel: source.reorderLevel,
         costPrice: source.costPrice,
+        packagingCharge: source.packagingCharge,
         createdUserId: userId,
       })
       .returning({ id: menuItems.id });

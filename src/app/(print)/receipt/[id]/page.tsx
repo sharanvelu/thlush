@@ -31,6 +31,9 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
   const model = buildReceiptModel(bill, settings);
   const autoPrint = query.print === "1";
   const withKitchen = query.kitchen === "1";
+  const kotSeq = Number(query.kot);
+  const kot = Number.isInteger(kotSeq) && kotSeq > 0 ? bill.kots.find((k) => k.seq === kotSeq) : undefined;
+  const withReceipt = query.receipt !== "0";
 
   return (
     <div className="min-h-dvh bg-neutral-200 py-6 dark:bg-background print:bg-white print:py-0">
@@ -41,8 +44,9 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
           mailHref={mailtoUrl(model, bill.customer?.email ?? null)}
         />
       )}
-      <ReceiptView model={model} />
-      {withKitchen ? <KitchenSlip model={buildKitchenSlipModel(bill, settings)} paperSize={model.paperSize} /> : null}
+      {withReceipt ? <ReceiptView model={model} /> : null}
+      {kot ? <KitchenSlip model={buildKitchenSlipModel(bill, settings, kot)} paperSize={model.paperSize} standalone={!withReceipt} /> : null}
+      {!kot && withKitchen ? <KitchenSlip model={buildKitchenSlipModel(bill, settings)} paperSize={model.paperSize} standalone={!withReceipt} /> : null}
       {autoPrint ? <AutoPrint /> : null}
     </div>
   );

@@ -1,4 +1,4 @@
-import { index, jsonb, numeric, text } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, numeric, text } from "drizzle-orm/pg-core";
 import { bigId, bigRef, ix, table } from "./_shared";
 import { bills } from "./bills";
 import { menuItems } from "./menu-items";
@@ -31,6 +31,10 @@ export const billItems = table(
     /** Final line amount including tax. */
     total: numeric("total", { precision: 12, scale: 2 }).notNull(),
     options: jsonb("options").$type<BillItemOptions>(),
+    /** How much of `quantity` the kitchen has already been sent. The rest is still to send. */
+    sentQty: numeric("sent_qty", { precision: 10, scale: 3 }).notNull().default("0"),
+    /** A packaging charge line the system added, not something the cashier ordered. Recomputed on every save. */
+    isPackaging: boolean("is_packaging").notNull().default(false),
   },
   (t) => [
     index(ix("bill_items_bill_idx")).on(t.billId),
