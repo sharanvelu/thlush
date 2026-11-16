@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {accent ? <style id="accent-override" dangerouslySetInnerHTML={{ __html: accent }} /> : null}
         <ThemeProvider>
           <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
-          <Toaster richColors closeButton />
+          <Toaster richColors closeButton position="top-right" offset={{ top: "5.25rem", right: "1rem" }} mobileOffset={{ top: "5.25rem", left: "0.75rem", right: "0.75rem" }} />
         </ThemeProvider>
       </body>
     </html>
