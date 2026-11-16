@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isHexColor } from "@/lib/color";
-import { percentString } from "@/lib/validation/common";
+import { moneyString, percentString } from "@/lib/validation/common";
 import type { SettingsKey } from "@/types/settings";
 
 const text = (max: number, label: string) => z.string().trim().max(max, `${label} must be ${max} characters or fewer`);
@@ -51,6 +51,7 @@ export const settingsSchemas = {
     orderTypes: z.array(z.enum(["dine_in", "takeaway", "delivery"])).max(3).transform((v) => [...new Set(v)]),
     mode: z.enum(["per_unit", "per_line", "per_bill"]),
     taxed: z.boolean(),
+    billAmount: moneyString("Packaging charge"),
   }),
   appearance: z.object({ accent: z.string().refine(isHexColor, "Use a colour like #cc3300").nullable() }),
   features: z.object({ inventory: z.boolean(), discounts: z.boolean(), orderTypes: z.boolean() }),

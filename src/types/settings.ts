@@ -58,6 +58,11 @@ export interface PackagingSettings {
   mode: PackagingMode;
   /** Charge SGST and CGST on packaging, at the rates of the item it belongs to. */
   taxed: boolean;
+  /**
+   * The packaging charge for a whole bill, used when `mode` is "per_bill". When above 0 it replaces the
+   * per-item charges; at 0 the highest item charge is used instead.
+   */
+  billAmount: string;
 }
 
 export interface AppearanceSettings {

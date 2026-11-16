@@ -42,7 +42,7 @@ const settings: PlanSettings = {
   discountsEnabled: true,
   orderTypesEnabled: true,
   blockOutOfStock: false,
-  packaging: { orderTypes: ["takeaway"], mode: "per_unit", taxed: true },
+  packaging: { orderTypes: ["takeaway"], mode: "per_unit", taxed: true, billAmount: "0.00" },
 };
 
 const request = (overrides: Partial<BillSaveRequest> = {}) =>

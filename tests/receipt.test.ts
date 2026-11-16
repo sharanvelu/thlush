@@ -14,7 +14,7 @@ const catalog = new Map([
   [2, item(2, "Packaged Water 1L", "20.00", "9")],
   [3, item(3, "Cake Slice", "33.33", "6")],
 ]);
-const PLAN_SETTINGS = { ignoreTax: false, discountsEnabled: true, orderTypesEnabled: true, blockOutOfStock: false, packaging: { orderTypes: [] as Array<"dine_in" | "takeaway" | "delivery">, mode: "per_unit" as const, taxed: true } };
+const PLAN_SETTINGS = { ignoreTax: false, discountsEnabled: true, orderTypesEnabled: true, blockOutOfStock: false, packaging: { orderTypes: [] as Array<"dine_in" | "takeaway" | "delivery">, mode: "per_unit" as const, taxed: true, billAmount: "0.00" } };
 
 /** Saves a bill through the real planner and returns it the way `getBill` would. */
 function billFrom(overrides: Record<string, unknown>, ignoreTax = false): BillDetail {

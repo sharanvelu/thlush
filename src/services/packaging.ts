@@ -34,6 +34,8 @@ export function packagingApplies(orderType: OrderType | null, settings: Packagin
   return orderType !== null && settings.orderTypes.includes(orderType);
 }
 
+const rateOf = (s: { sgst: Numeric; cgst: Numeric }): Dec => toDecimal(s.sgst).plus(toDecimal(s.cgst));
+
 export function packagingLines(
   sources: PackagingSource[],
   orderType: OrderType | null,
@@ -41,14 +43,22 @@ export function packagingLines(
 ): PackagingLine[] {
   if (!packagingApplies(orderType, settings)) return [];
 
-  const charged = sources
+  const present = sources
     .map((s) => ({ ...s, charge: toDecimal(s.charge), quantity: toDecimal(s.quantity) }))
-    .filter((s) => s.charge.greaterThan(0) && s.quantity.greaterThan(0));
-  if (charged.length === 0) return [];
+    .filter((s) => s.quantity.greaterThan(0));
+  const charged = present.filter((s) => s.charge.greaterThan(0));
 
   const amounts: Array<{ amount: Dec; sgst: Numeric; cgst: Numeric }> = [];
-  if (settings.mode === "per_bill") {
-    // One charge for the bill: the highest, taxed at that item's rates.
+  const global = toDecimal(settings.billAmount);
+  if (settings.mode === "per_bill" && global.greaterThan(0) && present.length > 0) {
+    // The global charge takes precedence and does not depend on any item having one. It is not tied to an
+    // item, so it is taxed at the highest rates on the bill (packaging follows the principal supply).
+    const top = present.reduce((best, s) => (rateOf(s).greaterThan(rateOf(best)) ? s : best));
+    amounts.push({ amount: global, sgst: top.sgst, cgst: top.cgst });
+  } else if (charged.length === 0) {
+    return [];
+  } else if (settings.mode === "per_bill") {
+    // No global charge set: the highest item charge, taxed at that item's rates.
     const top = charged.reduce((best, s) => (s.charge.greaterThan(best.charge) ? s : best));
     amounts.push({ amount: top.charge, sgst: top.sgst, cgst: top.cgst });
   } else {

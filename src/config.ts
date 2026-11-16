@@ -51,6 +51,7 @@ export const defaultSettings: AppSettings = {
     orderTypes: ["takeaway"],
     mode: "per_unit",
     taxed: true,
+    billAmount: "0.00",
   },
   appearance: {
     accent: null,

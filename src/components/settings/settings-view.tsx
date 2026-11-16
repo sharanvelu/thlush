@@ -255,10 +255,17 @@ function PackagingForm({ initial, orderTypesEnabled }: GroupProps<"packaging"> &
               ? "The charge is added for every unit: 3 dosas with a ₹10 charge add ₹30. Weighed items count once per line."
               : v.mode === "per_line"
                 ? "The charge is added once per item on the bill, however many units: 3 dosas with a ₹10 charge add ₹10."
-                : "One charge for the whole bill: the highest charge among the items that have one."}
+                : v.billAmount !== "" && Number(v.billAmount) > 0
+                  ? "One charge for the whole bill: the amount below, whatever the items are."
+                  : "One charge for the whole bill: the highest charge among the items that have one."}
           </FieldDescription>
         </Field>
-        <ToggleRow id="pk-tax" label="Charge tax on packaging" hint="Adds SGST and CGST to the packaging charge at the same rates as the item. Off, packaging is untaxed. Has no effect while tax is switched off." checked={v.taxed} onChange={(on) => set({ taxed: on })} />
+        {v.mode === "per_bill" ? (
+          <Text id="pk-amount" label="Charge per bill" error={f.errors.billAmount} hint="Used instead of the charges set on individual items, for every bill of the order types above. Leave 0 to use the highest item charge.">
+            <Input id="pk-amount" inputMode="decimal" placeholder="0.00" value={v.billAmount} onChange={(ev) => set({ billAmount: ev.target.value })} aria-invalid={Boolean(f.errors.billAmount)} className="max-w-40" />
+          </Text>
+        ) : null}
+        <ToggleRow id="pk-tax" label="Charge tax on packaging" hint="Adds SGST and CGST to the packaging charge at the same rates as the item (for the per-bill amount: the highest rates on the bill). Off, packaging is untaxed. Has no effect while tax is switched off." checked={v.taxed} onChange={(on) => set({ taxed: on })} />
       </FieldGroup>
     </Section>
   );

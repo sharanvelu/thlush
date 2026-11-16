@@ -9,6 +9,7 @@ const settings = (patch: Partial<PackagingSettings> = {}): PackagingSettings => 
   orderTypes: ["takeaway"],
   mode: "per_unit",
   taxed: true,
+  billAmount: "0.00",
   ...patch,
 });
 const src = (charge: string, quantity: string, extra: Partial<PackagingSource> = {}): PackagingSource => ({
@@ -38,6 +39,29 @@ describe("packagingLines", () => {
       settings({ mode: "per_bill" }),
     );
     expect(lines).toEqual([{ price: "20.00", sgst: "9", cgst: "9" }]);
+  });
+
+  it("once per bill with a global amount: the global amount replaces the item charges", () => {
+    const lines = packagingLines([src("10", "3"), src("20", "1")], "takeaway", settings({ mode: "per_bill", billAmount: "15" }));
+    expect(lines).toEqual([{ price: "15.00", sgst: "2.5", cgst: "2.5" }]);
+  });
+
+  it("the global amount applies even when no item has a charge, taxed at the highest rates on the bill", () => {
+    const lines = packagingLines(
+      [src("0", "1"), src("0", "1", { sgst: "9", cgst: "9" })],
+      "takeaway",
+      settings({ mode: "per_bill", billAmount: "15" }),
+    );
+    expect(lines).toEqual([{ price: "15.00", sgst: "9", cgst: "9" }]);
+  });
+
+  it("the global amount is ignored in the other modes, and only counts for the chosen order types", () => {
+    expect(packagingLines([src("10", "3")], "takeaway", settings({ mode: "per_unit", billAmount: "15" }))[0]?.price).toBe("30.00");
+    expect(packagingLines([src("10", "3")], "dine_in", settings({ mode: "per_bill", billAmount: "15" }))).toEqual([]);
+  });
+
+  it("falls back to the highest item charge when the global amount is 0", () => {
+    expect(packagingLines([src("10", "1"), src("20", "1")], "takeaway", settings({ mode: "per_bill", billAmount: "0.00" }))[0]?.price).toBe("20.00");
   });
 
   it("counts a weighed item once per line even per unit", () => {
