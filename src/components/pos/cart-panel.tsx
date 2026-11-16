@@ -2,10 +2,8 @@
 
 import {
   Archive,
-  ChevronDown,
   Loader2,
   Minus,
-  NotebookPen,
   Percent,
   Plus,
   Printer,
@@ -31,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { D, formatMoney } from "@/lib/money";
-import { cn } from "@/lib/utils";
 import type { BillTotals } from "@/services/calculations";
 import { ORDER_TYPE_LABELS, type OrderType } from "@/types/bill";
 
@@ -76,8 +73,6 @@ export function CartPanel(props: CartPanelProps) {
   } = props;
   const baseId = useId();
   const [discountOpen, setDiscountOpen] = useState<Set<string>>(new Set());
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const money = (v: string) => formatMoney(v, { currency: settings.currency, locale: settings.locale });
   const currencySymbol =
     new Intl.NumberFormat(settings.locale, { style: "currency", currency: settings.currency })
@@ -87,21 +82,6 @@ export function CartPanel(props: CartPanelProps) {
   const empty = lines.length === 0;
   const total = totals.grandTotal;
   const canSave = !empty && !pending && paymentResult.valid && !problem;
-
-  // One line that says what is set inside "Order details", so it is visible while collapsed.
-  const extras: string[] = [];
-  if (details.orderType) {
-    const table = details.orderType === "dine_in" && details.tableNo.trim() ? ` ${details.tableNo.trim()}` : "";
-    extras.push(`${ORDER_TYPE_LABELS[details.orderType]}${table}`);
-  }
-  if (settings.discountsEnabled && details.discountValue.trim() !== "") {
-    extras.push(
-      details.discountKind === "percent"
-        ? `${details.discountValue.trim()}% off`
-        : `${money(new D(details.discountValue.trim() || 0).toFixed(2))} off`,
-    );
-  }
-  if (details.notes.trim()) extras.push("Note");
 
   const toggleDiscount = (key: string) =>
     setDiscountOpen((set) => {
@@ -250,124 +230,102 @@ export function CartPanel(props: CartPanelProps) {
           </ul>
         )}
 
-        <div className="mt-4 flex flex-col gap-4 border-t pt-4">
-          <div className="flex flex-col gap-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Customer</p>
+        <div className="mt-4 flex flex-col divide-y border-t">
+          <section aria-labelledby={`${baseId}-customer`} className="flex flex-col gap-1.5 py-4">
+            <h3 id={`${baseId}-customer`} className="text-sm font-medium">Customer</h3>
             <CustomerPicker
               value={details.customer}
               onChange={(customer) => onDetails({ customer })}
               walkInLabel={settings.walkInLabel}
             />
-          </div>
+          </section>
 
           {settings.orderTypesEnabled || settings.discountsEnabled ? (
-            <div className="rounded-lg border">
-              <button
-                type="button"
-                onClick={() => setMoreOpen((open) => !open)}
-                aria-expanded={moreOpen}
-                aria-controls={`${baseId}-more`}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm"
-              >
-                <span className="font-medium">Order details</span>
-                <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                  <span className="truncate">{extras.length > 0 ? extras.join(" · ") : "Type, discount, notes"}</span>
-                  <ChevronDown
-                    className={cn("size-4 shrink-0 transition-transform motion-reduce:transition-none", moreOpen && "rotate-180")}
-                    aria-hidden
-                  />
-                </span>
-              </button>
-
-              <div id={`${baseId}-more`} hidden={!moreOpen} className="flex flex-col gap-4 border-t px-3 py-3">
-                {settings.orderTypesEnabled ? (
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">Order type</p>
-                    <div className="flex gap-2">
-                      <ToggleGroup
-                        type="single"
-                        variant="outline"
-                        value={details.orderType ?? ""}
-                        onValueChange={(v) => onDetails({ orderType: (v || null) as OrderType | null })}
-                        className="flex-1"
-                        aria-label="Order type"
-                      >
-                        {ORDER_TYPES.map((t) => (
-                          <ToggleGroupItem key={t} value={t} className="h-9 flex-1 text-xs">
-                            {ORDER_TYPE_LABELS[t]}
-                          </ToggleGroupItem>
-                        ))}
-                      </ToggleGroup>
-                      {details.orderType === "dine_in" ? (
-                        <Input
-                          value={details.tableNo}
-                          onChange={(e) => onDetails({ tableNo: e.target.value })}
-                          placeholder="Table"
-                          aria-label="Table number"
-                          maxLength={20}
-                          className="h-9 w-20"
-                        />
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                {settings.discountsEnabled ? (
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor={`${baseId}-discount`} className="text-xs font-medium text-muted-foreground">
-                      Bill discount
-                    </label>
-                    <div className="flex gap-2">
-                      <ToggleGroup
-                        type="single"
-                        variant="outline"
-                        value={details.discountKind}
-                        onValueChange={(v) => v && onDetails({ discountKind: v as "percent" | "flat" })}
-                        aria-label="Discount type"
-                      >
-                        <ToggleGroupItem value="percent" className="h-9 w-10" aria-label="Percent">
-                          <Percent className="size-4" aria-hidden />
+            <section aria-labelledby={`${baseId}-details`} className="flex flex-col gap-4 py-4">
+              <h3 id={`${baseId}-details`} className="text-sm font-medium">Order details</h3>
+              {settings.orderTypesEnabled ? (
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Order type</p>
+                  <div className="flex gap-2">
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      value={details.orderType ?? ""}
+                      onValueChange={(v) => onDetails({ orderType: (v || null) as OrderType | null })}
+                      className="flex-1"
+                      aria-label="Order type"
+                    >
+                      {ORDER_TYPES.map((t) => (
+                        <ToggleGroupItem key={t} value={t} className="h-9 flex-1 text-xs">
+                          {ORDER_TYPE_LABELS[t]}
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="flat" className="h-9 w-10" aria-label={`Amount in ${settings.currency}`}>
-                          <span aria-hidden>{currencySymbol}</span>
-                        </ToggleGroupItem>
-                      </ToggleGroup>
+                      ))}
+                    </ToggleGroup>
+                    {details.orderType === "dine_in" ? (
                       <Input
-                        id={`${baseId}-discount`}
-                        inputMode="decimal"
-                        value={details.discountValue}
-                        onChange={(e) => onDetails({ discountValue: e.target.value })}
-                        placeholder={details.discountKind === "percent" ? "0 %" : "0.00"}
-                        className="h-9 tabular-nums"
+                        value={details.tableNo}
+                        onChange={(e) => onDetails({ tableNo: e.target.value })}
+                        placeholder="Table"
+                        aria-label="Table number"
+                        maxLength={20}
+                        className="h-9 w-20"
                       />
-                    </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </div>
+              ) : null}
 
-                {notesOpen || details.notes ? (
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor={`${baseId}-notes`} className="text-xs font-medium text-muted-foreground">
-                      Notes
-                    </label>
-                    <Textarea
-                      id={`${baseId}-notes`}
-                      value={details.notes}
-                      onChange={(e) => onDetails({ notes: e.target.value })}
-                      rows={2}
-                      maxLength={300}
-                      placeholder="Less spicy, pack separately..."
+              {settings.discountsEnabled ? (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor={`${baseId}-discount`} className="text-xs font-medium text-muted-foreground">
+                    Bill discount
+                  </label>
+                  <div className="flex gap-2">
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      value={details.discountKind}
+                      onValueChange={(v) => v && onDetails({ discountKind: v as "percent" | "flat" })}
+                      aria-label="Discount type"
+                    >
+                      <ToggleGroupItem value="percent" className="h-9 w-10" aria-label="Percent">
+                        <Percent className="size-4" aria-hidden />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="flat" className="h-9 w-10" aria-label={`Amount in ${settings.currency}`}>
+                        <span aria-hidden>{currencySymbol}</span>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                    <Input
+                      id={`${baseId}-discount`}
+                      inputMode="decimal"
+                      value={details.discountValue}
+                      onChange={(e) => onDetails({ discountValue: e.target.value })}
+                      placeholder={details.discountKind === "percent" ? "0 %" : "0.00"}
+                      className="h-9 tabular-nums"
                     />
                   </div>
-                ) : (
-                  <Button type="button" variant="ghost" size="sm" className="w-fit" onClick={() => setNotesOpen(true)}>
-                    <NotebookPen aria-hidden /> Add a note
-                  </Button>
-                )}
+                </div>
+              ) : null}
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor={`${baseId}-notes`} className="text-xs font-medium text-muted-foreground">
+                  Notes
+                </label>
+                <Textarea
+                  id={`${baseId}-notes`}
+                  value={details.notes}
+                  onChange={(e) => onDetails({ notes: e.target.value })}
+                  rows={2}
+                  maxLength={300}
+                  placeholder="Less spicy, pack separately..."
+                />
               </div>
-            </div>
+            </section>
           ) : null}
 
-          <PaymentPanel state={payment} onChange={onPayment} total={total} result={paymentResult} settings={settings} />
+          <section aria-label="Payment" className="py-4 pb-1">
+            <PaymentPanel state={payment} onChange={onPayment} total={total} result={paymentResult} settings={settings} />
+          </section>
         </div>
       </div>
 
