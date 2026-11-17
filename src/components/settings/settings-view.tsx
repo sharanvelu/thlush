@@ -16,7 +16,7 @@ import { accentCss, contrastRatio, DEFAULT_ACCENT, isHexColor, readableOn } from
 import { errorMessage } from "@/lib/api-client";
 import { fileToResizedDataUrl, IMAGE_ACCEPT } from "@/lib/image";
 import { formatMoney } from "@/lib/money";
-import type { AppSettings, PackagingSettings } from "@/types/settings";
+import type { AppSettings, PackagingSettings, SsoSettings } from "@/types/settings";
 
 const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD", "AUD", "CAD", "JPY"];
 const LOCALES = ["en-IN", "en-US", "en-GB", "en-AU", "en-CA", "hi-IN", "ta-IN", "de-DE", "fr-FR"];
@@ -326,7 +326,21 @@ function SsoForm({ initial }: GroupProps<"sso">) {
   return (
     <Section title="Single sign-on" description="How logging out works for people who signed in with SSO." dirty={f.dirty} saving={f.saving} onSave={f.save} onDiscard={f.discard}>
       <FieldGroup>
-        <ToggleRow id="sso-logout" label="Also log out of SSO" hint="Logging out of the app also ends the user's session at the identity provider, so the next sign-in asks for credentials again. Off, only the app session ends and the provider may sign them straight back in. The provider must allow your sign-in page as a post-logout redirect URI." checked={v.logoutFromProvider} onChange={(on) => set({ logoutFromProvider: on })} />
+        <Field>
+          <FieldLabel id="sso-logout">When someone logs out</FieldLabel>
+          <ToggleGroup type="single" variant="outline" value={v.logout} onValueChange={(m) => m && set({ logout: m as SsoSettings["logout"] })} aria-labelledby="sso-logout">
+            <ToggleGroupItem value="off" className="px-4">App only</ToggleGroupItem>
+            <ToggleGroupItem value="background" className="px-4">App and SSO, in the background</ToggleGroupItem>
+            <ToggleGroupItem value="redirect" className="px-4">App and SSO, via the provider</ToggleGroupItem>
+          </ToggleGroup>
+          <FieldDescription>
+            {v.logout === "off"
+              ? "Only the app session ends. The identity provider may sign the user straight back in next time."
+              : v.logout === "background"
+                ? "The user stays in this app and lands on the sign-in page while the provider's session is ended behind the scenes. This works only if the provider allows its logout page to load in a hidden frame; if it does not, the provider session stays open, so test it and switch to the next option if so."
+                : "The user is sent to the identity provider's logout page and back to the sign-in page. The most reliable, but they briefly leave the app. Register your sign-in page as a post-logout redirect URI at the provider."}
+          </FieldDescription>
+        </Field>
       </FieldGroup>
     </Section>
   );

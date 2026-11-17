@@ -19,6 +19,12 @@ describe("buildEndSessionUrl", () => {
     expect(url.searchParams.get("client_id")).toBe("thlush");
   });
 
+  it("leaves out the return address when nothing needs to come back (a background logout)", () => {
+    const url = new URL(buildEndSessionUrl("https://sso.example.com/logout", { idToken: "t" }));
+    expect(url.searchParams.get("id_token_hint")).toBe("t");
+    expect(url.searchParams.has("post_logout_redirect_uri")).toBe(false);
+  });
+
   it("keeps query parameters the provider already uses", () => {
     const url = new URL(buildEndSessionUrl("https://sso.example.com/logout?tenant=a", { idToken: "t", postLogoutRedirectUri: "https://x.test/login" }));
     expect(url.searchParams.get("tenant")).toBe("a");
@@ -49,8 +55,10 @@ describe("discoverEndSessionEndpoint", () => {
 });
 
 describe("sso settings", () => {
-  it("accepts a yes or no and nothing else", () => {
-    expect(settingsSchemas.sso.safeParse({ logoutFromProvider: true }).success).toBe(true);
-    expect(settingsSchemas.sso.safeParse({ logoutFromProvider: "yes" }).success).toBe(false);
+  it("accepts the three logout modes and nothing else", () => {
+    for (const logout of ["off", "background", "redirect"]) {
+      expect(settingsSchemas.sso.safeParse({ logout }).success).toBe(true);
+    }
+    expect(settingsSchemas.sso.safeParse({ logout: "yes" }).success).toBe(false);
   });
 });

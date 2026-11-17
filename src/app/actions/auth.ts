@@ -59,47 +59,65 @@ export async function ssoLoginAction(redirect?: string): Promise<void> {
 }
 
 /**
- * The SSO provider's logout URL for the current session, or null when the user should only be logged out of the
- * app: SSO is not configured, the setting is off, they did not sign in with SSO, or the provider has no logout
- * endpoint (then logging out of the app still works).
+ * What logging out should do about the SSO provider, for the current session: the provider's logout URL and
+ * how to use it, or null when the user should only be logged out of the app (SSO is not configured, the
+ * setting is "off", they did not sign in with SSO, or the provider has no logout endpoint).
  */
-async function providerLogoutUrl(): Promise<string | null> {
+async function providerLogout(): Promise<{ mode: "background" | "redirect"; url: string } | null> {
   if (!isOidcEnabled()) return null;
-  const { logoutFromProvider } = await getSettingsGroup("sso");
-  if (!logoutFromProvider) return null;
+  const { logout } = await getSettingsGroup("sso");
+  if (logout === "off") return null;
 
   // The ID token lives only in the encrypted session cookie, so it is read from there, never from `auth()`.
   const requestHeaders = await headers();
-  const secure = (requestHeaders.get("x-forwarded-proto") ?? new URL(getEnv().NEXT_PUBLIC_BASE_URL).protocol.replace(":", "")) === "https";
+  const baseUrl = getEnv().NEXT_PUBLIC_BASE_URL;
+  const secure = (requestHeaders.get("x-forwarded-proto") ?? new URL(baseUrl).protocol.replace(":", "")) === "https";
   const token = await getToken({ req: { headers: requestHeaders }, secret: process.env.AUTH_SECRET, secureCookie: secure });
   if (token?.provider !== "oidc" || !token.idToken) return null;
 
   const issuer = process.env.OIDC_ISSUER;
   const endpoint = issuer ? await discoverEndSessionEndpoint(issuer) : null;
   if (!endpoint) return null;
-  return buildEndSessionUrl(endpoint, {
-    idToken: token.idToken,
-    postLogoutRedirectUri: new URL("/login", getEnv().NEXT_PUBLIC_BASE_URL).toString(),
-    clientId: process.env.OIDC_CLIENT_ID,
-  });
+  return {
+    mode: logout,
+    url: buildEndSessionUrl(endpoint, {
+      idToken: token.idToken,
+      // Only a redirect comes back here. In the background nothing needs to load our page.
+      postLogoutRedirectUri: logout === "redirect" ? new URL("/login", baseUrl).toString() : undefined,
+      clientId: process.env.OIDC_CLIENT_ID,
+    }),
+  };
 }
 
-export async function logoutAction(): Promise<void> {
+export interface LogoutResult {
+  /** Set when the app session has ended and the browser should now end the provider's session in a hidden frame. */
+  backgroundUrl: string | null;
+}
+
+/**
+ * Logs out of the app. Depending on the SSO setting it may also end the provider's session: by redirecting
+ * (this action then never returns) or by handing back a URL for the browser to load in the background.
+ */
+export async function logoutAction(): Promise<LogoutResult> {
   const user = await getCurrentUser();
-  const providerUrl = user ? await providerLogoutUrl() : null;
+  const provider = user ? await providerLogout() : null;
   if (user) {
     await AuditService.log({
       userId: user.id,
       action: "logout",
       entity: "user",
       entityId: user.id,
-      metadata: providerUrl ? { sso: true } : undefined,
+      metadata: provider ? { sso: provider.mode } : undefined,
     });
   }
-  if (providerUrl) {
-    // End the app session, then send the browser to the provider to end its session and bring them back.
+  if (provider?.mode === "redirect") {
     await signOut({ redirect: false });
-    redirect(providerUrl);
+    redirect(provider.url);
+  }
+  if (provider) {
+    await signOut({ redirect: false });
+    return { backgroundUrl: provider.url };
   }
   await signOut({ redirectTo: "/login" });
+  return { backgroundUrl: null };
 }

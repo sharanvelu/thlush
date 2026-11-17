@@ -54,7 +54,7 @@ export const defaultSettings: AppSettings = {
     billAmount: "0.00",
   },
   sso: {
-    logoutFromProvider: false,
+    logout: "off",
   },
   appearance: {
     accent: null,

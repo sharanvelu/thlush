@@ -65,9 +65,15 @@ export interface PackagingSettings {
   billAmount: string;
 }
 
+/**
+ * What logging out does for people who signed in with SSO (only used when SSO is configured):
+ * "off" ends the app session only; "background" also ends the provider's session without leaving the
+ * app; "redirect" sends the browser to the provider's logout page and back.
+ */
+export type SsoLogoutMode = "off" | "background" | "redirect";
+
 export interface SsoSettings {
-  /** Also end the SSO provider's session when a user logs out (only used when SSO is configured). */
-  logoutFromProvider: boolean;
+  logout: SsoLogoutMode;
 }
 
 export interface AppearanceSettings {

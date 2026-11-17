@@ -2,6 +2,8 @@
 
 import { LogOut, User as UserIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { logoutAction } from "@/app/actions/auth";
 import { RoleBadge } from "@/components/layout/role-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { SessionUser } from "@/types/user";
+import { endProviderSessionInBackground } from "@/lib/background-logout";
 import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
@@ -25,6 +28,21 @@ function initials(name: string): string {
 }
 
 export function UserMenu({ user }: { user: SessionUser }) {
+  const router = useRouter();
+  const [loggingOut, startLogout] = useTransition();
+
+  // Logging out normally redirects from the server. With "SSO in the background" the app session has ended and
+  // a URL comes back: load it in a hidden frame to end the provider's session too, then go to the sign-in page.
+  const logout = () =>
+    startLogout(async () => {
+      const { backgroundUrl } = await logoutAction();
+      if (backgroundUrl) {
+        await endProviderSessionInBackground(backgroundUrl);
+        router.replace("/login");
+        router.refresh();
+      }
+    });
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -48,12 +66,15 @@ export function UserMenu({ user }: { user: SessionUser }) {
             <UserIcon aria-hidden /> Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <form action={logoutAction}>
-            <button type="submit" className="flex w-full items-center gap-2">
-              <LogOut aria-hidden /> Log out
-            </button>
-          </form>
+        <DropdownMenuItem
+          disabled={loggingOut}
+          // Keep the menu open until the redirect, so "Logging out…" is seen.
+          onSelect={(event) => {
+            event.preventDefault();
+            logout();
+          }}
+        >
+          <LogOut aria-hidden /> {loggingOut ? "Logging out…" : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

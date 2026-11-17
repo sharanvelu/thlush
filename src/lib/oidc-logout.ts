@@ -3,11 +3,11 @@
 /** The provider's logout URL for this user, or null when it has none. */
 export function buildEndSessionUrl(
   endpoint: string,
-  params: { idToken: string; postLogoutRedirectUri: string; clientId?: string },
+  params: { idToken: string; postLogoutRedirectUri?: string; clientId?: string },
 ): string {
   const url = new URL(endpoint);
   url.searchParams.set("id_token_hint", params.idToken);
-  url.searchParams.set("post_logout_redirect_uri", params.postLogoutRedirectUri);
+  if (params.postLogoutRedirectUri) url.searchParams.set("post_logout_redirect_uri", params.postLogoutRedirectUri);
   if (params.clientId) url.searchParams.set("client_id", params.clientId);
   return url.toString();
 }
