@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // `ws` is required by the Neon serverless Pool for interactive transactions;
   // `pdfkit` reads its font files from disk, so it must not be bundled.
   serverExternalPackages: ["ws", "pdfkit", "exceljs"],
+  experimental: {
+    agentUpgrade: "security",
+  },
   turbopack: {
     rules: {
       "*.css": {
