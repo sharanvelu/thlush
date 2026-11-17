@@ -16,7 +16,7 @@ import { accentCss, contrastRatio, DEFAULT_ACCENT, isHexColor, readableOn } from
 import { errorMessage } from "@/lib/api-client";
 import { fileToResizedDataUrl, IMAGE_ACCEPT } from "@/lib/image";
 import { formatMoney } from "@/lib/money";
-import type { AppSettings, PackagingSettings } from "@/types/settings";
+import type { AppSettings, PackagingSettings, SsoSettings } from "@/types/settings";
 
 const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD", "AUD", "CAD", "JPY"];
 const LOCALES = ["en-IN", "en-US", "en-GB", "en-AU", "en-CA", "hi-IN", "ta-IN", "de-DE", "fr-FR"];
@@ -320,6 +320,32 @@ function AppearanceForm({ initial }: GroupProps<"appearance">) {
   );
 }
 
+function SsoForm({ initial }: GroupProps<"sso">) {
+  const f = useGroupForm("sso", initial);
+  const { values: v, set } = f;
+  return (
+    <Section title="Single sign-on" description="How logging out works for people who signed in with SSO." dirty={f.dirty} saving={f.saving} onSave={f.save} onDiscard={f.discard}>
+      <FieldGroup>
+        <Field>
+          <FieldLabel id="sso-logout">When someone logs out</FieldLabel>
+          <ToggleGroup type="single" variant="outline" value={v.logout} onValueChange={(m) => m && set({ logout: m as SsoSettings["logout"] })} aria-labelledby="sso-logout">
+            <ToggleGroupItem value="off" className="px-4">App only</ToggleGroupItem>
+            <ToggleGroupItem value="background" className="px-4">App and SSO, in the background</ToggleGroupItem>
+            <ToggleGroupItem value="redirect" className="px-4">App and SSO, via the provider</ToggleGroupItem>
+          </ToggleGroup>
+          <FieldDescription>
+            {v.logout === "off"
+              ? "Only the app session ends. The identity provider may sign the user straight back in next time."
+              : v.logout === "background"
+                ? "The user stays in this app and lands on the sign-in page while the provider's session is ended behind the scenes. This works only if the provider allows its logout page to load in a hidden frame; if it does not, the provider session stays open, so test it and switch to the next option if so."
+                : "The user is sent to the identity provider's logout page and back to the sign-in page. The most reliable, but they briefly leave the app. Register your sign-in page as a post-logout redirect URI at the provider."}
+          </FieldDescription>
+        </Field>
+      </FieldGroup>
+    </Section>
+  );
+}
+
 function FeaturesForm({ initial }: GroupProps<"features">) {
   const f = useGroupForm("features", initial);
   const { values: v, set } = f;
@@ -334,7 +360,7 @@ function FeaturesForm({ initial }: GroupProps<"features">) {
   );
 }
 
-export function SettingsView({ settings }: { settings: AppSettings }) {
+export function SettingsView({ settings, oidcEnabled }: { settings: AppSettings; oidcEnabled: boolean }) {
   return (
     <Tabs defaultValue="business" className="gap-6">
       <div className="-mx-1 overflow-x-auto px-1">
@@ -359,7 +385,10 @@ export function SettingsView({ settings }: { settings: AppSettings }) {
           <PackagingForm initial={settings.packaging} orderTypesEnabled={settings.features.orderTypes} />
         </TabsContent>
         <TabsContent value="appearance"><AppearanceForm initial={settings.appearance} /></TabsContent>
-        <TabsContent value="features"><FeaturesForm initial={settings.features} /></TabsContent>
+        <TabsContent value="features" className="flex flex-col gap-6">
+          <FeaturesForm initial={settings.features} />
+          {oidcEnabled ? <SsoForm initial={settings.sso} /> : null}
+        </TabsContent>
       </div>
     </Tabs>
   );

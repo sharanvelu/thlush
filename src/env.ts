@@ -63,4 +63,3 @@ export const appEnv: Env["NEXT_PUBLIC_APP_ENV"] =
     ? process.env.NEXT_PUBLIC_APP_ENV
     : "local";
 
-export const isLocalEnv = appEnv === "local";

@@ -53,6 +53,9 @@ export const defaultSettings: AppSettings = {
     taxed: true,
     billAmount: "0.00",
   },
+  sso: {
+    logout: "off",
+  },
   appearance: {
     accent: null,
   },

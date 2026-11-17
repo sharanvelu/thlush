@@ -6,11 +6,9 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { loginAction, ssoLoginAction } from "@/app/actions/auth";
-import { RoleBadge } from "@/components/layout/role-badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { Role } from "@/config/permissions";
 
 const schema = z.object({
   email: z.email("Enter a valid email address."),
@@ -18,19 +16,10 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-export interface DemoAccount {
-  name: string;
-  email: string;
-  role: Role;
-  password: string;
-}
-
 interface LoginFormProps {
   /** Where to go after signing in. Already sanitised on the server. */
   redirectTo: string;
   ssoEnabled: boolean;
-  /** Empty outside the local environment. */
-  demoAccounts: DemoAccount[];
   /** Error code handed back by Auth.js, e.g. from a failed SSO attempt. */
   authError?: string;
 }
@@ -41,7 +30,7 @@ function ssoErrorMessage(code: string | undefined): string | null {
   return "Sign-in failed. Please try again.";
 }
 
-export function LoginForm({ redirectTo, ssoEnabled, demoAccounts, authError }: LoginFormProps) {
+export function LoginForm({ redirectTo, ssoEnabled, authError }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(ssoErrorMessage(authError));
   const [pending, startTransition] = useTransition();
@@ -50,7 +39,6 @@ export function LoginForm({ redirectTo, ssoEnabled, demoAccounts, authError }: L
   const {
     register,
     handleSubmit,
-    setValue,
     setError,
     formState: { errors },
   } = useForm<FormValues>({
@@ -72,11 +60,6 @@ export function LoginForm({ redirectTo, ssoEnabled, demoAccounts, authError }: L
         }
       }
     });
-  };
-
-  const fillDemo = (account: DemoAccount) => {
-    setValue("email", account.email, { shouldValidate: true });
-    setValue("password", account.password, { shouldValidate: true });
   };
 
   return (
@@ -160,28 +143,6 @@ export function LoginForm({ redirectTo, ssoEnabled, demoAccounts, authError }: L
             Sign in with SSO
           </Button>
         </>
-      ) : null}
-
-      {demoAccounts.length > 0 ? (
-        <section aria-label="Demo accounts" className="rounded-xl border border-dashed p-3">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">
-            Local demo accounts (this box is hidden outside local)
-          </p>
-          <ul className="flex flex-col gap-1.5">
-            {demoAccounts.map((account) => (
-              <li key={account.email}>
-                <button
-                  type="button"
-                  onClick={() => fillDemo(account)}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent"
-                >
-                  <span className="min-w-0 truncate">{account.email}</span>
-                  <RoleBadge role={account.role} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
       ) : null}
     </div>
   );

@@ -22,8 +22,14 @@ export async function searchCustomers(
   { page = 1, pageSize = 8 }: { page?: number; pageSize?: number } = {},
 ): Promise<{ rows: CustomerSummary[]; total: number }> {
   const term = q.trim();
+  // A phone typed as "9845010001" must find "98450 10001": compare digits only when the term looks like a phone.
+  const digits = /^[\d\s+()-]+$/.test(term) ? term.replace(/\D/g, "") : "";
   const where = term
-    ? or(ilike(customers.name, likePattern(term)), ilike(customers.phone, likePattern(term)))
+    ? or(
+        ilike(customers.name, likePattern(term)),
+        ilike(customers.phone, likePattern(term)),
+        digits ? sql`regexp_replace(${customers.phone}, '\D', '', 'g') like ${`%${digits}%`}` : undefined,
+      )
     : undefined;
   const [rows, totals] = await Promise.all([
     db

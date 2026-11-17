@@ -1,10 +1,9 @@
 import { Receipt, Store } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { LoginForm, type DemoAccount } from "@/components/auth/login-form";
+import { LoginForm } from "@/components/auth/login-form";
 import { appConfig } from "@/config";
-import { DEMO_USERS, seedPassword } from "@/config/demo";
-import { isLocalEnv, isOidcEnabled } from "@/env";
+import { isOidcEnabled } from "@/env";
 import { safeRedirectPath } from "@/lib/redirect";
 import { getCurrentUser } from "@/services/AuthService";
 
@@ -21,11 +20,6 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   // Already signed in (and the account still exists): go straight to the app.
   const user = await getCurrentUser();
   if (user) redirect(redirectTo);
-
-  // Demo credentials are resolved here, so they never reach the browser outside local.
-  const demoAccounts: DemoAccount[] = isLocalEnv
-    ? DEMO_USERS.map((u) => ({ ...u, password: seedPassword() }))
-    : [];
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
@@ -64,7 +58,6 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           <LoginForm
             redirectTo={redirectTo}
             ssoEnabled={isOidcEnabled()}
-            demoAccounts={demoAccounts}
             authError={first(params.error)}
           />
         </div>

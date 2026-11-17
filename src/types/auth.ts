@@ -19,5 +19,9 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     role?: Role;
+    /** How this session was started: "credentials" or "oidc". */
+    provider?: string;
+    /** The SSO provider's ID token, kept only to end the provider session at logout. Never sent to the browser. */
+    idToken?: string;
   }
 }

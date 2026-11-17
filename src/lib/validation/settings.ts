@@ -53,6 +53,7 @@ export const settingsSchemas = {
     taxed: z.boolean(),
     billAmount: moneyString("Packaging charge"),
   }),
+  sso: z.object({ logout: z.enum(["off", "background", "redirect"]) }),
   appearance: z.object({ accent: z.string().refine(isHexColor, "Use a colour like #cc3300").nullable() }),
   features: z.object({ inventory: z.boolean(), discounts: z.boolean(), orderTypes: z.boolean() }),
 } satisfies Record<SettingsKey, z.ZodType>;

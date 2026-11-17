@@ -33,11 +33,13 @@ The login page offers these as one-click fill-ins, but only when `NEXT_PUBLIC_AP
 | `DATABASE_URL`                                      | yes      | Postgres connection string.                                          |
 | `AUTH_SECRET`                                       | yes      | Signs session cookies (`openssl rand -base64 32`).                   |
 | `NEXT_PUBLIC_BASE_URL`                              | yes      | Public URL of the app.                                               |
-| `NEXT_PUBLIC_APP_ENV`                               | yes      | `local`, `staging` or `production`. Controls the demo-login helper.  |
+| `NEXT_PUBLIC_APP_ENV`                               | yes      | `local`, `staging` or `production`. The seed refuses to run in production. |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | no     | Set all three to enable "Sign in with SSO". Works with Authentik and Keycloak. |
 | `AUTH_TRUST_HOST`                                   | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production. |
 | `DB_TABLE_PREFIX`                                   | no       | Table-name prefix, default `app_`.                                   |
 | `SEED_PASSWORD`                                     | no       | Password for seeded demo users.                                      |
+
+**Logging out of SSO.** With SSO configured, **Settings > Features > Single sign-on > When someone logs out** chooses what the Log out button does for people who signed in with SSO: **App only** (default), **App and SSO, in the background** (the user stays in the app and lands on the sign-in page while the provider's session is ended in a hidden frame), or **App and SSO, via the provider** (the browser goes to the provider's logout page and back). The background option works only if the provider lets its logout page load in a frame and sends its session cookie there; a provider that refuses leaves its session open without any error, so test it and use the redirect option if so. The redirect option needs `<your URL>/login` registered as a **post-logout redirect URI** at the provider. Both need a provider that publishes an `end_session_endpoint`; without one, logging out only ends the app session.
 
 SSO users are created on first sign-in with the least-privileged role (cashier). An SSO email must be verified by the identity provider, and it links to an existing account with the same email.
 
