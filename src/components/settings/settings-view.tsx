@@ -337,7 +337,7 @@ function SsoForm({ initial }: GroupProps<"sso">) {
             {v.logout === "off"
               ? "Only the app session ends. The identity provider may sign the user straight back in next time."
               : v.logout === "background"
-                ? "The user stays in this app and lands on the sign-in page while the provider's session is ended behind the scenes. This works only if the provider allows its logout page to load in a hidden frame; if it does not, the provider session stays open, so test it and switch to the next option if so."
+                ? "The user stays in this app, sees a full-screen logging-out loader while the provider's session is ended in the background, then lands on the sign-in page. Built for Authentik; other providers only work if they accept their login cookie on a request from another site. If the provider session stays open, switch to the next option."
                 : "The user is sent to the identity provider's logout page and back to the sign-in page. The most reliable, but they briefly leave the app. Register your sign-in page as a post-logout redirect URI at the provider."}
           </FieldDescription>
         </Field>

@@ -7,7 +7,7 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 import { signIn, signOut } from "@/auth";
 import { getEnv, isOidcEnabled } from "@/env";
-import { buildEndSessionUrl, discoverEndSessionEndpoint } from "@/lib/oidc-logout";
+import { buildEndSessionUrl, discoverEndSessionEndpoint, discoverFlowExecutorUrl } from "@/lib/oidc-logout";
 import { safeRedirectPath } from "@/lib/redirect";
 import * as AuditService from "@/services/AuditService";
 import { getCurrentUser } from "@/services/AuthService";
@@ -73,19 +73,24 @@ async function providerLogout(): Promise<{ mode: "background" | "redirect"; url:
   const baseUrl = getEnv().NEXT_PUBLIC_BASE_URL;
   const secure = (requestHeaders.get("x-forwarded-proto") ?? new URL(baseUrl).protocol.replace(":", "")) === "https";
   const token = await getToken({ req: { headers: requestHeaders }, secret: process.env.AUTH_SECRET, secureCookie: secure });
-  if (token?.provider !== "oidc" || !token.idToken) return null;
+  if (token?.provider !== "oidc") return null;
 
   const issuer = process.env.OIDC_ISSUER;
   const endpoint = issuer ? await discoverEndSessionEndpoint(issuer) : null;
   if (!endpoint) return null;
+  // In the background, Authentik's logout flow is run through its API (no page, nothing comes back). Providers
+  // that have no such flow get the standard logout address as a plain request instead.
+  const flowUrl = logout === "background" ? await discoverFlowExecutorUrl(endpoint) : null;
   return {
     mode: logout,
-    url: buildEndSessionUrl(endpoint, {
-      idToken: token.idToken,
-      // Only a redirect comes back here. In the background nothing needs to load our page.
-      postLogoutRedirectUri: logout === "redirect" ? new URL("/login", baseUrl).toString() : undefined,
-      clientId: process.env.OIDC_CLIENT_ID,
-    }),
+    url:
+      flowUrl ??
+      buildEndSessionUrl(endpoint, {
+        idToken: token.idToken,
+        // Only a redirect comes back here. In the background nothing needs to load our page.
+        postLogoutRedirectUri: logout === "redirect" ? new URL("/login", baseUrl).toString() : undefined,
+        clientId: process.env.OIDC_CLIENT_ID,
+      }),
   };
 }
 
