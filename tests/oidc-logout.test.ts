@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { settingsSchemas } from "@/lib/validation/settings";
-import { buildEndSessionUrl, discoverEndSessionEndpoint } from "@/lib/oidc-logout";
+import { buildEndSessionUrl, discoverEndSessionEndpoint, discoverFlowExecutorUrl, flowExecutorUrl } from "@/lib/oidc-logout";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -51,6 +51,33 @@ describe("discoverEndSessionEndpoint", () => {
     expect(await discoverEndSessionEndpoint("https://sso.example.com")).toBeNull();
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     expect(await discoverEndSessionEndpoint("https://sso.example.com")).toBeNull();
+  });
+});
+
+describe("Authentik logout flow", () => {
+  const endpoint = "https://auth.example.com/application/o/thlush/end-session/";
+
+  it("turns the end-session redirect into the flow's API address", () => {
+    expect(flowExecutorUrl(endpoint, "/if/flow/default-invalidation-flow/?next=%2F")).toBe(
+      "https://auth.example.com/api/v3/flows/executor/default-invalidation-flow/",
+    );
+    expect(flowExecutorUrl(endpoint, "https://auth.example.com/if/flow/my-logout/")).toBe(
+      "https://auth.example.com/api/v3/flows/executor/my-logout/",
+    );
+  });
+
+  it("is null when the redirect is not an Authentik flow", () => {
+    expect(flowExecutorUrl(endpoint, null)).toBeNull();
+    expect(flowExecutorUrl(endpoint, "https://sso.example.com/realms/shop/login")).toBeNull();
+  });
+
+  it("reads the redirect without following it", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ headers: new Headers({ location: "/if/flow/inv/" }) });
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await discoverFlowExecutorUrl(endpoint)).toBe("https://auth.example.com/api/v3/flows/executor/inv/");
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ redirect: "manual" });
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+    expect(await discoverFlowExecutorUrl(endpoint)).toBeNull();
   });
 });
 
