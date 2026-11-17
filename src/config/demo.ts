@@ -1,8 +1,7 @@
 import type { Role } from "@/config/permissions";
 
 /**
- * Demo accounts created by `npm run db:seed`. The login page only offers them
- * when NEXT_PUBLIC_APP_ENV is "local"; they are never sent to the browser otherwise.
+ * Demo accounts created by `npm run db:seed`. The login page does not list them.
  */
 export interface DemoUser {
   name: string;

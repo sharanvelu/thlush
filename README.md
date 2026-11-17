@@ -33,7 +33,7 @@ The login page offers these as one-click fill-ins, but only when `NEXT_PUBLIC_AP
 | `DATABASE_URL`                                      | yes      | Postgres connection string.                                          |
 | `AUTH_SECRET`                                       | yes      | Signs session cookies (`openssl rand -base64 32`).                   |
 | `NEXT_PUBLIC_BASE_URL`                              | yes      | Public URL of the app.                                               |
-| `NEXT_PUBLIC_APP_ENV`                               | yes      | `local`, `staging` or `production`. Controls the demo-login helper.  |
+| `NEXT_PUBLIC_APP_ENV`                               | yes      | `local`, `staging` or `production`. The seed refuses to run in production. |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | no     | Set all three to enable "Sign in with SSO". Works with Authentik and Keycloak. |
 | `AUTH_TRUST_HOST`                                   | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production. |
 | `DB_TABLE_PREFIX`                                   | no       | Table-name prefix, default `app_`.                                   |
