@@ -65,6 +65,11 @@ export interface PackagingSettings {
   billAmount: string;
 }
 
+export interface SsoSettings {
+  /** Also end the SSO provider's session when a user logs out (only used when SSO is configured). */
+  logoutFromProvider: boolean;
+}
+
 export interface AppearanceSettings {
   /** Accent colour as a CSS colour value; null keeps the built-in warm orange. */
   accent: string | null;
@@ -83,6 +88,7 @@ export interface AppSettings {
   receipt: ReceiptSettings;
   billing: BillingSettings;
   packaging: PackagingSettings;
+  sso: SsoSettings;
   appearance: AppearanceSettings;
   features: FeatureToggles;
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Forbidden } from "@/components/layout/forbidden";
 import { PageHeader } from "@/components/layout/page-header";
 import { SettingsView } from "@/components/settings/settings-view";
+import { isOidcEnabled } from "@/env";
 import { requireAccess } from "@/services/AuthService";
 import { getSettings } from "@/services/SettingsService";
 import { PAGE_COPY } from "@/config/page-copy";
@@ -15,7 +16,7 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader {...PAGE_COPY.settings} />
-      <SettingsView settings={settings} />
+      <SettingsView settings={settings} oidcEnabled={isOidcEnabled()} />
     </>
   );
 }

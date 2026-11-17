@@ -39,6 +39,8 @@ The login page offers these as one-click fill-ins, but only when `NEXT_PUBLIC_AP
 | `DB_TABLE_PREFIX`                                   | no       | Table-name prefix, default `app_`.                                   |
 | `SEED_PASSWORD`                                     | no       | Password for seeded demo users.                                      |
 
+**Logging out of SSO.** With SSO configured, **Settings > Features > Single sign-on > Also log out of SSO** (off by default) makes the Log out button also end the user's session at the identity provider, so the next SSO sign-in asks for credentials again. It applies only to people who signed in with SSO, and needs a provider that publishes an `end_session_endpoint`. Register `<your URL>/login` as a **post-logout redirect URI** at the provider; without it the provider shows its own error page after the app session has already ended. If the provider has no logout endpoint, logging out only ends the app session.
+
 SSO users are created on first sign-in with the least-privileged role (cashier). An SSO email must be verified by the identity provider, and it links to an existing account with the same email.
 
 ## Scripts

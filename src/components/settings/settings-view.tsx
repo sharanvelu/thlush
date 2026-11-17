@@ -320,6 +320,18 @@ function AppearanceForm({ initial }: GroupProps<"appearance">) {
   );
 }
 
+function SsoForm({ initial }: GroupProps<"sso">) {
+  const f = useGroupForm("sso", initial);
+  const { values: v, set } = f;
+  return (
+    <Section title="Single sign-on" description="How logging out works for people who signed in with SSO." dirty={f.dirty} saving={f.saving} onSave={f.save} onDiscard={f.discard}>
+      <FieldGroup>
+        <ToggleRow id="sso-logout" label="Also log out of SSO" hint="Logging out of the app also ends the user's session at the identity provider, so the next sign-in asks for credentials again. Off, only the app session ends and the provider may sign them straight back in. The provider must allow your sign-in page as a post-logout redirect URI." checked={v.logoutFromProvider} onChange={(on) => set({ logoutFromProvider: on })} />
+      </FieldGroup>
+    </Section>
+  );
+}
+
 function FeaturesForm({ initial }: GroupProps<"features">) {
   const f = useGroupForm("features", initial);
   const { values: v, set } = f;
@@ -334,7 +346,7 @@ function FeaturesForm({ initial }: GroupProps<"features">) {
   );
 }
 
-export function SettingsView({ settings }: { settings: AppSettings }) {
+export function SettingsView({ settings, oidcEnabled }: { settings: AppSettings; oidcEnabled: boolean }) {
   return (
     <Tabs defaultValue="business" className="gap-6">
       <div className="-mx-1 overflow-x-auto px-1">
@@ -359,7 +371,10 @@ export function SettingsView({ settings }: { settings: AppSettings }) {
           <PackagingForm initial={settings.packaging} orderTypesEnabled={settings.features.orderTypes} />
         </TabsContent>
         <TabsContent value="appearance"><AppearanceForm initial={settings.appearance} /></TabsContent>
-        <TabsContent value="features"><FeaturesForm initial={settings.features} /></TabsContent>
+        <TabsContent value="features" className="flex flex-col gap-6">
+          <FeaturesForm initial={settings.features} />
+          {oidcEnabled ? <SsoForm initial={settings.sso} /> : null}
+        </TabsContent>
       </div>
     </Tabs>
   );

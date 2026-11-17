@@ -11,10 +11,16 @@ export const authConfig = {
   session: { strategy: "jwt", maxAge: appConfig.sessionMaxAgeSeconds },
   providers: [],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+      }
+      // A fresh sign-in (account is set only then) records how it happened. For SSO the provider's ID
+      // token is kept so logout can end the provider session too.
+      if (account) {
+        token.provider = account.provider;
+        token.idToken = account.provider === "oidc" ? (account.id_token ?? undefined) : undefined;
       }
       return token;
     },
