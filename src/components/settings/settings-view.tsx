@@ -314,6 +314,10 @@ function AppearanceForm({ initial }: GroupProps<"appearance">) {
           <Button type="button">Primary button</Button>
           <Button type="button" variant="outline">Outline</Button>
           <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">Badge</span>
+          <ToggleGroup type="single" variant="outline" defaultValue="selected" aria-label="Chip preview">
+            <ToggleGroupItem value="selected" className="h-9 px-3 text-xs">Selected chip</ToggleGroupItem>
+            <ToggleGroupItem value="other" className="h-9 px-3 text-xs">Unselected</ToggleGroupItem>
+          </ToggleGroup>
         </div>
       </FieldGroup>
     </Section>
