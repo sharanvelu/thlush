@@ -52,6 +52,7 @@ export function LoginForm({ redirectTo, ssoEnabled, authError }: LoginFormProps)
 
   const onSubmit = (values: FormValues) => {
     setFormError(null);
+    clearBillDraft();
     startTransition(async () => {
       const result = await loginAction({ ...values, redirect: redirectTo });
       // Only reached on failure: success redirects away.
@@ -141,7 +142,10 @@ export function LoginForm({ redirectTo, ssoEnabled, authError }: LoginFormProps)
             size="lg"
             className="w-full"
             disabled={ssoPending}
-            onClick={() => startSso(() => ssoLoginAction(redirectTo))}
+            onClick={() => {
+              clearBillDraft();
+              startSso(() => ssoLoginAction(redirectTo));
+            }}
           >
             {ssoPending ? <LoaderCircle className="animate-spin" aria-hidden /> : <KeyRound aria-hidden />}
             Sign in with SSO

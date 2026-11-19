@@ -36,8 +36,6 @@ interface PosScreenProps {
   settings: PosSettings & { timezone: string };
   appSettings: AppSettings;
   initialHeld: HeldBillSummary[];
-  /** Whose unsaved bill is kept in the browser. */
-  userId: string;
 }
 
 const INITIAL_PAYMENT: PaymentState = { split: false, method: "cash", received: "", reference: "", rows: [] };
@@ -55,7 +53,7 @@ function isTyping(target: EventTarget | null): boolean {
   return Boolean(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable));
 }
 
-export function PosScreen({ items, categories, settings, appSettings, initialHeld, userId }: PosScreenProps) {
+export function PosScreen({ items, categories, settings, appSettings, initialHeld }: PosScreenProps) {
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const attempt = useRef({ signature: "", ref: "" });
@@ -260,7 +258,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   // Restore after mount (not during the first render, which would not match the server's HTML).
   /* eslint-disable react-hooks/set-state-in-effect -- reading browser storage can only happen after mount */
   useEffect(() => {
-    const draft = loadBillDraft(userId);
+    const draft = loadBillDraft();
     if (draft) {
       const rebuilt: CartLine[] = [];
       for (const l of draft.lines) {
@@ -285,8 +283,8 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   useEffect(() => {
     if (!restored) return;
     if (lines.length === 0) clearBillDraft();
-    else saveBillDraft({ userId, lines: toDraftLines(lines), details, heldBillId });
-  }, [restored, userId, lines, details, heldBillId]);
+    else saveBillDraft({ lines: toDraftLines(lines), details, heldBillId });
+  }, [restored, lines, details, heldBillId]);
 
   // ---- Keyboard shortcuts ---------------------------------------------------------
   useEffect(() => {

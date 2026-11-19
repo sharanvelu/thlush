@@ -1,6 +1,6 @@
 /**
  * The unsaved bill on the New bill screen, kept in the browser so it survives navigating to another page and
- * back. Cleared on sign-in and sign-out, and ignored when it belongs to a different user. Browser only.
+ * back. One draft per browser, cleared on every sign-in and sign-out. Browser only.
  */
 import type { CartLine } from "@/components/pos/pos-cart";
 import type { BillDetailsDraft } from "@/components/pos/pos-types";
@@ -18,7 +18,6 @@ export interface DraftLine {
 }
 
 export interface BillDraft {
-  userId: number | string;
   lines: DraftLine[];
   details: BillDetailsDraft;
   heldBillId: number | null;
@@ -35,12 +34,12 @@ export function toDraftLines(lines: CartLine[]): DraftLine[] {
   }));
 }
 
-export function loadBillDraft(userId: number | string): BillDraft | null {
+export function loadBillDraft(): BillDraft | null {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return null;
     const draft = JSON.parse(raw) as BillDraft;
-    if (draft.userId !== userId || !Array.isArray(draft.lines)) return null;
+    if (!Array.isArray(draft.lines)) return null;
     return draft;
   } catch {
     return null;

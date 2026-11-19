@@ -34,7 +34,6 @@ export default async function BillingPage() {
       items={items}
       categories={categories}
       initialHeld={held}
-      userId={user.id}
       appSettings={appSettings}
       settings={{
         currency: appSettings.locale.currency,
