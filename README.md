@@ -34,6 +34,7 @@ The login page offers these as one-click fill-ins, but only when `NEXT_PUBLIC_AP
 | `AUTH_SECRET`                                       | yes      | Signs session cookies (`openssl rand -base64 32`).                   |
 | `NEXT_PUBLIC_BASE_URL`                              | yes      | Public URL of the app.                                               |
 | `NEXT_PUBLIC_APP_ENV`                               | yes      | `local`, `staging` or `production`. The seed refuses to run in production. |
+| `APP_DOMAIN_POS`, `APP_DOMAIN_CUSTOMER`             | no       | Hostnames (no `https://`) for the staff app and the customer site, both added as domains on the one Vercel project. Leave empty for local development. When set, any other host (including `*.vercel.app`) gets an empty 404. |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | no     | Set all three to enable "Sign in with SSO". Works with Authentik and Keycloak. |
 | `AUTH_TRUST_HOST`                                   | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production. |
 | `DB_TABLE_PREFIX`                                   | no       | Table-name prefix, default `app_`.                                   |
