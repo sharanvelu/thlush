@@ -22,6 +22,7 @@ import { ProductPanel, type PosCategory } from "@/components/pos/product-panel";
 import { SuccessDialog } from "@/components/pos/success-dialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { clearBillDraft, loadBillDraft, saveBillDraft, toDraftLines } from "@/lib/bill-draft";
 import { api, ApiClientError, errorMessage } from "@/lib/api-client";
 import { D, formatMoney, toDecimal } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
@@ -69,6 +70,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   const [cartOpen, setCartOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [resumeId, setResumeId] = useState<number | null>(null);
+  const [restored, setRestored] = useState(false);
 
   // ---- Derived totals ---------------------------------------------------------
   const billDiscount = useMemo(() => {
@@ -251,6 +253,38 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
     },
     [items, lines.length],
   );
+
+  // ---- Unsaved bill kept in the browser -----------------------------------------
+  // Restore after mount (not during the first render, which would not match the server's HTML).
+  /* eslint-disable react-hooks/set-state-in-effect -- reading browser storage can only happen after mount */
+  useEffect(() => {
+    const draft = loadBillDraft();
+    if (draft) {
+      const rebuilt: CartLine[] = [];
+      for (const l of draft.lines) {
+        const item = items.find((i) => i.id === l.itemId);
+        if (!item || item.status !== "active") continue;
+        if (l.variant && !item.variants.some((v) => v.name === l.variant)) continue;
+        if (!l.addons.every((name) => item.addons.some((a) => a.name === name))) continue;
+        rebuilt.push({ ...l, key: lineKey(item.id, l.variant, l.addons), item });
+      }
+      if (rebuilt.length > 0) {
+        dispatch({ type: "replace", lines: rebuilt });
+        setDetails({ ...EMPTY_DETAILS, ...draft.details });
+        setHeldBillId(draft.heldBillId);
+      }
+    }
+    setRestored(true);
+    // Once, on mount: later menu refreshes must not overwrite what is on the screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!restored) return;
+    if (lines.length === 0) clearBillDraft();
+    else saveBillDraft({ lines: toDraftLines(lines), details, heldBillId });
+  }, [restored, lines, details, heldBillId]);
 
   // ---- Keyboard shortcuts ---------------------------------------------------------
   useEffect(() => {
