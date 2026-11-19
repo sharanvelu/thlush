@@ -2,13 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, KeyRound, LoaderCircle } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { loginAction, ssoLoginAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { clearBillDraft } from "@/lib/bill-draft";
 
 const schema = z.object({
   email: z.email("Enter a valid email address."),
@@ -35,6 +36,9 @@ export function LoginForm({ redirectTo, ssoEnabled, authError }: LoginFormProps)
   const [formError, setFormError] = useState<string | null>(ssoErrorMessage(authError));
   const [pending, startTransition] = useTransition();
   const [ssoPending, startSso] = useTransition();
+
+  // Arriving at sign-in means a sign-out (or an expired session): the next user starts with an empty bill.
+  useEffect(() => clearBillDraft(), []);
 
   const {
     register,

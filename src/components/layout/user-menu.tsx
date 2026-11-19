@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { SessionUser } from "@/types/user";
 import { endProviderSessionInBackground } from "@/lib/background-logout";
+import { clearBillDraft } from "@/lib/bill-draft";
 import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
@@ -36,6 +37,7 @@ export function UserMenu({ user }: { user: SessionUser }) {
   // a URL comes back: send the logout request to the provider (the loader stays up meanwhile), then go to the sign-in page.
   const logout = () =>
     startLogout(async () => {
+      clearBillDraft();
       const { backgroundUrl } = await logoutAction();
       if (backgroundUrl) {
         await endProviderSessionInBackground(backgroundUrl);
