@@ -5,6 +5,7 @@ import {
   Loader2,
   Minus,
   Package,
+  Pencil,
   Percent,
   Plus,
   Printer,
@@ -54,6 +55,8 @@ interface CartPanelProps {
   /** Parks the bill and prints a kitchen slip with only the items not sent before. */
   onSendKitchen: () => void;
   onClear: () => void;
+  /** Opens the size and extras picker for a line. */
+  onEditOptions: (line: CartLine) => void;
 }
 
 const ORDER_TYPES: OrderType[] = ["dine_in", "takeaway", "delivery"];
@@ -76,6 +79,7 @@ export function CartPanel(props: CartPanelProps) {
     onHold,
     onSendKitchen,
     onClear,
+    onEditOptions,
   } = props;
   const baseId = useId();
   const [discountOpen, setDiscountOpen] = useState<Set<string>>(new Set());
@@ -198,6 +202,18 @@ export function CartPanel(props: CartPanelProps) {
                       </Button>
                     </div>
                     <div className="flex items-center gap-1">
+                      {(line.item.variants.length > 0 || line.item.addons.length > 0) && new D(line.sentQty).isZero() ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-9"
+                          onClick={() => onEditOptions(line)}
+                          aria-label={`Edit size and extras for ${line.item.name}`}
+                        >
+                          <Pencil className="size-4" aria-hidden />
+                        </Button>
+                      ) : null}
                       {settings.discountsEnabled ? (
                         <Button
                           type="button"

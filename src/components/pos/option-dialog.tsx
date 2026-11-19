@@ -23,12 +23,24 @@ interface OptionDialogProps {
   settings: PosSettings;
   onCancel: () => void;
   onConfirm: (variant: string | null, addons: string[]) => void;
+  /** Starting choices when editing a line already on the bill. */
+  initialVariant?: string | null;
+  initialAddons?: string[];
+  confirmLabel?: string;
 }
 
 /** Choose a size and extras for an item that has them. A variant is required when the item has any. */
-export function OptionDialog({ item, settings, onCancel, onConfirm }: OptionDialogProps) {
-  const [variant, setVariant] = useState<string | null>(item?.variants[0]?.name ?? null);
-  const [addons, setAddons] = useState<string[]>([]);
+export function OptionDialog({
+  item,
+  settings,
+  onCancel,
+  onConfirm,
+  initialVariant,
+  initialAddons,
+  confirmLabel = "Add to bill",
+}: OptionDialogProps) {
+  const [variant, setVariant] = useState<string | null>(initialVariant ?? item?.variants[0]?.name ?? null);
+  const [addons, setAddons] = useState<string[]>(initialAddons ?? []);
 
   if (!item) return null;
   const money = (v: string) => formatMoney(v, { currency: settings.currency, locale: settings.locale });
@@ -89,7 +101,7 @@ export function OptionDialog({ item, settings, onCancel, onConfirm }: OptionDial
               Cancel
             </Button>
             <Button onClick={() => onConfirm(variant, addons)} disabled={item.variants.length > 0 && !variant} autoFocus>
-              Add to bill
+              {confirmLabel}
             </Button>
           </div>
         </DialogFooter>

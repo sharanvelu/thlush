@@ -73,6 +73,7 @@ export type CartAction =
   | { type: "setQuantity"; key: string; quantity: string }
   | { type: "setDiscount"; key: string; discount: string }
   | { type: "remove"; key: string }
+  | { type: "setOptions"; key: string; variant: string | null; addons: string[] }
   | { type: "replace"; lines: CartLine[] }
   | { type: "clear" };
 
@@ -111,6 +112,22 @@ export function cartReducer(state: CartLine[], action: CartAction): CartLine[] {
       });
     case "setDiscount":
       return state.map((l) => (l.key === action.key ? { ...l, discount: action.discount } : l));
+    case "setOptions": {
+      // A line the kitchen has already been sent keeps its options.
+      const line = state.find((l) => l.key === action.key);
+      if (!line || new D(line.sentQty).greaterThan(0)) return state;
+      const key = lineKey(line.item.id, action.variant, action.addons);
+      if (key === line.key) return state;
+      const next = { ...line, key, variant: action.variant, addons: action.addons };
+      const twin = state.find((l) => l.key === key);
+      // The same choice is already on the bill: fold this line into it.
+      if (twin) {
+        return state
+          .filter((l) => l.key !== line.key)
+          .map((l) => (l.key === key ? { ...l, quantity: new D(l.quantity).plus(line.quantity).toString() } : l));
+      }
+      return state.map((l) => (l.key === line.key ? next : l));
+    }
     case "remove":
       return state.filter((l) => l.key !== action.key || new D(l.sentQty).greaterThan(0));
     case "replace":

@@ -67,6 +67,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   const [saved, setSaved] = useState<SavedBill | null>(null);
 
   const [optionItem, setOptionItem] = useState<PosItem | null>(null);
+  const [editLine, setEditLine] = useState<CartLine | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [resumeId, setResumeId] = useState<number | null>(null);
@@ -358,6 +359,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       onSave={() => void submit("complete")}
       onHold={() => void submit("hold")}
       onSendKitchen={() => void submit("kot")}
+      onEditOptions={setEditLine}
       onClear={() => (lines.length > 0 ? setConfirmClear(true) : resetBill())}
     />
   );
@@ -405,6 +407,20 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         onConfirm={(variant, addons) => {
           if (optionItem) dispatch({ type: "add", item: optionItem, variant, addons });
           setOptionItem(null);
+        }}
+      />
+
+      <OptionDialog
+        key={editLine?.key ?? "none-edit"}
+        item={editLine?.item ?? null}
+        settings={settings}
+        initialVariant={editLine?.variant}
+        initialAddons={editLine?.addons}
+        confirmLabel="Update item"
+        onCancel={() => setEditLine(null)}
+        onConfirm={(variant, addons) => {
+          if (editLine) dispatch({ type: "setOptions", key: editLine.key, variant, addons });
+          setEditLine(null);
         }}
       />
 
