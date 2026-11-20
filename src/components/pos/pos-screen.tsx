@@ -39,7 +39,7 @@ interface PosScreenProps {
   initialHeld: HeldBillSummary[];
 }
 
-const INITIAL_PAYMENT: PaymentState = { split: false, method: "cash", received: "", reference: "", rows: [] };
+const INITIAL_PAYMENT: PaymentState = { split: false, method: "upi", received: "", reference: "", rows: [] };
 const MONEY_PATTERN = /^\d{1,9}(\.\d{1,2})?$/;
 
 /** A fresh id per save attempt. `randomUUID` needs HTTPS, so fall back for tablets on a plain LAN address. */

@@ -61,7 +61,7 @@ export function PaymentPanel({ state, onChange, total, result, settings }: Payme
 
   const addRow = () => {
     const remaining = new D(result.remaining);
-    onChange({ ...state, rows: [...state.rows, newRow(state.rows.length === 0 ? "cash" : "upi", remaining.greaterThan(0) ? remaining.toFixed(2) : "")] });
+    onChange({ ...state, rows: [...state.rows, newRow(state.rows.length === 0 ? "upi" : "cash", remaining.greaterThan(0) ? remaining.toFixed(2) : "")] });
   };
 
   return (
