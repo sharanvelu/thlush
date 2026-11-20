@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray, max, sql } from "drizzle-orm";
 import { db, schema, type DbExecutor, type Transaction } from "@/db";
 import { hasPermission } from "@/config/permissions";
+import { addonLabel } from "@/lib/addons";
+import { lineTitle } from "@/lib/line-label";
 import { businessDayKey } from "@/lib/dates";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { HttpError } from "@/lib/errors";
@@ -306,11 +308,10 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
             const line = plan.lines[index];
             if (!line) throw new Error("Kitchen line missing");
             return {
-              name: line.name,
+              // "Cold Coffee (Large)", with each add-on on a line of its own below it.
+              name: lineTitle(line.name, line.options),
               quantity,
-              details: [line.options?.variant, ...(line.options?.addons?.map((a) => `+ ${a.name}`) ?? [])].filter(
-                (d): d is string => Boolean(d),
-              ),
+              details: line.options?.addons?.map(addonLabel) ?? [],
             };
           }),
         });

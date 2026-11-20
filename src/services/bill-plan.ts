@@ -6,6 +6,8 @@
  * passed in here, so a tampered or stale client can never change what is billed.
  * Persisting the plan (numbering, stock, rows) is `BillingService`'s job.
  */
+import { type AddonChoice } from "@/lib/addons";
+import { optionsSuffix } from "@/lib/line-label";
 import { HttpError } from "@/lib/errors";
 import { D, parseMoney, parseQuantity, round2, type Dec } from "@/lib/money";
 import type { BillSaveInput } from "@/lib/validation/bill";
@@ -90,10 +92,9 @@ const unavailable = (name: string) => HttpError.conflict(`"${name}" is no longer
 function resolveOptions(
   item: PlanItem,
   variantName: string | null,
-  addonNames: string[],
+  addonChoices: AddonChoice[],
 ): { unitPrice: Dec; label: string; options: BillItemOptions | null } {
   let unitPrice = new D(item.price);
-  const labelParts: string[] = [];
   const options: BillItemOptions = {};
 
   if (item.variants.length > 0) {
@@ -101,28 +102,31 @@ function resolveOptions(
     const variant = item.variants.find((v) => v.name === variantName);
     if (!variant) throw unavailable(`${item.name} (${variantName})`);
     unitPrice = unitPrice.plus(variant.priceDelta);
-    labelParts.push(variant.name);
     options.variant = variant.name;
   } else if (variantName) {
     throw HttpError.badRequest(`"${item.name}" has no variants.`);
   }
 
-  if (addonNames.length > 0) {
-    if (new Set(addonNames).size !== addonNames.length) {
+  if (addonChoices.length > 0) {
+    // One entry per add-on: a repeat is a mistake, because "twice" is sent as a quantity.
+    if (new Set(addonChoices.map((a) => a.name)).size !== addonChoices.length) {
       throw HttpError.badRequest(`An add-on is repeated on "${item.name}".`);
     }
-    options.addons = addonNames.map((addonName) => {
-      const addon = item.addons.find((a) => a.name === addonName);
-      if (!addon) throw unavailable(`${item.name} + ${addonName}`);
-      unitPrice = unitPrice.plus(addon.price);
-      return { name: addon.name, price: parseMoney(addon.price) };
+    options.addons = addonChoices.map((choice) => {
+      const addon = item.addons.find((a) => a.name === choice.name);
+      if (!addon) throw unavailable(`${item.name} + ${choice.name}`);
+      unitPrice = unitPrice.plus(new D(addon.price).times(choice.quantity));
+      return {
+        name: addon.name,
+        price: parseMoney(addon.price),
+        ...(choice.quantity > 1 ? { quantity: choice.quantity } : {}),
+      };
     });
-    labelParts.push(`+ ${addonNames.join(", ")}`);
   }
 
   if (unitPrice.isNegative()) throw HttpError.badRequest(`The price of "${item.name}" cannot be negative.`);
-  const label = labelParts.length > 0 ? `${item.name} (${labelParts.join(" ")})` : item.name;
-  return { unitPrice: round2(unitPrice), label, options: Object.keys(options).length > 0 ? options : null };
+  const saved = Object.keys(options).length > 0 ? options : null;
+  return { unitPrice: round2(unitPrice), label: `${item.name}${optionsSuffix(saved)}`, options: saved };
 }
 
 export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanItem>, settings: PlanSettings): BillPlan {

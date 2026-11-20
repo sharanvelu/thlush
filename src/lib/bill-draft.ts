@@ -2,6 +2,7 @@
  * The unsaved bill on the New bill screen, kept in the browser so it survives navigating to another page and
  * back. One draft per browser, cleared on every sign-in and sign-out. Browser only.
  */
+import { normalizeAddons, type AddonChoice } from "@/lib/addons";
 import type { CartLine } from "@/components/pos/pos-cart";
 import type { BillDetailsDraft } from "@/components/pos/pos-types";
 
@@ -11,7 +12,7 @@ const KEY = "thlush:bill-draft";
 export interface DraftLine {
   itemId: number;
   variant: string | null;
-  addons: string[];
+  addons: AddonChoice[];
   quantity: string;
   discount: string;
   sentQty: string;
@@ -40,7 +41,8 @@ export function loadBillDraft(): BillDraft | null {
     if (!raw) return null;
     const draft = JSON.parse(raw) as BillDraft;
     if (!Array.isArray(draft.lines)) return null;
-    return draft;
+    // A draft saved before add-ons had quantities lists them as plain names.
+    return { ...draft, lines: draft.lines.map((l) => ({ ...l, addons: normalizeAddons(l.addons) })) };
   } catch {
     return null;
   }

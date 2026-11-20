@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { D } from "@/lib/money";
 import { money, type ReceiptModel } from "@/lib/receipt";
 import { formatMoney } from "@/lib/money";
@@ -30,6 +31,7 @@ export function ReceiptView({ model }: { model: ReceiptModel }) {
         .receipt .kv { display: flex; justify-content: space-between; gap: 8px; }
         .receipt .total { font-size: 14px; font-weight: 700; }
         .receipt .note { font-style: italic; padding-left: 8px; }
+        .receipt .extra td { font-size: 0.92em; padding-top: 0; }
         .receipt .stamp { font-size: 14px; font-weight: 700; letter-spacing: 2px; margin: 4px 0; }
         @media print {
           html, body { background: #fff !important; }
@@ -72,15 +74,26 @@ export function ReceiptView({ model }: { model: ReceiptModel }) {
           </thead>
           <tbody>
             {model.items.map((item, index) => (
-              <tr key={`${item.name}-${index}`}>
-                <td>
-                  {item.name}
-                  {item.note ? <div className="note">{item.note}</div> : null}
-                </td>
-                <td className="num">{item.quantity}</td>
-                {wide ? <td className="num">{m(item.unitPrice)}</td> : null}
-                <td className="num">{m(item.amount)}</td>
-              </tr>
+              <Fragment key={`${item.name}-${index}`}>
+                <tr>
+                  <td>
+                    {item.name}
+                    {item.note ? <div className="note">{item.note}</div> : null}
+                  </td>
+                  <td className="num">{item.quantity}</td>
+                  {wide ? <td className="num">{m(item.unitPrice)}</td> : null}
+                  <td className="num">{m(item.amount)}</td>
+                </tr>
+                {/* Add-ons: one indented line each, with their own price. */}
+                {item.extras.map((extra) => (
+                  <tr key={extra.label} className="extra">
+                    <td style={{ paddingLeft: "1.2em" }}>{extra.label}</td>
+                    <td />
+                    {wide ? <td /> : null}
+                    <td className="num">{m(extra.amount)}</td>
+                  </tr>
+                ))}
+              </Fragment>
             ))}
           </tbody>
         </table>

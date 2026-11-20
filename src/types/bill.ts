@@ -32,7 +32,7 @@ export interface BillDetailItem {
   /** Final line amount including tax. */
   total: string;
   /** The variant and add-ons chosen on the billing screen, if any. */
-  options: { variant?: string; addons?: Array<{ name: string; price: string }> } | null;
+  options: { variant?: string; addons?: Array<{ name: string; price: string; quantity?: number }> } | null;
   /** How much of `quantity` has been sent to the kitchen. */
   sentQty: string;
   /** A packaging charge line added by the system. */

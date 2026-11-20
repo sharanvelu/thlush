@@ -6,6 +6,7 @@
  * these numbers are for display and for deciding whether Save may be pressed.
  */
 import type { MenuAddon, MenuVariant } from "@/db/schema";
+import { addonsKey, type AddonChoice } from "@/lib/addons";
 import { D, parseMoney, parseQuantity, toDecimal, type Dec } from "@/lib/money";
 import { calculateBill, type BillDiscountInput, type BillTotals } from "@/services/calculations";
 import { packagingLines, type PackagingLine } from "@/services/packaging";
@@ -39,7 +40,7 @@ export interface CartLine {
   key: string;
   item: PosItem;
   variant: string | null;
-  addons: string[];
+  addons: AddonChoice[];
   quantity: string;
   /** Flat amount off this line, as typed. Empty means none. */
   discount: string;
@@ -47,15 +48,17 @@ export interface CartLine {
   sentQty: string;
 }
 
-export function lineKey(itemId: number, variant: string | null, addons: string[]): string {
-  return `${itemId}|${variant ?? ""}|${[...addons].sort().join(",")}`;
+export function lineKey(itemId: number, variant: string | null, addons: AddonChoice[]): string {
+  return `${itemId}|${variant ?? ""}|${addonsKey(addons)}`;
 }
 
 /** Unit price with the chosen variant and add-ons, before tax. */
-export function unitPriceOf(item: PosItem, variant: string | null, addons: string[]): Dec {
+export function unitPriceOf(item: PosItem, variant: string | null, addons: AddonChoice[]): Dec {
   let price = new D(item.price);
   if (variant) price = price.plus(item.variants.find((v) => v.name === variant)?.priceDelta ?? 0);
-  for (const name of addons) price = price.plus(item.addons.find((a) => a.name === name)?.price ?? 0);
+  for (const { name, quantity } of addons) {
+    price = price.plus(new D(item.addons.find((a) => a.name === name)?.price ?? 0).times(quantity));
+  }
   return price;
 }
 
@@ -68,12 +71,12 @@ function normalizeQuantity(item: PosItem, value: Dec): Dec {
 }
 
 export type CartAction =
-  | { type: "add"; item: PosItem; variant?: string | null; addons?: string[] }
+  | { type: "add"; item: PosItem; variant?: string | null; addons?: AddonChoice[] }
   | { type: "step"; key: string; direction: 1 | -1 }
   | { type: "setQuantity"; key: string; quantity: string }
   | { type: "setDiscount"; key: string; discount: string }
   | { type: "remove"; key: string }
-  | { type: "setOptions"; key: string; variant: string | null; addons: string[] }
+  | { type: "setOptions"; key: string; variant: string | null; addons: AddonChoice[] }
   | { type: "replace"; lines: CartLine[] }
   | { type: "clear" };
 

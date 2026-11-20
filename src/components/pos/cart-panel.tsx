@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { addonLabel } from "@/lib/addons";
 import { D, formatMoney } from "@/lib/money";
 import { ORDER_TYPE_LABELS, type OrderType } from "@/types/bill";
 
@@ -138,7 +139,7 @@ export function CartPanel(props: CartPanelProps) {
               const result = totals.lines[index];
               const unit = unitPriceOf(line.item, line.variant, line.addons);
               const discountShown = discountOpen.has(line.key) || line.discount !== "";
-              const optionText = [line.variant, ...line.addons.map((a) => `+ ${a}`)].filter(Boolean).join(" ");
+              const optionText = [line.variant, ...line.addons.map(addonLabel)].filter(Boolean).join(" ");
               return (
                 <li key={line.key} className="flex flex-col gap-2 py-3 first:pt-0">
                   <div className="flex items-start justify-between gap-3">

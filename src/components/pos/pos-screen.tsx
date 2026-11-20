@@ -22,6 +22,7 @@ import { ProductPanel, type PosCategory } from "@/components/pos/product-panel";
 import { SuccessDialog } from "@/components/pos/success-dialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { normalizeAddons } from "@/lib/addons";
 import { clearBillDraft, loadBillDraft, saveBillDraft, toDraftLines } from "@/lib/bill-draft";
 import { api, ApiClientError, errorMessage } from "@/lib/api-client";
 import { D, formatMoney, toDecimal } from "@/lib/money";
@@ -212,12 +213,12 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
           if (row.isPackaging) continue; // Added again from the settings when the bill is saved.
           const item = items.find((i) => i.id === row.menuItemId);
           const variant = row.options?.variant ?? null;
-          const addons = row.options?.addons?.map((a) => a.name) ?? [];
+          const addons = normalizeAddons(row.options?.addons);
           const stillValid =
             item &&
             item.status === "active" &&
             (!variant || item.variants.some((v) => v.name === variant)) &&
-            addons.every((name) => item.addons.some((a) => a.name === name));
+            addons.every((choice) => item.addons.some((a) => a.name === choice.name));
           if (!item || !stillValid) {
             skipped.push(row.name);
             continue;
@@ -266,7 +267,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         const item = items.find((i) => i.id === l.itemId);
         if (!item || item.status !== "active") continue;
         if (l.variant && !item.variants.some((v) => v.name === l.variant)) continue;
-        if (!l.addons.every((name) => item.addons.some((a) => a.name === name))) continue;
+        if (!l.addons.every((choice) => item.addons.some((a) => a.name === choice.name))) continue;
         rebuilt.push({ ...l, key: lineKey(item.id, l.variant, l.addons), item });
       }
       if (rebuilt.length > 0) {
