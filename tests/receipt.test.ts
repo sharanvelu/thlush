@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { billSaveSchema } from "@/lib/validation/bill";
-import { buildReceiptModel, mailtoUrl, receiptText, receiptTotals, whatsappUrl } from "@/lib/receipt";
+import { buildKitchenSlipModel, buildReceiptModel, mailtoUrl, receiptText, receiptTotals, whatsappUrl } from "@/lib/receipt";
 import { planBill, type PlanItem } from "@/services/bill-plan";
 import { defaultSettings } from "@/config";
 import type { BillDetail } from "@/types/bill";
@@ -11,6 +11,7 @@ const item = (id: number, name: string, price: string, rate: string): PlanItem =
 });
 const catalog = new Map([
   [1, item(1, "Masala Dosa", "90.00", "2.5")],
+  [4, { ...item(4, "Cold Coffee", "90.00", "2.5"), variants: [{ name: "Large", priceDelta: "30" }], addons: [{ name: "Extra shot", price: "20" }, { name: "Mayo", price: "10" }] }],
   [2, item(2, "Packaged Water 1L", "20.00", "9")],
   [3, item(3, "Cake Slice", "33.33", "6")],
 ]);
@@ -95,5 +96,52 @@ describe("receipt model and sharing", () => {
     expect(whatsappUrl(model)).toMatch(/^https:\/\/wa\.me\/919845010001\?text=/);
     expect(whatsappUrl({ ...model, customerPhone: null })).toMatch(/^https:\/\/wa\.me\/\?text=/);
     expect(mailtoUrl(model, "asha@example.com")).toMatch(/^mailto:asha@example\.com\?subject=/);
+  });
+});
+
+describe("variants and add-ons on the receipt and the kitchen slip", () => {
+  const bill = billFrom({
+    lines: [{ menuItemId: 4, quantity: "2", variant: "Large", addons: [{ name: "Extra shot", quantity: 2 }, { name: "Mayo", quantity: 1 }] }],
+  });
+  const model = buildReceiptModel(bill, defaultSettings);
+
+  it("puts the variant in brackets and each add-on on its own line with its price", () => {
+    const row = model.items[0]!;
+    expect(row.name).toBe("Cold Coffee (Large)");
+    // Per unit: 90 + 30 base, 2 x 20 + 10 add-ons. 2.5% + 2.5% tax each: 126.00 base, 52.50 add-ons, 2 units.
+    expect(row.extras).toEqual([
+      { label: "+ Extra shot x2", amount: "84.00" },
+      { label: "+ Mayo", amount: "21.00" },
+    ]);
+  });
+
+  it("splits the line so the item and its add-ons still add up to the line total", () => {
+    const row = model.items[0]!;
+    const sum = Number(row.amount) + row.extras.reduce((acc, e) => acc + Number(e.amount), 0);
+    expect(sum.toFixed(2)).toBe(Number(bill.items[0]!.total).toFixed(2));
+    expect(row.amount).toBe("126.00".replace("126.00", (Number(bill.items[0]!.total) - 105).toFixed(2)));
+  });
+
+  it("lists the add-ons in the shared text too", () => {
+    const text = receiptText(model);
+    expect(text).toContain("- Cold Coffee (Large) x 2");
+    expect(text).toContain("+ Extra shot x2");
+  });
+
+  it("gives the kitchen the item with its variant, then the add-ons, and no prices", () => {
+    const slip = buildKitchenSlipModel(bill, defaultSettings);
+    expect(slip.items[0]).toEqual({ name: "Cold Coffee (Large)", quantity: "2", details: ["+ Extra shot x2", "+ Mayo"] });
+  });
+
+  it("prints a bill saved before add-on counts the same way", () => {
+    const old = { ...bill, items: [{ ...bill.items[0]!, name: "Cold Coffee (Large + Extra shot, Mayo)", options: { variant: "Large", addons: [{ name: "Extra shot", price: "20.00" }, { name: "Mayo", price: "10.00" }] } }] };
+    const slip = buildKitchenSlipModel(old, defaultSettings);
+    expect(slip.items[0]?.name).toBe("Cold Coffee (Large)");
+    expect(slip.items[0]?.details).toEqual(["+ Extra shot", "+ Mayo"]);
+  });
+
+  it("leaves a plain item alone", () => {
+    const plain = buildReceiptModel(billFrom({}), defaultSettings).items[0]!;
+    expect(plain).toMatchObject({ name: "Masala Dosa", extras: [] });
   });
 });

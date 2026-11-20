@@ -42,6 +42,8 @@ export function receiptToEscPos(model: ReceiptModel): Uint8Array {
   for (const item of model.items) {
     p.row(item.name, m(item.amount));
     p.line(`  ${item.quantity} x ${m(item.unitPrice)}`);
+    // Each add-on on its own indented line, with its price at the right like the item's.
+    for (const extra of item.extras) p.row(`  ${extra.label}`, m(extra.amount));
     if (item.note) p.line(`  ${item.note}`);
   }
   p.rule();

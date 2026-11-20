@@ -39,6 +39,16 @@ describe("allocateSent", () => {
     );
   });
 
+  it("treats a different count of the same add-on as a different item", () => {
+    expect(sentKey(1, { addons: [{ name: "a", price: "1", quantity: 2 }] })).not.toBe(
+      sentKey(1, { addons: [{ name: "a", price: "1", quantity: 3 }] }),
+    );
+    // No quantity stored (older bills) means one.
+    expect(sentKey(1, { addons: [{ name: "a", price: "1" }] })).toBe(
+      sentKey(1, { addons: [{ name: "a", price: "1", quantity: 1 }] }),
+    );
+  });
+
   it("refuses to drop or reduce an item that was already sent", () => {
     expect(() => allocateSent([prev(1, "2.000")], [line(2, "1")], "send")).toThrow(/already sent/);
     expect(() => allocateSent([prev(1, "2.000")], [line(1, "1")], "keep")).toThrow(/already sent/);

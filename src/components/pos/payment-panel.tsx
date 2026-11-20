@@ -18,7 +18,8 @@ import { D, formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/types/bill";
 
-const METHODS: PaymentMethod[] = ["cash", "card", "upi", "other"];
+/** The order the methods are listed in, in both the single and split payment pickers. */
+const METHODS: PaymentMethod[] = ["upi", "cash", "card", "other"];
 
 interface PaymentPanelProps {
   state: PaymentState;

@@ -102,6 +102,38 @@ describe("planBill: pricing", () => {
     expect(plan.totals.grandTotal).toBe("152.26");
   });
 
+  it("prices an add-on taken several times and records the count", () => {
+    const plan = planBill(
+      request({
+        lines: [{ menuItemId: 2, quantity: "2", variant: "Large", addons: [{ name: "Extra shot", quantity: 3 }] }],
+        payments: [{ method: "upi", amount: "409.50" }],
+      }),
+      catalog(coffee),
+      settings,
+    );
+    // 90 + 30 + 3 x 25 = 195 each, two of them, plus 5% tax
+    expect(plan.lines[0]?.price).toBe("195.00");
+    expect(plan.totals.grandTotal).toBe("409.50");
+    expect(plan.lines[0]?.name).toBe("Cold Coffee (Large + Extra shot x3)");
+    expect(plan.lines[0]?.options).toEqual({ variant: "Large", addons: [{ name: "Extra shot", price: "25.00", quantity: 3 }] });
+  });
+
+  it("still accepts add-ons sent as plain names, meaning one each", () => {
+    const parsed = billSaveSchema.parse({
+      action: "hold",
+      clientRef: "abcdefgh",
+      lines: [{ menuItemId: 2, quantity: "1", variant: "Regular", addons: ["Extra shot"] }],
+    });
+    expect(parsed.lines[0]?.addons).toEqual([{ name: "Extra shot", quantity: 1 }]);
+  });
+
+  it("rejects an add-on count of zero or more than the limit", () => {
+    const line = { menuItemId: 2, quantity: "1", variant: "Regular" };
+    const base = { action: "hold", clientRef: "abcdefgh" };
+    expect(billSaveSchema.safeParse({ ...base, lines: [{ ...line, addons: [{ name: "Extra shot", quantity: 0 }] }] }).success).toBe(false);
+    expect(billSaveSchema.safeParse({ ...base, lines: [{ ...line, addons: [{ name: "Extra shot", quantity: 21 }] }] }).success).toBe(false);
+  });
+
   it("requires a variant when the item has them, and rejects unknown ones", () => {
     expectHttp(400, () => planBill(request({ lines: [{ menuItemId: 2, quantity: "1" }] }), catalog(coffee), settings), /Choose a variant/);
     expectHttp(409, () => planBill(request({ lines: [{ menuItemId: 2, quantity: "1", variant: "Huge" }] }), catalog(coffee), settings));

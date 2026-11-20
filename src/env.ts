@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeHost } from "@/lib/host-routing";
 
 /** Treat empty strings (e.g. `OIDC_ISSUER=`) as unset. */
 const optionalString = z.preprocess(
@@ -17,11 +18,23 @@ const envSchema = z
     AUTH_SECRET: z.string().min(16, "AUTH_SECRET must be at least 16 characters"),
     NEXT_PUBLIC_BASE_URL: z.url().default("http://localhost:3000"),
     NEXT_PUBLIC_APP_ENV: z.enum(["local", "staging", "production"]).default("local"),
+    // Hostnames (no scheme) the POS and the customer site are served on. Both empty: development and previews.
+    APP_DOMAIN_POS: optionalString,
+    APP_DOMAIN_CUSTOMER: optionalString,
     OIDC_ISSUER: optionalUrl,
     OIDC_CLIENT_ID: optionalString,
     OIDC_CLIENT_SECRET: optionalString,
   })
   .superRefine((env, ctx) => {
+    const pos = normalizeHost(env.APP_DOMAIN_POS);
+    const customer = normalizeHost(env.APP_DOMAIN_CUSTOMER);
+    if (pos && pos === customer) {
+      ctx.addIssue({
+        code: "custom",
+        message: "APP_DOMAIN_POS and APP_DOMAIN_CUSTOMER must be different domains.",
+        path: ["APP_DOMAIN_CUSTOMER"],
+      });
+    }
     const set = [env.OIDC_ISSUER, env.OIDC_CLIENT_ID, env.OIDC_CLIENT_SECRET].filter(Boolean);
     if (set.length > 0 && set.length < 3) {
       ctx.addIssue({

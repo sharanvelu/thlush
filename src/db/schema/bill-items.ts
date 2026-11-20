@@ -5,7 +5,8 @@ import { menuItems } from "./menu-items";
 
 export interface BillItemOptions {
   variant?: string;
-  addons?: Array<{ name: string; price: string }>;
+  /** `price` is for one; `quantity` is left out when it is 1 (older bills never have it). */
+  addons?: Array<{ name: string; price: string; quantity?: number }>;
 }
 
 /**

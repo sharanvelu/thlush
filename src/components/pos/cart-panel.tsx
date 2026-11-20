@@ -5,6 +5,7 @@ import {
   Loader2,
   Minus,
   Package,
+  Pencil,
   Percent,
   Plus,
   Printer,
@@ -32,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { addonLabel } from "@/lib/addons";
 import { D, formatMoney } from "@/lib/money";
 import { ORDER_TYPE_LABELS, type OrderType } from "@/types/bill";
 
@@ -54,6 +56,8 @@ interface CartPanelProps {
   /** Parks the bill and prints a kitchen slip with only the items not sent before. */
   onSendKitchen: () => void;
   onClear: () => void;
+  /** Opens the size and extras picker for a line. */
+  onEditOptions: (line: CartLine) => void;
 }
 
 const ORDER_TYPES: OrderType[] = ["dine_in", "takeaway", "delivery"];
@@ -76,6 +80,7 @@ export function CartPanel(props: CartPanelProps) {
     onHold,
     onSendKitchen,
     onClear,
+    onEditOptions,
   } = props;
   const baseId = useId();
   const [discountOpen, setDiscountOpen] = useState<Set<string>>(new Set());
@@ -134,7 +139,7 @@ export function CartPanel(props: CartPanelProps) {
               const result = totals.lines[index];
               const unit = unitPriceOf(line.item, line.variant, line.addons);
               const discountShown = discountOpen.has(line.key) || line.discount !== "";
-              const optionText = [line.variant, ...line.addons.map((a) => `+ ${a}`)].filter(Boolean).join(" ");
+              const optionText = [line.variant, ...line.addons.map(addonLabel)].filter(Boolean).join(" ");
               return (
                 <li key={line.key} className="flex flex-col gap-2 py-3 first:pt-0">
                   <div className="flex items-start justify-between gap-3">
@@ -198,6 +203,18 @@ export function CartPanel(props: CartPanelProps) {
                       </Button>
                     </div>
                     <div className="flex items-center gap-1">
+                      {(line.item.variants.length > 0 || line.item.addons.length > 0) && new D(line.sentQty).isZero() ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-9"
+                          onClick={() => onEditOptions(line)}
+                          aria-label={`Edit size and extras for ${line.item.name}`}
+                        >
+                          <Pencil className="size-4" aria-hidden />
+                        </Button>
+                      ) : null}
                       {settings.discountsEnabled ? (
                         <Button
                           type="button"

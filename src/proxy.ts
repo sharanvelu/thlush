@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 import { canAccessPath } from "@/config/permissions";
+import { routeForHost } from "@/lib/host-routing";
 import type { ApiFailure } from "@/types/api";
 
 /**
@@ -25,6 +26,17 @@ function json(body: ApiFailure, status: number) {
 export default auth((req) => {
   const { nextUrl } = req;
   const { pathname, search } = nextUrl;
+
+  // Which domain is this? The customer domain only ever reaches the customer pages, and an unknown domain
+  // gets an empty 404 (not a redirect to /login, which would give the POS away).
+  const route = routeForHost(req.headers.get("x-forwarded-host") ?? req.headers.get("host"), pathname, {
+    pos: process.env.APP_DOMAIN_POS,
+    customer: process.env.APP_DOMAIN_CUSTOMER,
+    allowDirectCustomer: process.env.NODE_ENV !== "production",
+  });
+  if (route.kind === "not-found") return new NextResponse(null, { status: 404 });
+  if (route.kind === "rewrite") return NextResponse.rewrite(new URL(`${route.path}${search}`, nextUrl));
+  if (route.kind === "customer-direct") return NextResponse.next();
 
   if (isPublic(pathname)) return NextResponse.next();
 

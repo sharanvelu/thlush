@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { AddonChoice } from "@/lib/addons";
 import {
   cartReducer,
   cartTotals,
@@ -22,7 +23,10 @@ const coffee: PosItem = {
 };
 const rice: PosItem = { ...dosa, id: 3, name: "Basmati", price: "200.00", unit: "kg" };
 
-const add = (state: CartLine[], item: PosItem, variant: string | null = null, addons: string[] = []) =>
+/** Add-ons by name, one of each unless a count is given: `x("Extra shot")`, `x("Extra shot", 3)`. */
+const x = (name: string, quantity = 1) => ({ name, quantity });
+
+const add = (state: CartLine[], item: PosItem, variant: string | null = null, addons: AddonChoice[] = []) =>
   cartReducer(state, { type: "add", item, variant, addons });
 
 describe("cartReducer", () => {
@@ -38,11 +42,11 @@ describe("cartReducer", () => {
   it("keeps different variants and add-ons on separate lines", () => {
     let cart = add([], coffee, "Regular");
     cart = add(cart, coffee, "Large");
-    cart = add(cart, coffee, "Large", ["Extra shot"]);
+    cart = add(cart, coffee, "Large", [x("Extra shot")]);
     expect(cart.map((l) => l.key)).toEqual([
       lineKey(2, "Regular", []),
       lineKey(2, "Large", []),
-      lineKey(2, "Large", ["Extra shot"]),
+      lineKey(2, "Large", [x("Extra shot")]),
     ]);
     cart = add(cart, coffee, "Large");
     expect(cart[1]?.quantity).toBe("2");
@@ -50,7 +54,21 @@ describe("cartReducer", () => {
 
   it("treats add-on order as irrelevant", () => {
     const item: PosItem = { ...coffee, addons: [{ name: "A", price: "1" }, { name: "B", price: "2" }] };
-    expect(lineKey(item.id, null, ["A", "B"])).toBe(lineKey(item.id, null, ["B", "A"]));
+    expect(lineKey(item.id, null, [x("A"), x("B")])).toBe(lineKey(item.id, null, [x("B"), x("A")]));
+  });
+
+  it("keeps a different count of the same add-on on a separate line", () => {
+    let cart = add([], coffee, "Large", [x("Extra shot", 2)]);
+    cart = add(cart, coffee, "Large", [x("Extra shot", 3)]);
+    expect(cart).toHaveLength(2);
+    cart = add(cart, coffee, "Large", [x("Extra shot", 2)]);
+    expect(cart).toHaveLength(2);
+    expect(cart[0]?.quantity).toBe("2");
+  });
+
+  it("prices each add-on by its count", () => {
+    // 90 + 30 (Large) + 3 x 25 = 195
+    expect(unitPriceOf(coffee, "Large", [x("Extra shot", 3)]).toFixed(2)).toBe("195.00");
   });
 
   it("steps up and down, and removes the line at zero", () => {
@@ -91,8 +109,8 @@ describe("cartReducer", () => {
 
 describe("cartTotals", () => {
   it("prices variants and add-ons, then adds tax", () => {
-    const cart = add([], coffee, "Large", ["Extra shot"]);
-    expect(unitPriceOf(coffee, "Large", ["Extra shot"]).toFixed(2)).toBe("145.00");
+    const cart = add([], coffee, "Large", [x("Extra shot")]);
+    expect(unitPriceOf(coffee, "Large", [x("Extra shot")]).toFixed(2)).toBe("145.00");
     expect(cartTotals(cart, { ignoreTax: false, billDiscount: null }).grandTotal).toBe("152.26");
   });
 

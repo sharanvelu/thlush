@@ -1,7 +1,7 @@
 "use client";
 
 import { ImagePlus, LoaderCircle, Store } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import { Section } from "@/components/settings/section";
 import { useGroupForm } from "@/components/settings/use-group-form";
@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { accentCss, contrastRatio, DEFAULT_ACCENT, isHexColor, readableOn } from "@/lib/color";
+import { contrastRatio, DEFAULT_ACCENT, isHexColor, readableOn } from "@/lib/color";
 import { errorMessage } from "@/lib/api-client";
 import { fileToResizedDataUrl, IMAGE_ACCEPT } from "@/lib/image";
 import { formatMoney } from "@/lib/money";
@@ -277,14 +277,13 @@ function AppearanceForm({ initial }: GroupProps<"appearance">) {
   const [text, setText] = useState(v.accent ?? DEFAULT_ACCENT);
   const accent = v.accent ?? DEFAULT_ACCENT;
 
-  // Preview the colour live; it goes away when you leave without saving.
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.id = "accent-preview";
-    style.textContent = accentCss(accent);
-    document.head.appendChild(style);
-    return () => style.remove();
-  }, [accent]);
+  // The preview below repaints with the colour as you pick it, before anything is saved. The colour is set on
+  // that block alone, so the rest of the app (sidebar, Save button) keeps the saved accent until you save.
+  const previewColours = {
+    "--primary": accent,
+    "--primary-foreground": readableOn(accent),
+    "--ring": accent,
+  } as CSSProperties;
 
   const ratio = contrastRatio(accent, readableOn(accent));
   const choose = (hex: string) => {
@@ -293,7 +292,7 @@ function AppearanceForm({ initial }: GroupProps<"appearance">) {
   };
 
   return (
-    <Section title="Accent colour" description="The colour of buttons, highlights and charts. Changes preview as you pick." dirty={f.dirty} saving={f.saving} onSave={f.save} onDiscard={() => { f.discard(); setText(initial.accent ?? DEFAULT_ACCENT); }}>
+    <Section title="Accent colour" description="The colour of buttons, highlights and charts. The preview below shows your pick before you save." dirty={f.dirty} saving={f.saving} onSave={f.save} onDiscard={() => { f.discard(); setText(initial.accent ?? DEFAULT_ACCENT); }}>
       <FieldGroup>
         <div className="flex flex-wrap items-center gap-3">
           <input type="color" aria-label="Pick a colour" value={accent} onChange={(ev) => choose(ev.target.value)} className="size-10 cursor-pointer rounded-lg border bg-transparent p-1" />
@@ -310,7 +309,7 @@ function AppearanceForm({ initial }: GroupProps<"appearance">) {
         <p className={`text-sm ${ratio >= 4.5 ? "text-muted-foreground" : "text-destructive"}`} role="status">
           Button text contrast: {ratio.toFixed(1)}:1 {ratio >= 4.5 ? "(passes WCAG AA)" : "(too low to read comfortably, pick a darker or lighter colour)"}
         </p>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3" style={previewColours} aria-label="Preview of the accent colour" role="group">
           <Button type="button">Primary button</Button>
           <Button type="button" variant="outline">Outline</Button>
           <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">Badge</span>

@@ -5,13 +5,13 @@
  * lines: the same item with the same variant and add-ons. Matching on content (not row ids)
  * means the cart can merge or reorder lines freely.
  */
+import { addonsKey } from "@/lib/addons";
 import { HttpError } from "@/lib/errors";
 import { D, parseQuantity, type Dec } from "@/lib/money";
 import type { BillItemOptions } from "@/db/schema";
 
 export function sentKey(menuItemId: number | null, options: BillItemOptions | null): string {
-  const addons = (options?.addons ?? []).map((a) => a.name).sort().join(",");
-  return `${menuItemId ?? 0}|${options?.variant ?? ""}|${addons}`;
+  return `${menuItemId ?? 0}|${options?.variant ?? ""}|${addonsKey(options?.addons ?? [])}`;
 }
 
 export interface PreviousLine {

@@ -78,6 +78,14 @@ function draw(doc: Doc, model: ReceiptModel): number {
     if (wide) doc.text(num(item.unitPrice), colPrice, y, { width: priceW, align: "right", lineBreak: false });
     doc.text(num(item.amount), colAmt, y, { width: amtW, align: "right", lineBreak: false });
     y += nameHeight + 2;
+    // Each add-on on its own indented line, with its price in the amount column.
+    for (const extra of item.extras) {
+      doc.font("Helvetica").fontSize(7.5);
+      const extraHeight = doc.heightOfString(extra.label, { width: nameW - 8 });
+      doc.text(extra.label, MARGIN + 8, y, { width: nameW - 8 });
+      doc.text(num(extra.amount), colAmt, y, { width: amtW, align: "right", lineBreak: false });
+      y += extraHeight + 1;
+    }
     if (item.note) {
       doc.font("Helvetica-Oblique").fontSize(7).text(item.note, MARGIN + 4, y, { width: nameW });
       y = doc.y + 1;

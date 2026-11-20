@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_ADDON_QUANTITY } from "@/lib/addons";
 import { moneyString, optionalText } from "@/lib/validation/common";
 
 /** A quantity with up to 3 decimals (kilograms, litres). Whole pieces are enforced per item by the service. */
@@ -8,13 +9,22 @@ export const quantityString = z
   .regex(/^\d{1,4}(\.\d{1,3})?$/, "Enter a quantity like 2 or 0.5")
   .refine((v) => Number(v) > 0, "Quantity must be more than zero");
 
+/** An add-on and how many of it. A bare name (the older format) means one. */
+const addonChoiceSchema = z.preprocess(
+  (v) => (typeof v === "string" ? { name: v, quantity: 1 } : v),
+  z.object({
+    name: z.string().trim().min(1).max(40),
+    quantity: z.number().int().min(1).max(MAX_ADDON_QUANTITY).default(1),
+  }),
+);
+
 export const billLineSchema = z.object({
   menuItemId: z.number().int().positive(),
   quantity: quantityString,
   /** Flat amount taken off this line before tax. */
   discount: moneyString("Discount").default("0"),
   variant: z.string().trim().max(40).nullish().transform((v) => v || null),
-  addons: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
+  addons: z.array(addonChoiceSchema).max(20).default([]),
 });
 
 export const billPaymentSchema = z.object({

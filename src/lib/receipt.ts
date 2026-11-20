@@ -2,7 +2,9 @@
  * One description of a receipt, shared by the printed page, the PDF and the
  * WhatsApp/email text, so the three can never disagree.
  */
+import { addonLabel } from "@/lib/addons";
 import { formatDateTime } from "@/lib/format";
+import { lineTitle } from "@/lib/line-label";
 import { D, formatMoney, round2 } from "@/lib/money";
 import { unitPriceInclTax } from "@/services/calculations";
 import type { AppSettings, PaperSize } from "@/types/settings";
@@ -65,6 +67,15 @@ export interface ReceiptItemRow {
   amount: string;
   /** e.g. "Discount -10.00", when the line was discounted. */
   note: string | null;
+  /** Add-ons, each printed on its own indented line under the item with its own price. */
+  extras: ReceiptExtraRow[];
+}
+
+export interface ReceiptExtraRow {
+  /** "+ Extra cheese" or "+ Extra cheese x2". */
+  label: string;
+  /** What the add-on adds to the line (all of this line's quantity), including tax. */
+  amount: string;
 }
 
 export interface ReceiptModel {
@@ -96,6 +107,37 @@ export interface ReceiptModel {
 }
 
 const trimQty = (q: string) => new D(q).toString();
+
+/**
+ * One receipt line. The add-ons come off the item's own price and amount and are listed under it with theirs,
+ * so the item line plus its add-on lines still add up to the line's total.
+ */
+export function receiptItemRow(item: BillDetail["items"][number], showTax: boolean): ReceiptItemRow {
+  const quantity = new D(item.quantity);
+  const lineAmount = round2(item.total);
+  const unitPrice = new D(unitPriceInclTax(item.price, item.sgst, item.cgst, !showTax));
+
+  let extrasUnit = new D(0);
+  let extrasAmount = new D(0);
+  const extras = (item.options?.addons ?? []).map((addon) => {
+    const count = addon.quantity ?? 1;
+    const unit = new D(unitPriceInclTax(new D(addon.price).times(count), item.sgst, item.cgst, !showTax));
+    const amount = round2(unit.times(quantity));
+    extrasUnit = extrasUnit.plus(unit);
+    extrasAmount = extrasAmount.plus(amount);
+    return { label: addonLabel(addon), amount: amount.toFixed(2) };
+  });
+
+  return {
+    name: lineTitle(item.name, item.options),
+    quantity: trimQty(item.quantity),
+    unitPrice: unitPrice.minus(extrasUnit).toFixed(2),
+    // The item takes whatever the add-ons leave, so rounding never changes the line's total.
+    amount: lineAmount.minus(extrasAmount).toFixed(2),
+    note: new D(item.discount).greaterThan(0) ? `Discount -${round2(item.discount).toFixed(2)}` : null,
+    extras,
+  };
+}
 
 export function buildReceiptModel(bill: BillDetail, settings: AppSettings): ReceiptModel {
   const { locale, currency, timezone } = settings.locale;
@@ -130,13 +172,7 @@ export function buildReceiptModel(bill: BillDetail, settings: AppSettings): Rece
     orderLine: orderBits.length > 0 ? orderBits.join(" · ") : null,
     statusNote,
     notes: bill.notes,
-    items: bill.items.map((item) => ({
-      name: item.name,
-      quantity: trimQty(item.quantity),
-      unitPrice: unitPriceInclTax(item.price, item.sgst, item.cgst, !showTax),
-      amount: round2(item.total).toFixed(2),
-      note: new D(item.discount).greaterThan(0) ? `Discount -${round2(item.discount).toFixed(2)}` : null,
-    })),
+    items: bill.items.map((item) => receiptItemRow(item, showTax)),
     itemCount: bill.items.reduce((acc, i) => acc.plus(i.quantity), new D(0)).toNumber(),
     totals,
     showTax,
@@ -165,7 +201,10 @@ export function receiptText(model: ReceiptModel): string {
   lines.push("", `Bill ${model.billNo}`, model.dateText, `Customer: ${model.customerName}`);
   if (model.orderLine) lines.push(model.orderLine);
   lines.push("", "Items");
-  for (const item of model.items) lines.push(`- ${item.name} x ${item.quantity}  ${m(item.amount)}`);
+  for (const item of model.items) {
+    lines.push(`- ${item.name} x ${item.quantity}  ${m(item.amount)}`);
+    for (const extra of item.extras) lines.push(`    ${extra.label}  ${m(extra.amount)}`);
+  }
   lines.push("");
   lines.push(`Subtotal: ${m(model.totals.subtotal)}`);
   if (new D(model.totals.discount).greaterThan(0)) lines.push(`Discount: -${m(model.totals.discount)}`);
@@ -212,7 +251,10 @@ function kitchenOrderNo(bill: BillDetail): string | null {
   return counter ? `#${counter}` : null;
 }
 
-/** What the kitchen needs: no prices, no customer details. Variants and add-ons are listed under each item. */
+/**
+ * What the kitchen needs: no prices, no customer details. The variant sits in brackets after the item's name
+ * and each add-on is listed under it.
+ */
 export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings, kot?: BillKot): KitchenSlipModel {
   const { locale, timezone } = settings.locale;
   const orderBits = [
@@ -229,11 +271,9 @@ export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings, k
     orderLine: orderBits.length > 0 ? orderBits.join(" · ") : null,
     notes: bill.notes,
     items: slipItems ?? bill.items.filter((item) => !item.isPackaging).map((item) => ({
-      name: item.name,
+      name: lineTitle(item.name, item.options),
       quantity: trimQty(item.quantity),
-      details: [item.options?.variant, ...(item.options?.addons?.map((a) => `+ ${a.name}`) ?? [])].filter(
-        (d): d is string => Boolean(d),
-      ),
+      details: item.options?.addons?.map(addonLabel) ?? [],
     })),
   };
 }
