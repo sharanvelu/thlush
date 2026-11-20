@@ -112,7 +112,7 @@ const trimQty = (q: string) => new D(q).toString();
  * One receipt line. The add-ons come off the item's own price and amount and are listed under it with theirs,
  * so the item line plus its add-on lines still add up to the line's total.
  */
-function receiptItemRow(item: BillDetail["items"][number], showTax: boolean): ReceiptItemRow {
+export function receiptItemRow(item: BillDetail["items"][number], showTax: boolean): ReceiptItemRow {
   const quantity = new D(item.quantity);
   const lineAmount = round2(item.total);
   const unitPrice = new D(unitPriceInclTax(item.price, item.sgst, item.cgst, !showTax));

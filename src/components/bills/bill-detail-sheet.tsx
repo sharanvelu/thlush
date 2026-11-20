@@ -1,7 +1,7 @@
 "use client";
 
 import { Ban, Download, ExternalLink, LoaderCircle, Printer } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { BillStatusBadge } from "@/components/bills/bill-status-badge";
 import { ReverseDialog } from "@/components/bills/reverse-dialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { api, errorMessage } from "@/lib/api-client";
 import { formatDateTime } from "@/lib/format";
 import { D, formatMoney } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
-import { receiptTotals } from "@/lib/receipt";
+import { receiptItemRow, receiptTotals } from "@/lib/receipt";
 import { ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS, type BillDetail } from "@/types/bill";
 
 export interface HistorySettings {
@@ -121,19 +121,36 @@ function Body({ billId, canVoid, settings, onChanged }: Omit<BillDetailSheetProp
             </tr>
           </thead>
           <tbody className="divide-y">
-            {bill.items.map((item) => (
-              <tr key={item.id}>
-                <td className="py-2 pr-2">
-                  {item.name}
-                  {new D(item.discount).greaterThan(0) ? (
-                    <span className="block text-xs text-muted-foreground">Discount -{money(item.discount)}</span>
-                  ) : null}
-                </td>
-                <td className="py-2 text-right tabular-nums">{new D(item.quantity).toString()}</td>
-                <td className="py-2 text-right tabular-nums">{money(item.price)}</td>
-                <td className="py-2 text-right tabular-nums">{money(item.total)}</td>
-              </tr>
-            ))}
+            {bill.items.map((item) => {
+              // The same split as the receipt: the item with its variant in brackets, then each add-on on its
+              // own line. Price is before tax, as in the column above; amount is the line's share of the total.
+              const row = receiptItemRow(item, showTax);
+              const addons = item.options?.addons ?? [];
+              const addonsUnit = addons.reduce((sum, a) => sum.plus(new D(a.price).times(a.quantity ?? 1)), new D(0));
+              return (
+                <Fragment key={item.id}>
+                  <tr className={addons.length > 0 ? "border-b-0" : undefined}>
+                    <td className="py-2 pr-2">
+                      {row.name}
+                      {new D(item.discount).greaterThan(0) ? (
+                        <span className="block text-xs text-muted-foreground">Discount -{money(item.discount)}</span>
+                      ) : null}
+                    </td>
+                    <td className="py-2 text-right tabular-nums">{new D(item.quantity).toString()}</td>
+                    <td className="py-2 text-right tabular-nums">{money(new D(item.price).minus(addonsUnit).toFixed(2))}</td>
+                    <td className="py-2 text-right tabular-nums">{money(row.amount)}</td>
+                  </tr>
+                  {addons.map((addon, i) => (
+                    <tr key={addon.name} className={`text-xs text-muted-foreground ${i === addons.length - 1 ? "" : "border-b-0"}`}>
+                      <td className={`pr-2 pl-4 ${i === addons.length - 1 ? "pb-2" : "pb-0.5"}`}>{row.extras[i]?.label}</td>
+                      <td />
+                      <td className="text-right tabular-nums">{money(new D(addon.price).times(addon.quantity ?? 1).toFixed(2))}</td>
+                      <td className="text-right tabular-nums">{money(row.extras[i]?.amount ?? "0")}</td>
+                    </tr>
+                  ))}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
 
