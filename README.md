@@ -106,12 +106,6 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 
 **Custom domain.** Add it under Domains, then update `NEXT_PUBLIC_BASE_URL` and redeploy. If you use SSO, add `<your URL>/api/auth/callback/oidc` as a redirect URI at the identity provider.
 
-## Customer menu
-
-The customer site (`/c/menu` locally, the root of `APP_DOMAIN_CUSTOMER` in production) shows the active menu. It opens in the light theme and has a switch for dark.
-
-**Photos from the codebase.** Put a photo in `public/menu-photos/` named after the item (`Cold Coffee.jpg`, `cold-coffee.webp`, …; case, spaces and punctuation don't matter) and it shows on that item. It replaces a photo uploaded in the staff app. Locally the next page load picks it up; on Vercel it goes live with the next deploy. See `public/menu-photos/README.md`.
-
 ## Billing screen
 
 `/billing` is a two-pane POS: items on the left (search, category chips, grid or list), the bill on the right. On phones the bill opens from a bar at the bottom.
