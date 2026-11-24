@@ -51,7 +51,7 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
     <div className="flex flex-col gap-4">
       <div className="sticky top-0 z-10 -mx-4 bg-background/75 px-4 py-3 backdrop-blur-xl">
         <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-primary" aria-hidden />
+          <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-brand" aria-hidden />
           <label htmlFor={`${baseId}-search`} className="sr-only">
             Search the menu
           </label>
@@ -83,7 +83,7 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
 
       {visible.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center text-muted-foreground">
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-brand ring-1 ring-primary/20">
             <SearchX className="size-6" aria-hidden />
           </span>
           <p className="text-sm">Nothing on the menu matches &ldquo;{query.trim()}&rdquo;.</p>
@@ -113,7 +113,7 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                   >
                     <span aria-hidden className={cn("h-6 w-1 shrink-0 rounded-full transition-colors motion-reduce:transition-none", expanded ? "bg-primary" : "bg-border")} />
                     <span className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight">{section.name}</span>
-                    <span className="shrink-0 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary tabular-nums">
+                    <span className="shrink-0 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-brand tabular-nums">
                       {section.items.length}
                     </span>
                     <span
@@ -147,7 +147,7 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                               <span>{item.name}</span>
                             </p>
                             {item.variants.length === 0 ? (
-                              <p className="shrink-0 text-base font-semibold text-primary tabular-nums">
+                              <p className="shrink-0 text-base font-semibold text-brand tabular-nums">
                                 {money(item.price)}
                                 {item.unit !== "pcs" ? <span className="text-xs font-normal text-muted-foreground"> / {item.unit}</span> : null}
                               </p>
@@ -158,7 +158,7 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                               {item.variants.map((v) => (
                                 <li key={v.name} className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 py-1 pr-3 pl-3">
                                   <span className="text-muted-foreground">{v.name}</span>
-                                  <span className="font-semibold text-primary tabular-nums">{money(v.price)}</span>
+                                  <span className="font-semibold text-brand tabular-nums">{money(v.price)}</span>
                                 </li>
                               ))}
                             </ul>

@@ -28,7 +28,7 @@ export default async function CustomerMenuPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-balance">{brand.name}</h1>
         <p className="text-sm text-muted-foreground">
           Our menu
-          {itemCount > 0 ? <span className="text-primary"> · {itemCount} dishes</span> : null}
+          {itemCount > 0 ? <span className="text-brand"> · {itemCount} dishes</span> : null}
         </p>
       </header>
 

@@ -6,7 +6,7 @@ export default async function CustomerNotFound() {
   const brand = await getCustomerBrand();
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center gap-4 p-6 text-center">
-      <p className="text-7xl font-semibold tracking-tight text-primary/80 tabular-nums">404</p>
+      <p className="text-7xl font-semibold tracking-tight text-brand/80 tabular-nums">404</p>
       <div className="flex flex-col gap-1.5">
         <h1 className="text-2xl font-semibold tracking-tight">We couldn&apos;t find that page</h1>
         <p className="text-muted-foreground">The link may be wrong or out of date.</p>

@@ -7,7 +7,7 @@ export function BrandMark({ logoSrc, name, className }: { logoSrc: string | null
   return (
     <span
       className={cn(
-        "flex size-16 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/25",
+        "flex size-16 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-brand ring-1 ring-primary/25",
         className,
       )}
     >

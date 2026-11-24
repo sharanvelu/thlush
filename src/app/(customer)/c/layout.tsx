@@ -1,3 +1,5 @@
+import { CustomerThemeToggle } from "@/components/customer/customer-theme-toggle";
+
 /**
  * A soft spot of the accent colour, fading out by 65% of its size. `at` places its centre. Sizes are capped
  * by the screen width, so on a phone the spots stay small and in the corners instead of washing the page.
@@ -17,13 +19,17 @@ const BACKGROUND = [
  * The customer-facing site. Served at the root of the customer domain (the proxy rewrites every path under
  * `/c`), and never on the POS domain. Keep it free of anything from the staff app: no staff components,
  * no staff services, no session. Colours come from the app's theme tokens, so the accent chosen in Settings
- * (and light or dark mode) carries over; the page itself stays neutral.
+ * (and light or dark mode) carries over; the page itself stays neutral. Every customer page must work in both
+ * themes (see CLAUDE.md), so use theme tokens, never fixed colours.
  */
 export default function CustomerLayout({ children }: LayoutProps<"/c">) {
   return (
-    <div className="relative isolate min-h-dvh overflow-x-clip bg-background text-foreground antialiased">
+    <div className="customer-site relative isolate min-h-dvh overflow-x-clip bg-background text-foreground antialiased">
       {/* Fixed to the window, so the spots stay at the screen's corners while the menu scrolls. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10" style={{ backgroundImage: BACKGROUND }} />
+      <div className="absolute top-3 right-3 z-20 sm:top-4 sm:right-4">
+        <CustomerThemeToggle />
+      </div>
       {children}
     </div>
   );

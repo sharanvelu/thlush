@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -6,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { appConfig } from "@/config";
 import { accentCss } from "@/lib/color";
+import { CUSTOMER_THEME_PROPS, SITE_HEADER } from "@/lib/customer-theme";
 import { getSettingsGroup } from "@/services/SettingsService";
 import "./globals.css";
 
@@ -60,7 +62,8 @@ async function loadAccent(): Promise<string> {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const accent = await loadAccent();
+  const [accent, requestHeaders] = await Promise.all([loadAccent(), headers()]);
+  const themeProps = requestHeaders.get(SITE_HEADER) === "customer" ? CUSTOMER_THEME_PROPS : {};
   return (
     <html
       lang="en"
@@ -69,7 +72,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         {accent ? <style id="accent-override" dangerouslySetInnerHTML={{ __html: accent }} /> : null}
-        <ThemeProvider>
+        <ThemeProvider {...themeProps}>
           <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
           <Toaster richColors closeButton position="top-right" offset={{ top: "5.25rem", right: "1rem" }} mobileOffset={{ top: "5.25rem", left: "0.75rem", right: "0.75rem" }} />
         </ThemeProvider>
