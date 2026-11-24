@@ -23,9 +23,6 @@ export interface HostConfig {
   allowDirectCustomer?: boolean;
 }
 
-/** Request header the proxy sets on customer-site requests, so the root layout can tell the two sites apart. */
-export const CUSTOMER_SITE_HEADER = "x-thlush-customer-site";
-
 /** `https://Order.Shop.in:443/` and `order.shop.in` both become `order.shop.in`. Empty becomes null. */
 export function normalizeHost(value: string | null | undefined): string | null {
   const trimmed = (value ?? "").trim().toLowerCase();
