@@ -18,7 +18,7 @@ import type { AppSettings } from "@/types/settings";
 import type { BillDetail, HeldBillSummary, SavedBill } from "@/types/bill";
 import type { SessionUser } from "@/types/user";
 
-const { bills, billItems, billKots, payments, menuItems, categories, customers, users, stockMovements } = schema;
+const { bills, billItems, billKots, payments, menuItems, categories, customers, users, stockMovements, staffMembers } = schema;
 
 // ---------------------------------------------------------------------------
 // Reading
@@ -69,7 +69,13 @@ export async function getBill(id: number, user: SessionUser, executor: DbExecuto
     notes: bill.notes,
     voidReason: bill.voidReason,
     customer: row.customer?.id ? row.customer : null,
-    cashier: row.cashier?.id ? row.cashier : null,
+    // A shared till names the cashier on the bill itself; otherwise it is the account that saved it.
+    cashier:
+      bill.cashierId !== null
+        ? { id: `s${bill.cashierId}`, name: bill.cashierName ?? "Staff" }
+        : row.cashier?.id
+          ? row.cashier
+          : null,
     items: items.map((i) => ({
       id: i.id,
       menuItemId: i.menuItemId,
@@ -175,6 +181,32 @@ async function loadPlanItems(tx: Transaction, ids: number[], lock: boolean): Pro
   return new Map(rows.map((r) => [r.id, { ...r, deleted: r.deletedAt !== null } satisfies PlanItem]));
 }
 
+/**
+ * Who is taking this payment. The shared Counter login must name a cashier to finish a bill; anyone may
+ * name one. The person has to be active and marked as a cashier, so a stale screen can't use someone
+ * who has since left.
+ */
+async function resolveCashier(
+  tx: Transaction,
+  input: BillSaveInput,
+  user: SessionUser,
+): Promise<{ id: number; name: string } | null> {
+  if (input.cashierId === null) {
+    if (user.role === "counter" && input.action === "complete") {
+      throw HttpError.badRequest("Choose who is taking this payment.", { cashierId: ["Choose the cashier."] });
+    }
+    return null;
+  }
+  const [row] = await tx
+    .select({ id: staffMembers.id, name: staffMembers.name, status: staffMembers.status, isCashier: staffMembers.isCashier })
+    .from(staffMembers)
+    .where(eq(staffMembers.id, input.cashierId));
+  if (!row || row.status !== "active" || !row.isCashier) {
+    throw HttpError.badRequest("That cashier is no longer available. Pick someone else.", { cashierId: ["Pick another cashier."] });
+  }
+  return { id: row.id, name: row.name };
+}
+
 async function findByClientRef(clientRef: string) {
   const [row] = await db
     .select({ id: bills.id, createdUserId: bills.createdUserId })
@@ -218,6 +250,8 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
         }
       }
 
+      const cashier = await resolveCashier(tx, input, user);
+
       const ids = [...new Set(input.lines.map((l) => l.menuItemId))];
       const items = await loadPlanItems(tx, ids, completing);
       const plan = planBill(input, items, {
@@ -245,6 +279,7 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
         customerId,
         currency: settings.locale.currency,
         userId: user.id,
+        cashier,
         clientRef: input.clientRef,
         now,
       });
@@ -329,7 +364,14 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
           action: completing ? "bill.create" : input.action === "kot" ? "bill.kot" : "bill.hold",
           entity: "bill",
           entityId: id,
-          metadata: { billNo, total: plan.totals.grandTotal, items: plan.lines.length, fromHold: held?.id ?? null, kot: newKotSeq },
+          metadata: {
+            billNo,
+            total: plan.totals.grandTotal,
+            items: plan.lines.length,
+            fromHold: held?.id ?? null,
+            kot: newKotSeq,
+            ...(cashier ? { cashier: cashier.name } : {}),
+          },
         },
         tx,
       );
@@ -357,7 +399,15 @@ function withKotSeq(bill: BillDetail, input: BillSaveInput): SavedBill {
 
 function billHeader(
   plan: BillPlan,
-  ctx: { billNo: string; customerId: number | null; currency: string; userId: string; clientRef: string; now: Date },
+  ctx: {
+    billNo: string;
+    customerId: number | null;
+    currency: string;
+    userId: string;
+    cashier: { id: number; name: string } | null;
+    clientRef: string;
+    now: Date;
+  },
 ): typeof bills.$inferInsert {
   const held = plan.status === "held";
   return {
@@ -379,6 +429,8 @@ function billHeader(
     heldAt: held ? ctx.now : null,
     clientRef: ctx.clientRef,
     createdUserId: ctx.userId,
+    cashierId: ctx.cashier?.id ?? null,
+    cashierName: ctx.cashier?.name ?? null,
     // The bill's date is when it was paid, so a resumed bill takes the time it is finished.
     createdAt: ctx.now,
   };

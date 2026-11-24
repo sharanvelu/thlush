@@ -69,7 +69,14 @@ function conditions(filters: ScopedBillFilters, timeZone: string): SQL[] {
   }
   // Held bills are unfinished drafts, so they only show when asked for.
   out.push(filters.status ? eq(bills.status, filters.status) : ne(bills.status, "held"));
-  if (filters.cashier) out.push(eq(bills.createdUserId, filters.cashier));
+  if (filters.cashier) {
+    // "s12" is a staff member picked on a shared till; anything else is the account that saved the bill.
+    out.push(
+      filters.cashier.startsWith("s")
+        ? eq(bills.cashierId, Number(filters.cashier.slice(1)))
+        : eq(bills.createdUserId, filters.cashier),
+    );
+  }
   if (filters.customerId !== undefined) out.push(eq(bills.customerId, filters.customerId));
   return out;
 }
@@ -91,7 +98,7 @@ export async function listBills(
         status: bills.status,
         total: bills.totalAmount,
         customerName: customers.name,
-        cashierName: users.name,
+        cashierName: sql<string | null>`coalesce(${bills.cashierName}, ${users.name})`,
         itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(Number),
         methods: sql<string | null>`(select string_agg(distinct ${payments.method}::text, ',') from ${payments} where ${payments.billId} = ${bills.id})`,
       })
