@@ -24,7 +24,12 @@ export interface CustomerMenuSection {
   items: CustomerMenuItem[];
 }
 
-export function buildCustomerMenu(catalog: CachedPosCatalog): CustomerMenuSection[] {
+export interface CustomerMenuOptions {
+  /** A photo from the menu-photos folder for an item name, or null. Takes the place of an uploaded photo. */
+  photoFor?: (itemName: string) => string | null;
+}
+
+export function buildCustomerMenu(catalog: CachedPosCatalog, options: CustomerMenuOptions = {}): CustomerMenuSection[] {
   const sections: CustomerMenuSection[] = [];
   for (const category of catalog.categories) {
     const items = catalog.items
@@ -36,7 +41,7 @@ export function buildCustomerMenu(catalog: CachedPosCatalog): CustomerMenuSectio
           price: i.price,
           isVeg: i.isVeg,
           // Stored photos are at /api/menu/<id>/image; on the customer domain that path maps to a public route.
-          imageSrc: i.imageSrc,
+          imageSrc: options.photoFor?.(i.name) ?? i.imageSrc,
           unit: i.unit,
           variants: i.variants.map((v) => ({ name: v.name, price: new D(i.price).plus(v.priceDelta).toFixed(2) })),
           addons: i.addons.map((a) => ({ name: a.name, price: a.price })),
