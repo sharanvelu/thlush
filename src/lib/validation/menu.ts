@@ -10,7 +10,10 @@ import {
   unitSchema,
 } from "@/lib/validation/common";
 
-/** Product photos are stored as small WebP/PNG/JPEG data URLs, or an https link. */
+/**
+ * Clients send a product photo as a small WebP/PNG/JPEG data URL, or an https link. The server moves a data URL
+ * into the object-storage bucket on save, so a stored reference (`s3:...`) is never accepted from a client.
+ */
 export const MAX_IMAGE_CHARS = 300_000;
 
 const imageUrlSchema = z

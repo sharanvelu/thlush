@@ -41,6 +41,7 @@ export const menuItems = table(
     currency: text("currency").notNull().default("INR"),
     status: entityStatus("status").notNull().default("active"),
     sku: text("sku"),
+    /** `s3:<key>` (object-storage bucket), or a legacy `data:` URL / `https://` link. */
     imageUrl: text("image_url"),
     unit: text("unit").notNull().default("pcs"),
     /** True = veg, false = non-veg, null = not applicable. */
