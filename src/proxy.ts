@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 import { canAccessPath } from "@/config/permissions";
+import { SITE_HEADER } from "@/lib/customer-theme";
 import { routeForHost } from "@/lib/host-routing";
 import type { ApiFailure } from "@/types/api";
 
@@ -35,8 +36,14 @@ export default auth((req) => {
     allowDirectCustomer: process.env.NODE_ENV !== "production",
   });
   if (route.kind === "not-found") return new NextResponse(null, { status: 404 });
-  if (route.kind === "rewrite") return NextResponse.rewrite(new URL(`${route.path}${search}`, nextUrl));
-  if (route.kind === "customer-direct") return NextResponse.next();
+  // The root layout reads this to give the customer site its own theme default (see `lib/customer-theme.ts`).
+  // Set on the way in, so a client can't pass one off as a staff request, only as its own.
+  const customerHeaders = new Headers(req.headers);
+  customerHeaders.set(SITE_HEADER, "customer");
+  if (route.kind === "rewrite") {
+    return NextResponse.rewrite(new URL(`${route.path}${search}`, nextUrl), { request: { headers: customerHeaders } });
+  }
+  if (route.kind === "customer-direct") return NextResponse.next({ request: { headers: customerHeaders } });
 
   if (isPublic(pathname)) return NextResponse.next();
 

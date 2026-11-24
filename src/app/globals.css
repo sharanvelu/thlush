@@ -6,6 +6,7 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-brand: var(--brand);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -127,6 +128,18 @@
   --sidebar-accent-foreground: oklch(0.96 0.005 80);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.705 0.19 47);
+}
+
+/*
+ * The accent as text on the customer site. Same as --primary in light mode; in dark mode a dark accent
+ * (say deep green) would vanish into the background, so its lightness is raised to at least 0.72
+ * while the hue is kept.
+ */
+.customer-site {
+  --brand: var(--primary);
+}
+.dark .customer-site {
+  --brand: oklch(from var(--primary) max(l, 0.72) c h);
 }
 
 @layer base {
