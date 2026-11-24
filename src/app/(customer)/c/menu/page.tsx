@@ -3,6 +3,7 @@ import { CustomerMenu } from "@/components/customer/customer-menu";
 import { BrandMark } from "@/components/customer/brand-mark";
 import { getCustomerBrand } from "@/lib/customer-brand";
 import { buildCustomerMenu } from "@/lib/customer-menu";
+import { loadMenuPhotos, photoFor } from "@/lib/menu-photos";
 import { getCachedPosCatalog } from "@/services/PosCatalogService";
 import { getSettingsGroup } from "@/services/SettingsService";
 
@@ -13,12 +14,14 @@ export const metadata: Metadata = { title: "Menu" };
 export const dynamic = "force-dynamic";
 
 export default async function CustomerMenuPage() {
-  const [catalog, locale, brand] = await Promise.all([
+  const [catalog, locale, brand, photos] = await Promise.all([
     getCachedPosCatalog(),
     getSettingsGroup("locale"),
     getCustomerBrand(),
+    loadMenuPhotos(),
   ]);
-  const sections = buildCustomerMenu(catalog);
+  // Photos in public/menu-photos are matched to items by name (see src/lib/menu-photos.ts).
+  const sections = buildCustomerMenu(catalog, { photoFor: (name) => photoFor(photos, name) });
   const itemCount = sections.reduce((n, s) => n + s.items.length, 0);
 
   return (

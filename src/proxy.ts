@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 import { canAccessPath } from "@/config/permissions";
-import { routeForHost } from "@/lib/host-routing";
+import { CUSTOMER_SITE_HEADER, routeForHost } from "@/lib/host-routing";
 import type { ApiFailure } from "@/types/api";
 
 /**
@@ -35,8 +35,14 @@ export default auth((req) => {
     allowDirectCustomer: process.env.NODE_ENV !== "production",
   });
   if (route.kind === "not-found") return new NextResponse(null, { status: 404 });
-  if (route.kind === "rewrite") return NextResponse.rewrite(new URL(`${route.path}${search}`, nextUrl));
-  if (route.kind === "customer-direct") return NextResponse.next();
+  if (route.kind === "rewrite" || route.kind === "customer-direct") {
+    // Tells the root layout this is the customer site, which always renders in the light theme.
+    const headers = new Headers(req.headers);
+    headers.set(CUSTOMER_SITE_HEADER, "1");
+    return route.kind === "rewrite"
+      ? NextResponse.rewrite(new URL(`${route.path}${search}`, nextUrl), { request: { headers } })
+      : NextResponse.next({ request: { headers } });
+  }
 
   if (isPublic(pathname)) return NextResponse.next();
 
