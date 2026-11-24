@@ -1,6 +1,7 @@
 import { FolderPlus, History, PackagePlus, ReceiptText } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { CategoryDonut, HoursChart, RevenueChart } from "@/components/dashboard/dashboard-charts";
 import { Greeting } from "@/components/dashboard/greeting";
@@ -30,6 +31,8 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 
 export default async function DashboardPage({ searchParams }: PageProps<"/">) {
   const { user, allowed } = await requireAccess("dashboard.view");
+  // The shared till login has no dashboard; it lands on the billing screen.
+  if (!allowed && hasPermission(user.role, "bills.create")) redirect("/billing");
   if (!allowed) return <Forbidden />;
 
   const query = await searchParams;

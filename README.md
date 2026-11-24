@@ -216,6 +216,7 @@ Only completed bills count as sales. Days and hours follow the business timezone
 ## Admin
 
 - **Users & Roles** (super admin only): add, edit, reset a password, change a role, delete. You can't delete yourself or change your own role, and the last super admin can't be removed or demoted. Passwords are hashed with bcrypt and need 8+ characters with a letter and a number. SSO accounts have no password and their name and email come from the identity provider.
+- **Staff** (super admin and manager): the people who work at the counter, with an optional title and a "can take payments" switch. They have no login. Turn someone off when they leave; someone who is on past bills can be turned off but not deleted, so those bills keep their name.
 - **Audit log** (super admin and manager): who did what and when, filterable by user, record type, action and date. It records sign-ins, menu and category changes, bills, voids, stock, users and settings. Passwords are never written to it.
 - **Settings** (super admin only), saved one section at a time with an audit entry for each: business profile and logo, currency, locale and time zone, tax, receipt text and paper width, bill number prefix and digits, accent colour (live preview, auto-picked readable text, AA contrast check) and feature toggles. Turning Inventory off hides its navigation; Discounts and Order types hide those controls on the billing screen.
 - **Profile**: everyone can edit their own name and email, change their password (not for SSO accounts) and save a theme that follows them to other devices.
@@ -275,21 +276,36 @@ tests/            Vitest tests
 
 ### Roles
 
-| Capability                        | Super admin | Manager | Cashier  |
-| --------------------------------- | :---------: | :-----: | :------: |
-| Dashboard, New Bill, Customers    | yes         | yes     | yes      |
-| Bill History                      | all bills   | all     | own only |
-| Menu                              | manage      | manage  | read     |
-| Categories, Inventory, Reports    | yes         | yes     | no       |
-| Void / refund bills               | yes         | yes     | no       |
-| Audit log                         | yes         | yes     | no       |
-| Users & roles, Settings           | yes         | no      | no       |
+| Capability                        | Super admin | Manager | Cashier  | Counter  |
+| --------------------------------- | :---------: | :-----: | :------: | :------: |
+| Dashboard                         | yes         | yes     | yes      | no       |
+| New Bill                          | yes         | yes     | yes      | yes      |
+| Customers                         | yes         | yes     | yes      | no (menus) |
+| Bill History                      | all bills   | all     | own only | own only |
+| Menu                              | manage      | manage  | read     | no (menus) |
+| Categories, Inventory, Reports    | yes         | yes     | no       | no       |
+| Void / refund bills               | yes         | yes     | no       | no       |
+| Audit log                         | yes         | yes     | no       | no       |
+| Staff list                        | yes         | yes     | no       | no       |
+| Users & roles, Settings           | yes         | no      | no       | no       |
+
+**Counter** is one shared login for a till that several people use. It signs in once, sees only New Bill and Bill History in the menus (it still reads the menu and customers behind the scenes, because the billing screen needs them), and lands on the billing screen. Each bill must name its cashier, picked from the **Staff** list; see [Shared till](#shared-till).
 
 Access is enforced in three places. The proxy (`src/proxy.ts`) does a coarse check from the session token. Server pages and `withAuth` re-read the user from the database on every request, so a revoked role or deleted account takes effect immediately. The sidebar hides what a role cannot open. Newly granted access reaches the proxy after the user signs in again.
 
+### Shared till
+
+For a till that several people share, create one user with the **Counter** role and add each person under **Admin → Staff**. Signed in as Counter, the billing screen shows a **Cashier** choice above the payment, and **Save & print** stays off until one is picked. The choice is cleared after every bill, so each bill names its own cashier.
+
+- The bill keeps two things apart: the account that saved it (the Counter login, which decides who may see it) and the cashier (the staff member picked, with their name saved on the bill so a later rename never changes an old receipt).
+- Receipts, Bill History (filter by cashier) and the By cashier and Discounts reports use the cashier when there is one, and the account otherwise. Each bill falls in exactly one group, so the per-cashier totals always add up to the overall total.
+- Bills made before this was set up have no cashier and keep showing the account that saved them. Nothing is rewritten.
+- Held bills belong to the account that created them, so finish or discard held bills before switching a till to the Counter login.
+- Anyone can pick any cashier; there is no PIN.
+
 ### Database
 
-Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
+Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `payments`, `staff_members`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
 
 ## Features
 

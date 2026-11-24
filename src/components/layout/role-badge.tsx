@@ -6,6 +6,7 @@ const STYLES: Record<Role, string> = {
   super_admin: "bg-primary text-primary-foreground",
   manager: "bg-accent text-accent-foreground",
   billing: "bg-secondary text-secondary-foreground",
+  counter: "bg-secondary text-secondary-foreground",
 };
 
 export function RoleBadge({ role, className }: { role: Role; className?: string }) {

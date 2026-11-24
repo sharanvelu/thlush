@@ -12,7 +12,7 @@ import type { ResolvedRange } from "@/lib/dashboard";
 import { D, type Dec } from "@/lib/money";
 import { REPORT_META, ROW_LIMIT, share, sumColumn, type Group, type ReportColumn, type ReportData, type ReportKind } from "@/lib/reports";
 
-const { bills, billItems, payments, menuItems, categories, users, stockMovements } = schema;
+const { bills, billItems, payments, menuItems, categories, users, stockMovements, staffMembers } = schema;
 
 export interface ReportContext {
   range: ResolvedRange;
@@ -200,17 +200,21 @@ async function byItem(ctx: ReportContext): Promise<ReportData> {
 
 // ---- By cashier ------------------------------------------------------------
 async function byCashier(ctx: ReportContext): Promise<ReportData> {
+  // One row per person: the staff member named on the bill, else the account that saved it. Every bill lands
+  // in exactly one row, so the rows always add up to the overall total.
+  const person = sql`coalesce('s' || ${bills.cashierId}::text, 'u' || ${bills.createdUserId}::text)`;
   const data = await db
     .select({
-      name: sql<string>`coalesce(${users.name}, 'Removed user')`,
+      name: sql<string>`coalesce(max(${staffMembers.name}), max(${users.name}), 'Removed user')`,
       bills: sql<number>`count(*)`.mapWith(Number),
       discount: sql<string>`coalesce(sum(${bills.totalDiscount}), 0)`,
       total: sql<string>`coalesce(sum(${bills.totalAmount}), 0)`,
     })
     .from(bills)
     .leftJoin(users, eq(users.id, bills.createdUserId))
+    .leftJoin(staffMembers, eq(staffMembers.id, bills.cashierId))
     .where(and(...window(ctx)))
-    .groupBy(users.id, users.name)
+    .groupBy(person)
     .orderBy(desc(sql`4`));
   const rows = data.map((r) => ({
     name: r.name,
@@ -319,13 +323,14 @@ async function discounts(ctx: ReportContext): Promise<ReportData> {
       .select({
         billNo: bills.billNo,
         day: sql<string>`to_char(${local}, 'YYYY-MM-DD')`,
-        cashier: sql<string>`coalesce(${users.name}, 'Removed user')`,
+        cashier: sql<string>`coalesce(${staffMembers.name}, ${users.name}, 'Removed user')`,
         subtotal: bills.subtotal,
         discount: bills.totalDiscount,
         total: bills.totalAmount,
       })
       .from(bills)
       .leftJoin(users, eq(users.id, bills.createdUserId))
+      .leftJoin(staffMembers, eq(staffMembers.id, bills.cashierId))
       .where(where)
       .orderBy(desc(bills.createdAt))
       .limit(ROW_LIMIT + 1),

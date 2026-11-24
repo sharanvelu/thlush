@@ -6,6 +6,7 @@ import { billListQuerySchema } from "@/lib/validation/bill-history";
 import { requireAccess } from "@/services/AuthService";
 import { listBills } from "@/services/BillHistoryService";
 import { getSettings } from "@/services/SettingsService";
+import { listStaffOptions } from "@/services/StaffService";
 import { listUserOptions } from "@/services/UserService";
 
 export const metadata: Metadata = { title: "Bill History" };
@@ -23,7 +24,13 @@ export default async function BillsPage({ searchParams }: PageProps<"/bills">) {
   const settings = await getSettings();
   const [result, cashiers] = await Promise.all([
     listBills(filters, { page, pageSize }, user, settings.locale.timezone),
-    canSeeAll ? listUserOptions() : Promise.resolve(null),
+    // Accounts, then the staff picked on a shared till ("s12" keeps the two kinds apart in the filter).
+    canSeeAll
+      ? Promise.all([listUserOptions(), listStaffOptions()]).then(([users, staff]) => [
+          ...users,
+          ...staff.map((s) => ({ id: `s${s.id}`, name: s.name })),
+        ])
+      : Promise.resolve(null),
   ]);
 
   return (

@@ -30,6 +30,7 @@ import { printReceipt } from "@/lib/print";
 import type { HeldBillSummary, SavedBill } from "@/types/bill";
 import type { BillDetail } from "@/types/bill";
 import type { AppSettings } from "@/types/settings";
+import type { CashierOption } from "@/services/StaffService";
 
 interface PosScreenProps {
   items: PosItem[];
@@ -37,6 +38,8 @@ interface PosScreenProps {
   settings: PosSettings & { timezone: string };
   appSettings: AppSettings;
   initialHeld: HeldBillSummary[];
+  /** The shared Counter login picks a cashier on every bill. Null for ordinary accounts. */
+  cashiers: CashierOption[] | null;
 }
 
 const INITIAL_PAYMENT: PaymentState = { split: false, method: "upi", received: "", reference: "", rows: [] };
@@ -54,7 +57,7 @@ function isTyping(target: EventTarget | null): boolean {
   return Boolean(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable));
 }
 
-export function PosScreen({ items, categories, settings, appSettings, initialHeld }: PosScreenProps) {
+export function PosScreen({ items, categories, settings, appSettings, initialHeld, cashiers }: PosScreenProps) {
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const attempt = useRef({ signature: "", ref: "" });
@@ -63,6 +66,10 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   const [details, setDetails] = useState<BillDetailsDraft>(EMPTY_DETAILS);
   const [payment, setPayment] = useState<PaymentState>(INITIAL_PAYMENT);
   const [heldBillId, setHeldBillId] = useState<number | null>(null);
+  // Picked fresh for every bill: it is cleared when a bill is saved, so each one names its own cashier.
+  const [pickedCashier, setPickedCashier] = useState<number | null>(null);
+  // Someone turned off since the list loaded no longer counts as picked.
+  const cashierId = cashiers?.some((c) => c.id === pickedCashier) ? pickedCashier : null;
   const [held, setHeld] = useState(initialHeld);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState<SavedBill | null>(null);
@@ -108,6 +115,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
     setDetails(EMPTY_DETAILS);
     setPayment(INITIAL_PAYMENT);
     setHeldBillId(null);
+    setPickedCashier(null);
     attempt.current = { signature: "", ref: "" };
     setCartOpen(false);
   }, []);
@@ -143,6 +151,8 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         return void toast.error(paymentResult.message ?? "Collect the full amount first.");
       }
 
+      if (action === "complete" && cashiers && cashierId === null) return void toast.error("Choose who is taking this payment.");
+
       const c = details.customer;
       const body = {
         action,
@@ -163,6 +173,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         payments: action === "complete" ? paymentResult.payments : [],
         sendRemainder: action === "complete" && appSettings.receipt.printKitchenByDefault,
         cashTendered: action === "complete" ? paymentResult.cashTendered : null,
+        cashierId: cashiers ? cashierId : null,
       };
 
       // Pressing Save twice, or retrying after a dropped connection, reuses the same reference,
@@ -198,7 +209,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         setPending(false);
       }
     },
-    [pending, lines, problem, paymentResult, details, heldBillId, billDiscount, settings.orderTypesEnabled, resetBill, refreshHeld, router, appSettings.receipt.printKitchenByDefault],
+    [pending, lines, problem, paymentResult, details, heldBillId, cashiers, cashierId, billDiscount, settings.orderTypesEnabled, resetBill, refreshHeld, router, appSettings.receipt.printKitchenByDefault],
   );
 
   const resume = useCallback(
@@ -356,6 +367,9 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       settings={settings}
       pending={pending}
       resumedFromHold={heldBillId !== null}
+      cashiers={cashiers}
+      cashierId={cashierId}
+      onCashier={setPickedCashier}
       problem={problem}
       onSave={() => void submit("complete")}
       onHold={() => void submit("hold")}
