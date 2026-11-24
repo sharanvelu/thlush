@@ -18,6 +18,7 @@ export const PAGE_COPY = {
   suppliers: { title: "Suppliers & Purchases", description: "Record deliveries to add stock, and keep your suppliers in one place." },
   reports: { title: "Reports", description: "Sales, tax, discounts and stock, with the same figures in the table, the chart and the export." },
   users: { title: "Users & Roles", description: "Who can sign in, and what they can do." },
+  staff: { title: "Staff", description: "The people who work at the counter. On a shared till, the cashier is picked from this list on every bill." },
   auditLog: { title: "Audit Log", description: "Who did what, and when. Entries can't be edited or removed from here." },
   settings: { title: "Settings", description: "Business details, tax, receipts and what's switched on." },
   customPrint: { title: "Custom Print", description: "Type free text and print it on the thermal printer. Each text field is cut off as its own slip." },

@@ -1,5 +1,6 @@
 export * from "./_shared";
 export * from "./users";
+export * from "./staff-members";
 export * from "./categories";
 export * from "./menu-items";
 export * from "./customers";

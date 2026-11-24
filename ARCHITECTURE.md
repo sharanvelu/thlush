@@ -85,7 +85,7 @@ client components ──fetch──> route.ts   (via lib/api-client.ts)
 
 ## Auth and permissions
 
-- Roles: `super_admin`, `manager`, `billing` (shown as **Cashier**). SSO users start as `billing`.
+- Roles: `super_admin`, `manager`, `billing` (shown as **Cashier**) and `counter`. SSO users start as `billing`. `counter` is one shared login for a till: it can bill and see its own bills, the sidebar shows it only Billing and Bill History (`COUNTER_NAV` in `config/navigation.ts`), and `/` redirects it to `/billing`.
 - `src/config/permissions.ts` is the **only** place defining who can do what: `ROLE_PERMISSIONS` (role to permission set) and `ROUTE_PERMISSIONS` (URL prefix to permission). Keep it free of server-only imports.
 - Enforced in three layers: proxy (coarse, from the token, so role changes apply after next sign-in), `withAuth` / `requireAccess` (re-read the user from the DB every request, so revocation is immediate), and the sidebar (`config/navigation.ts`) hiding what a role cannot open.
 - Cashiers only ever see their own bills, enforced in the service, not just the UI.

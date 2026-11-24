@@ -10,6 +10,7 @@ import {
   table,
 } from "./_shared";
 import { customers } from "./customers";
+import { staffMembers } from "./staff-members";
 import { users } from "./users";
 
 export const bills = table(
@@ -41,7 +42,12 @@ export const bills = table(
     /** Client-generated id for one save attempt, so a retried or double-clicked save returns the same bill. */
     clientRef: text("client_ref"),
     voidedBy: uuid("voided_by").references(() => users.id, { onDelete: "set null" }),
+    /** The signed-in account that saved the bill. Drives who may see it; on a shared till it is the Counter login. */
     createdUserId: uuid("created_user_id").references(() => users.id, { onDelete: "set null" }),
+    /** Who actually took the payment, picked on the bill when the account is shared. Null on ordinary bills. */
+    cashierId: bigRef("cashier_id").references(() => staffMembers.id, { onDelete: "restrict" }),
+    /** The cashier's name when the bill was saved, so a later rename never changes an old receipt. */
+    cashierName: text("cashier_name"),
     createdAt: createdAt(),
   },
   (t) => [
@@ -50,6 +56,7 @@ export const bills = table(
     index(ix("bills_created_at_idx")).on(t.createdAt),
     index(ix("bills_customer_idx")).on(t.customerId),
     index(ix("bills_created_user_idx")).on(t.createdUserId),
+    index(ix("bills_cashier_idx")).on(t.cashierId),
     index(ix("bills_status_idx")).on(t.status),
   ],
 );
