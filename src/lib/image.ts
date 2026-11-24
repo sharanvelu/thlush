@@ -7,7 +7,7 @@ export const IMAGE_ACCEPT = ACCEPTED.join(",");
 
 /**
  * Resizes a photo to fit in `maxSize` pixels and re-encodes it as WebP, returning a
- * data URL of roughly 20 to 60 KB. Small enough to store in the database.
+ * data URL of roughly 20 to 60 KB. The server uploads it to the object-storage bucket when the item is saved.
  */
 export async function fileToResizedDataUrl(file: File, maxSize = 512): Promise<string> {
   if (!ACCEPTED.includes(file.type)) throw new Error("Choose a PNG, JPEG or WebP image.");

@@ -23,11 +23,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const image = await MenuService.getMenuItemImage(id);
   if (!image) return notFound();
   if (image.type === "redirect") return Response.redirect(image.url, 302);
-  return new Response(new Uint8Array(image.bytes), {
-    headers: {
-      "Content-Type": image.contentType,
-      "Cache-Control": "public, max-age=31536000, immutable",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+  const headers = {
+    "Content-Type": image.contentType,
+    "Cache-Control": "public, max-age=31536000, immutable",
+    "X-Content-Type-Options": "nosniff",
+  };
+  if (image.type === "stream") return new Response(image.body, { headers });
+  return new Response(new Uint8Array(image.bytes), { headers });
 }

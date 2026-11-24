@@ -16,6 +16,14 @@ import { toCsv, parseCsv, unescapeCell } from "@/lib/csv";
 import { invalidatePosCatalog } from "@/lib/catalog-cache";
 import { isForeignKeyViolation, isUniqueViolation } from "@/lib/db-errors";
 import { HttpError } from "@/lib/errors";
+import {
+  copyImage,
+  deleteImages,
+  isObjectStorageConfigured,
+  isStoredRef,
+  openImage,
+  putImageFromDataUrl,
+} from "@/lib/object-storage";
 import { D, parseMoney, parseQuantity } from "@/lib/money";
 import {
   menuItemSchema,
@@ -98,7 +106,7 @@ const listColumns = () => {
     categoryColor: categories.color,
     categoryIcon: categories.icon,
     externalImage: sql<string | null>`case when ${menuItems.imageUrl} like 'https://%' then ${menuItems.imageUrl} end`,
-    hasStoredImage: sql<boolean>`(${menuItems.imageUrl} like 'data:%')`,
+    hasStoredImage: sql<boolean>`(${menuItems.imageUrl} like 'data:%' or ${menuItems.imageUrl} like 's3:%')`,
   };
 };
 
@@ -222,7 +230,12 @@ export async function getMenuItem(id: number, executor: DbExecutor = db): Promis
 /** The stored photo, for the image route. Returns null when there is none. */
 export async function getMenuItemImage(
   id: number,
-): Promise<{ type: "redirect"; url: string } | { type: "bytes"; contentType: string; bytes: Buffer } | null> {
+): Promise<
+  | { type: "redirect"; url: string }
+  | { type: "bytes"; contentType: string; bytes: Buffer }
+  | { type: "stream"; contentType: string; body: ReadableStream<Uint8Array> }
+  | null
+> {
   const [row] = await db
     .select({ imageUrl: menuItems.imageUrl })
     .from(menuItems)
@@ -230,9 +243,22 @@ export async function getMenuItemImage(
   const url = row?.imageUrl;
   if (!url) return null;
   if (url.startsWith("https://")) return { type: "redirect", url };
+  if (isStoredRef(url)) {
+    const object = await openImage(url);
+    return object ? { type: "stream", ...object } : null;
+  }
   const match = /^data:(image\/(?:webp|png|jpeg));base64,(.+)$/.exec(url);
   if (!match?.[1] || !match[2]) return null;
   return { type: "bytes", contentType: match[1], bytes: Buffer.from(match[2], "base64") };
+}
+
+/**
+ * Turns the photo a client sent (a data URL) into what the database stores: a bucket reference. Links and
+ * `null` pass through. Without a configured bucket the data URL is kept in the database, as before.
+ */
+async function persistImage(imageUrl: string | null): Promise<string | null> {
+  if (!imageUrl?.startsWith("data:") || !isObjectStorageConfigured()) return imageUrl;
+  return putImageFromDataUrl(imageUrl);
 }
 
 function skuTaken() {
@@ -246,6 +272,7 @@ export async function createMenuItem(input: MenuItemData, userId: string): Promi
   const settings = await getSettings();
   // Opening stock only counts for items that track stock.
   const opening = input.trackStock && input.openingStock ? parseQuantity(input.openingStock) : "0.000";
+  const imageUrl = await persistImage(input.imageUrl);
   try {
     const id = await db.transaction(async (tx) => {
       const [created] = await tx
@@ -260,7 +287,7 @@ export async function createMenuItem(input: MenuItemData, userId: string): Promi
           currency: input.currency ?? settings.locale.currency,
           status: input.status,
           sku: input.sku,
-          imageUrl: input.imageUrl,
+          imageUrl,
           isVeg: input.isVeg,
           variants: input.variants,
           addons: input.addons,
@@ -293,6 +320,7 @@ export async function createMenuItem(input: MenuItemData, userId: string): Promi
     invalidatePosCatalog();
     return getMenuItem(id);
   } catch (error) {
+    await deleteImages([imageUrl]);
     if (isUniqueViolation(error)) throw skuTaken();
     if (isForeignKeyViolation(error)) throw badCategory();
     throw error;
@@ -310,7 +338,9 @@ export async function updateMenuItem(id: number, patch: MenuItemPatch, userId: s
   if (patch.currency !== undefined) values.currency = patch.currency;
   if (patch.status !== undefined) values.status = patch.status;
   if (patch.sku !== undefined) values.sku = patch.sku;
-  if (patch.imageUrl !== undefined) values.imageUrl = patch.imageUrl;
+  const imageChanged = patch.imageUrl !== undefined;
+  const newImage = imageChanged ? await persistImage(patch.imageUrl ?? null) : undefined;
+  if (newImage !== undefined) values.imageUrl = newImage;
   if (patch.isVeg !== undefined) values.isVeg = patch.isVeg;
   if (patch.variants !== undefined) values.variants = patch.variants;
   if (patch.addons !== undefined) values.addons = patch.addons;
@@ -320,9 +350,14 @@ export async function updateMenuItem(id: number, patch: MenuItemPatch, userId: s
   if (patch.costPrice !== undefined) values.costPrice = parseMoney(patch.costPrice);
   if (patch.packagingCharge !== undefined) values.packagingCharge = parseMoney(patch.packagingCharge);
 
+  let previousImage: string | null = null;
   try {
     await db.transaction(async (tx) => {
       const where = and(eq(menuItems.id, id), isNull(menuItems.deletedAt));
+      if (imageChanged) {
+        const [current] = await tx.select({ imageUrl: menuItems.imageUrl }).from(menuItems).where(where);
+        previousImage = current?.imageUrl ?? null;
+      }
       const [updated] =
         Object.keys(values).length > 0
           ? await tx.update(menuItems).set(values).where(where).returning({ id: menuItems.id })
@@ -334,22 +369,28 @@ export async function updateMenuItem(id: number, patch: MenuItemPatch, userId: s
       );
     });
   } catch (error) {
+    // The new object was never referenced by a row, so don't leave it behind.
+    if (newImage !== previousImage) await deleteImages([newImage]);
     if (isUniqueViolation(error)) throw skuTaken();
     if (isForeignKeyViolation(error)) throw badCategory();
     throw error;
   }
+  if (imageChanged && previousImage !== newImage) await deleteImages([previousImage]);
   invalidatePosCatalog();
   return getMenuItem(id);
 }
 
 /** Copies an item. The copy is disabled and has no SKU, so it never reaches the POS half-edited. */
 export async function duplicateMenuItem(id: number, userId: string): Promise<MenuListItem> {
+  let copiedImage: string | null = null;
   const newId = await db.transaction(async (tx) => {
     const [source] = await tx
       .select()
       .from(menuItems)
       .where(and(eq(menuItems.id, id), isNull(menuItems.deletedAt)));
     if (!source) throw HttpError.notFound("Menu item not found.");
+    // Each item owns its object, so replacing or deleting one photo never breaks the other.
+    copiedImage = isStoredRef(source.imageUrl) ? await copyImage(source.imageUrl) : source.imageUrl;
 
     const [copy] = await tx
       .insert(menuItems)
@@ -363,7 +404,7 @@ export async function duplicateMenuItem(id: number, userId: string): Promise<Men
         currency: source.currency,
         status: "disabled",
         sku: null,
-        imageUrl: source.imageUrl,
+        imageUrl: copiedImage,
         unit: source.unit,
         isVeg: source.isVeg,
         variants: source.variants,
@@ -381,6 +422,9 @@ export async function duplicateMenuItem(id: number, userId: string): Promise<Men
       tx,
     );
     return copy.id;
+  }).catch(async (error: unknown) => {
+    if (isStoredRef(copiedImage)) await deleteImages([copiedImage]);
+    throw error;
   });
   invalidatePosCatalog();
   return getMenuItem(newId);
@@ -409,13 +453,13 @@ async function removeItems(
   ids: number[],
   userId: string,
   tx: DbExecutor,
-): Promise<{ deleted: number; archived: number }> {
+): Promise<{ deleted: number; archived: number; images: Array<string | null> }> {
   const live = await tx
-    .select({ id: menuItems.id })
+    .select({ id: menuItems.id, imageUrl: menuItems.imageUrl })
     .from(menuItems)
     .where(and(inArray(menuItems.id, ids), isNull(menuItems.deletedAt)));
   const liveIds = live.map((r) => r.id);
-  if (liveIds.length === 0) return { deleted: 0, archived: 0 };
+  if (liveIds.length === 0) return { deleted: 0, archived: 0, images: [] };
 
   const used = await referencedIds(liveIds, tx);
   const toArchive = liveIds.filter((id) => used.has(id));
@@ -438,11 +482,14 @@ async function removeItems(
     },
     tx,
   );
-  return { deleted: toDelete.length, archived: toArchive.length };
+  // Only fully removed items give up their photo; archived ones keep it so history stays intact.
+  const images = live.filter((r) => toDelete.includes(r.id)).map((r) => r.imageUrl);
+  return { deleted: toDelete.length, archived: toArchive.length, images };
 }
 
 export async function deleteMenuItem(id: number, userId: string): Promise<{ mode: DeleteMode }> {
   const result = await db.transaction((tx) => removeItems([id], userId, tx));
+  await deleteImages(result.images);
   invalidatePosCatalog();
   if (result.deleted + result.archived === 0) throw HttpError.notFound("Menu item not found.");
   return { mode: result.archived > 0 ? "archived" : "deleted" };
@@ -458,6 +505,7 @@ export async function bulkUpdateMenuItems(input: MenuBulkInput, userId: string):
 
   if (input.action === "delete") {
     const result = await db.transaction((tx) => removeItems(ids, userId, tx));
+    await deleteImages(result.images);
     invalidatePosCatalog();
     return { affected: result.deleted + result.archived, archived: result.archived };
   }
