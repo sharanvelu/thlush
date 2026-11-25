@@ -21,7 +21,7 @@ Conventions for code and UI. Follow what is here instead of inventing a new patt
 - Conventional Commits for **both** commit messages and PR titles: `feat: ...`, `fix(scope): ...`. Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore. CI rejects other titles.
 - One concern per PR. Run `npm run check` (and `npm run build` for UI or routing changes) before pushing.
 - If you changed `src/db/schema`, commit the generated `drizzle/` files. If you added an env var, update `.env.example`, `src/env.ts` and the README table.
-- Update the docs your change touches (README feature text, ARCHITECTURE tables, permission table).
+- Update the docs your change touches in the same PR, each in its owning file (table in [AGENTS.md](AGENTS.md#keep-the-docs-in-step-with-every-change)).
 
 ## UI
 

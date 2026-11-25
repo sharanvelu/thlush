@@ -73,7 +73,7 @@ client components ──fetch──> route.ts   (via lib/api-client.ts)
 - **Server pages** call `requireAccess(permission)` and render `<Forbidden />` when not allowed, then call services directly (no HTTP hop).
 - **Client components** talk to the API with `api.get/post/...` from `src/lib/api-client.ts` and throw `ApiClientError`.
 - Services accept an optional `executor` (`db` or a transaction, type `DbExecutor`) when they must join a caller's transaction.
-- Every state change writes an audit entry via `AuditService`.
+- Every state change writes an audit entry via `AuditService`: `record` (propagates errors, use inside a transaction) or `log` (swallows errors, for sign-ins and the like). `AuditLogService` is the read side for the Audit log page.
 
 ### API conventions
 
@@ -126,7 +126,7 @@ Business-day logic uses the configured business timezone (`src/lib/dates.ts`, `f
 | You are adding | Put it in |
 | --- | --- |
 | A page | `src/app/(app)/<area>/page.tsx` (server), with `export const metadata`, `requireAccess`, and a client `*-view.tsx` in `src/components/<area>/` |
-| A sidebar entry | `src/config/navigation.ts` plus a route permission in `src/config/permissions.ts` |
+| A sidebar entry | `src/config/navigation.ts` (each item still needs a `milestone` number; nothing reads it any more, so use the highest existing one) plus a route permission in `src/config/permissions.ts` |
 | An API endpoint | `src/app/api/<resource>/route.ts` using `withAuth` |
 | Business logic | `src/services/<Name>Service.ts` (pure parts in a lower-case sibling, tested) |
 | A form schema | `src/lib/validation/<area>.ts`, shared by form and route |

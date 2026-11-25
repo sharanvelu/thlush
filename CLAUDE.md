@@ -7,6 +7,7 @@
 1. Check the skills listed in `docs/SKILLS.md` and install any required ones that are missing, **before** implementing anything. Tell the user if one cannot be installed.
 2. Use `ARCHITECTURE.md` (where things go) and `STYLE.md` (conventions) instead of exploring the repo or choosing your own patterns.
 3. Run `npm run check` before finishing; it is what CI runs.
+4. **Update the docs for every change you make**, in the file that owns it (README, ARCHITECTURE, STYLE, docs/SKILLS.md). See the table in `AGENTS.md`. A change isn't done until its docs are.
 
 # Project rules
 
