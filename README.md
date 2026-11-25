@@ -4,6 +4,17 @@ Billing and point-of-sale for restaurants, cafés and small shops. Built with Ne
 
 **Status:** all 8 milestones done (reports, accessibility pass and docs added in milestone 8). See [Roadmap](#roadmap).
 
+## Docs for developers and code agents
+
+| File | What it is for |
+| ---- | -------------- |
+| [AGENTS.md](AGENTS.md) | Start here. Reading order, setup, and the rules that are easy to get wrong. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Stack, directory map, layering, auth, database, key flows, where to put new code. |
+| [STYLE.md](STYLE.md) | Code, commit and UI conventions, theming and accessibility. |
+| [CLAUDE.md](CLAUDE.md) | Hard project rules for Claude Code (imports AGENTS.md). |
+| [docs/SKILLS.md](docs/SKILLS.md) | Agent skills to install before implementing. |
+| [docs/online-orders-integration.md](docs/online-orders-integration.md) | Draft design for Swiggy/Zomato orders. Nothing built. |
+
 ## Quick start
 
 Requires Node 22 or newer (developed on Node 24) and a PostgreSQL database. Neon is the target.
@@ -39,6 +50,11 @@ The login page offers these as one-click fill-ins, but only when `NEXT_PUBLIC_AP
 | `AUTH_TRUST_HOST`                                   | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production. |
 | `DB_TABLE_PREFIX`                                   | no       | Table-name prefix, default `app_`.                                   |
 | `SEED_PASSWORD`                                     | no       | Password for seeded demo users.                                      |
+| `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | no | Neon Object Storage credentials for menu photos. Filled in by `neon deploy` / `neon env pull`. |
+| `OBJECT_STORAGE_BUCKET`                             | no       | Bucket for menu photos, default `uploads` (declared in `neon.ts`).   |
+| `NEXT_PUBLIC_PRINT_AGENT_URL`                       | no       | Where the optional print agent listens, default `http://127.0.0.1:9101`. |
+
+**Menu photos.** Photos are stored in a Neon Object Storage bucket (`src/lib/object-storage.ts`); the database keeps a reference like `s3:menu/<uuid>.webp`. When the `AWS_*` credentials are not set (a plain local database), new photos stay in the database as data URLs, and older `data:` or `https://` values keep working. The customer menu serves photos through `/api/c/menu/[id]/image`, only for items that are on the public menu.
 
 **Logging out of SSO.** With SSO configured, **Settings > Features > Single sign-on > When someone logs out** chooses what the Log out button does for people who signed in with SSO: **App only** (default), **App and SSO, in the background** (the user stays in the app, sees a logging-out loader while the browser sends the logout request to the provider, then lands on the sign-in page), or **App and SSO, via the provider** (the browser goes to the provider's logout page and back). For Authentik the background option runs the provider's logout flow through its API (the same way the older thlush-v1 did); for other providers it sends the standard logout request, which only works if the provider accepts its session cookie on a request from another site. A provider that does not leaves its session open without any error, so test it and use the redirect option if so. The user sees a full-screen "Logging out…" loader throughout. The redirect option needs `<your URL>/login` registered as a **post-logout redirect URI** at the provider. Both need a provider that publishes an `end_session_endpoint`; without one, logging out only ends the app session.
 
@@ -98,13 +114,17 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 6. **Deploy.** Push to `main`. Every pull request also gets a preview deployment.
 7. **Check it.** Sign in, open **Reports** and download a PDF, and print a receipt. PDF export uses `pdfkit`, which reads font files at run time, so confirm it once on the first deployment.
 
-**Region.** Set the function region (Project Settings, Functions) close to your Neon region to keep queries fast.
-
 **Region.** `vercel.json` runs the functions in `sin1` (Singapore), next to the Neon database in ap-southeast-1. Every page and API call makes several database round trips, so keeping the two close matters. If your database is in another region, change `regions` in `vercel.json` to the nearest Vercel region.
 
 **Sharing previews.** Vercel protects previews by default, so only people signed in to your Vercel team can open them. To share one with reviewers, open Project Settings, Deployment Protection and change **Vercel Authentication**. Preview deployments then need no Vercel login, but anyone with the URL can open the app, so keep preview data fake and never point previews at the production database.
 
 **Custom domain.** Add it under Domains, then update `NEXT_PUBLIC_BASE_URL` and redeploy. If you use SSO, add `<your URL>/api/auth/callback/oidc` as a redirect URI at the identity provider.
+
+## Customer site (public menu)
+
+A read-only menu for customers, served from the same app. On its own domain (`APP_DOMAIN_CUSTOMER`) the proxy rewrites every path under `/c`; with no domains set (local, previews) open `/c` or `/c/menu` directly. It shows active items in active categories, built from the same cached catalogue as the billing screen, and leaves out SKUs, tax, stock and packaging charges (`src/lib/customer-menu.ts`). The name and logo come from Settings. Edits to the menu show up straight away.
+
+It supports light and dark: it follows the visitor's device until they choose Light, Dark or System with the toggle, saved in the browser under `customer-theme` (separate from the staff app's `theme`). Rules for building customer pages are in [STYLE.md](STYLE.md#customer-site).
 
 ## Billing screen
 
@@ -250,19 +270,22 @@ Targets WCAG 2.1 AA. Every page has one `h1`, a skip link and a `main` landmark;
 
 ## Architecture
 
+The full picture (directory map, layering, auth, database, key flows, where to put new code) is in [ARCHITECTURE.md](ARCHITECTURE.md). Conventions are in [STYLE.md](STYLE.md). In short:
+
 ```
 src/
-  app/            Routes. (auth)/login, (app)/* behind the shell, api/*
-  components/     ui/ (shadcn), layout/ (shell), auth/, theme/, dashboard/
+  app/            (app) staff pages, (auth) login, (print) receipts, (customer)/c public menu, api/*
+  components/     ui/ (shadcn), layout/ (shell), one folder per feature
   config.ts       App settings and default business settings
-  config/         permissions.ts (the role matrix), navigation.ts, demo.ts
+  config/         permissions.ts (the role matrix), navigation.ts, page-copy.ts, demo.ts
   db/             Drizzle client and one schema file per table
-  lib/            api envelope + withAuth, money, errors, password, formatting
-  services/       All business logic (users, audit, settings, calculations)
-  types/          Shared types
+  lib/            api envelope + withAuth, money, dates, validation/, printing, helpers
+  services/       All business logic and database access
+  hooks/ types/   Shared hooks and types
 drizzle/          Generated, ordered SQL migrations
-scripts/          migrate.ts and seed.ts
+scripts/          migrate.ts, seed.ts, print-agent.mjs
 tests/            Vitest tests
+docs/             Agent skills and design notes
 ```
 
 **Rules the code follows**
@@ -277,19 +300,21 @@ tests/            Vitest tests
 
 | Capability                        | Super admin | Manager | Cashier  |
 | --------------------------------- | :---------: | :-----: | :------: |
-| Dashboard, New Bill, Customers    | yes         | yes     | yes      |
+| Dashboard, New Bill               | yes         | yes     | yes      |
+| Customers                         | manage      | manage  | look up  |
 | Bill History                      | all bills   | all     | own only |
 | Menu                              | manage      | manage  | read     |
 | Categories, Inventory, Reports    | yes         | yes     | no       |
 | Void / refund bills               | yes         | yes     | no       |
 | Audit log                         | yes         | yes     | no       |
 | Users & roles, Settings           | yes         | no      | no       |
+| Custom Print (thermal)            | yes         | no      | no       |
 
 Access is enforced in three places. The proxy (`src/proxy.ts`) does a coarse check from the session token. Server pages and `withAuth` re-read the user from the database on every request, so a revoked role or deleted account takes effect immediately. The sidebar hides what a role cannot open. Newly granted access reaches the proxy after the user signs in again.
 
 ### Database
 
-Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
+Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots` (kitchen orders sent per bill), `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
 
 ## Features
 
