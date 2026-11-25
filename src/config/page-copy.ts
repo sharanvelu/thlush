@@ -12,6 +12,7 @@ export const PAGE_COPY = {
   menu: { title: "Menu", description: null },
   bills: { title: "Bill History", description: null },
   categories: { title: "Categories", description: "Drag to set the order of the tabs on the billing screen. Disabled categories and their items are hidden there." },
+  feedback: { title: "Feedback", description: "What customers said about their bills, with ratings per item and for the visit." },
   customers: { title: "Customers", description: "Who orders, how often and how much." },
   stock: { title: "Stock Overview", description: "What you have, what's running low, and what it's worth." },
   adjustments: { title: "Stock Adjustments", description: "Correct counts, record wastage and see every change to stock." },

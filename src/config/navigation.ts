@@ -3,6 +3,7 @@ import {
   ChartColumn,
   History,
   LayoutDashboard,
+  MessageSquareHeart,
   Printer,
   ReceiptText,
   ScrollText,
@@ -126,6 +127,15 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "People",
     items: [
+      {
+        label: "Feedback",
+        href: "/feedback",
+        icon: MessageSquareHeart,
+        permission: "feedback.view",
+        description: "Ratings and comments customers left after their bill.",
+        milestone: 9,
+        keywords: ["reviews", "ratings", "comments", "survey"],
+      },
       {
         label: "Customers",
         href: "/customers",
