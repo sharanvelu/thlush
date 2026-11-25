@@ -7,6 +7,7 @@ export * from "./customers";
 export * from "./bills";
 export * from "./bill-items";
 export * from "./bill-kots";
+export * from "./bill-feedback";
 export * from "./payments";
 export * from "./stock-movements";
 export * from "./suppliers";
