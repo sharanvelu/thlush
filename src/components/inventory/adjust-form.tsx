@@ -59,7 +59,8 @@ export function AdjustForm({ items }: { items: TrackedOption[] }) {
       if (error instanceof ApiClientError && error.fieldErrors) {
         const mapped: Errors = {};
         for (const [field, messages] of Object.entries(error.fieldErrors)) {
-          if (field in { menuItemId: 1, quantity: 1, reason: 1, direction: 1, note: 1 } && messages[0]) mapped[field as keyof Errors] = messages[0];
+          if (field in { menuItemId: 1, quantity: 1, reason: 1, direction: 1, note: 1 } && messages[0])
+            mapped[field as keyof Errors] = messages[0];
         }
         if (Object.keys(mapped).length > 0) setErrors(mapped);
         else toast.error(errorMessage(error));
@@ -73,11 +74,15 @@ export function AdjustForm({ items }: { items: TrackedOption[] }) {
     <Card className="mb-6 shadow-card">
       <CardHeader>
         <CardTitle>Adjust stock</CardTitle>
-        <CardDescription>Every change is written to the ledger below and can&apos;t be edited. Fix a mistake with another adjustment.</CardDescription>
+        <CardDescription>
+          Every change is written to the ledger below and can&apos;t be edited. Fix a mistake with another adjustment.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No items track stock yet. Turn on Track stock for an item in the menu first.</p>
+          <p className="text-sm text-muted-foreground">
+            No items track stock yet. Turn on Track stock for an item in the menu first.
+          </p>
         ) : (
           <form onSubmit={submit} noValidate>
             <FieldGroup>
@@ -90,20 +95,30 @@ export function AdjustForm({ items }: { items: TrackedOption[] }) {
                     </SelectTrigger>
                     <SelectContent>
                       {items.map((i) => (
-                        <SelectItem key={i.id} value={String(i.id)}>{i.name}</SelectItem>
+                        <SelectItem key={i.id} value={String(i.id)}>
+                          {i.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {item ? <FieldDescription>{item.stock} {item.unit} on hand</FieldDescription> : null}
+                  {item ? (
+                    <FieldDescription>
+                      {item.stock} {item.unit} on hand
+                    </FieldDescription>
+                  ) : null}
                   <FieldError>{errors.menuItemId}</FieldError>
                 </Field>
                 <Field data-invalid={Boolean(errors.reason)}>
                   <FieldLabel htmlFor="adjust-reason">Reason</FieldLabel>
                   <Select value={reason} onValueChange={(v) => chooseReason(v as ManualReason)}>
-                    <SelectTrigger id="adjust-reason" className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="adjust-reason" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {MANUAL_REASONS.map((r) => (
-                        <SelectItem key={r} value={r}>{REASON_LABELS[r]}</SelectItem>
+                        <SelectItem key={r} value={r}>
+                          {REASON_LABELS[r]}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -113,23 +128,55 @@ export function AdjustForm({ items }: { items: TrackedOption[] }) {
               <div className="grid gap-4 md:grid-cols-2">
                 <Field>
                   <FieldLabel id="adjust-direction-label">Change</FieldLabel>
-                  <ToggleGroup type="single" variant="outline" value={direction} onValueChange={(v) => v && !locked && setDirection(v as Direction)} aria-labelledby="adjust-direction-label" className="w-fit">
-                    <ToggleGroupItem value="add" disabled={locked && direction !== "add"}>Add stock</ToggleGroupItem>
-                    <ToggleGroupItem value="remove" disabled={locked && direction !== "remove"}>Remove stock</ToggleGroupItem>
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    value={direction}
+                    onValueChange={(v) => v && !locked && setDirection(v as Direction)}
+                    aria-labelledby="adjust-direction-label"
+                    className="w-fit"
+                  >
+                    <ToggleGroupItem value="add" disabled={locked && direction !== "add"}>
+                      Add stock
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="remove" disabled={locked && direction !== "remove"}>
+                      Remove stock
+                    </ToggleGroupItem>
                   </ToggleGroup>
-                  {locked ? <FieldDescription>{REASON_LABELS[reason]} always {direction === "add" ? "adds" : "removes"} stock.</FieldDescription> : null}
+                  {locked ? (
+                    <FieldDescription>
+                      {REASON_LABELS[reason]} always {direction === "add" ? "adds" : "removes"} stock.
+                    </FieldDescription>
+                  ) : null}
                   <FieldError>{errors.direction}</FieldError>
                 </Field>
                 <Field data-invalid={Boolean(errors.quantity)}>
                   <FieldLabel htmlFor="adjust-qty">Quantity{item ? ` (${item.unit})` : ""}</FieldLabel>
-                  <Input id="adjust-qty" inputMode="decimal" value={quantity} onChange={(e) => setQuantity(e.target.value)} aria-invalid={Boolean(errors.quantity)} placeholder="0" />
-                  {preview && !preview.isNegative() ? <FieldDescription>Stock after: {preview.toString()} {item?.unit}</FieldDescription> : null}
+                  <Input
+                    id="adjust-qty"
+                    inputMode="decimal"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    aria-invalid={Boolean(errors.quantity)}
+                    placeholder="0"
+                  />
+                  {preview && !preview.isNegative() ? (
+                    <FieldDescription>
+                      Stock after: {preview.toString()} {item?.unit}
+                    </FieldDescription>
+                  ) : null}
                   <FieldError>{errors.quantity}</FieldError>
                 </Field>
               </div>
               <Field data-invalid={Boolean(errors.note)}>
                 <FieldLabel htmlFor="adjust-note">Note (optional)</FieldLabel>
-                <Input id="adjust-note" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Spilled during prep" />
+                <Input
+                  id="adjust-note"
+                  value={note}
+                  maxLength={200}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="e.g. Spilled during prep"
+                />
                 <FieldError>{errors.note}</FieldError>
               </Field>
               <div>

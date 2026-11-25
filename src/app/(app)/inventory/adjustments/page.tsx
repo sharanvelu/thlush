@@ -28,14 +28,25 @@ export default async function AdjustmentsPage({ searchParams }: PageProps<"/inve
   }
 
   const raw = await searchParams;
-  const query = movementQuerySchema.parse(Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])));
-  const [items, { rows, total }] = await Promise.all([listTrackedOptions(), listMovements(query, settings.locale.timezone)]);
+  const query = movementQuerySchema.parse(
+    Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
+  );
+  const [items, { rows, total }] = await Promise.all([
+    listTrackedOptions(),
+    listMovements(query, settings.locale.timezone),
+  ]);
 
   return (
     <>
       <PageHeader {...PAGE_COPY.adjustments} />
       <AdjustForm items={items} />
-      <MovementsView rows={rows} total={total} query={query} items={items} settings={{ locale: settings.locale.locale, timezone: settings.locale.timezone }} />
+      <MovementsView
+        rows={rows}
+        total={total}
+        query={query}
+        items={items}
+        settings={{ locale: settings.locale.locale, timezone: settings.locale.timezone }}
+      />
     </>
   );
 }

@@ -10,9 +10,29 @@ import { db, schema } from "@/db";
 import { nextDay, zonedStartOfDay } from "@/lib/dates";
 import type { ResolvedRange } from "@/lib/dashboard";
 import { D, type Dec } from "@/lib/money";
-import { REPORT_META, ROW_LIMIT, share, sumColumn, type Group, type ReportColumn, type ReportData, type ReportKind } from "@/lib/reports";
+import {
+  REPORT_META,
+  ROW_LIMIT,
+  share,
+  sumColumn,
+  type Group,
+  type ReportColumn,
+  type ReportData,
+  type ReportKind,
+} from "@/lib/reports";
 
-const { bills, billItems, payments, menuItems, categories, users, stockMovements } = schema;
+const {
+  bills,
+  billItems,
+  payments,
+  menuItems,
+  categories,
+  users,
+  stockMovements,
+  staffMembers,
+  billFeedback,
+  billFeedbackItems,
+} = schema;
 
 export interface ReportContext {
   range: ResolvedRange;
@@ -34,7 +54,11 @@ function periodText(ctx: ReportContext): string {
   return from === to ? f(from) : `${f(from)} to ${f(to)}`;
 }
 
-function base(kind: ReportKind, ctx: ReportContext | null, partial: Pick<ReportData, "columns" | "rows"> & Partial<ReportData>): ReportData {
+function base(
+  kind: ReportKind,
+  ctx: ReportContext | null,
+  partial: Pick<ReportData, "columns" | "rows"> & Partial<ReportData>,
+): ReportData {
   const meta = REPORT_META[kind];
   const limited = partial.rows.length > ROW_LIMIT;
   return {
@@ -82,7 +106,10 @@ async function sales(ctx: ReportContext): Promise<ReportData> {
       .groupBy(sql`1`)
       .orderBy(sql`1`),
     db
-      .select({ key: sql<string>`${bucket}`, qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)` })
+      .select({
+        key: sql<string>`${bucket}`,
+        qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)`,
+      })
       .from(billItems)
       .innerJoin(bills, eq(bills.id, billItems.billId))
       .where(where)
@@ -150,7 +177,12 @@ async function byCategory(ctx: ReportContext): Promise<ReportData> {
     .groupBy(categories.id, categories.name)
     .orderBy(desc(sql`3`));
   const total = data.reduce((acc, r) => acc.plus(r.revenue), new D(0)).toFixed(2);
-  const rows = data.map((r) => ({ name: r.name, qty: qty(r.qty), revenue: money(r.revenue), share: share(r.revenue, total) }));
+  const rows = data.map((r) => ({
+    name: r.name,
+    qty: qty(r.qty),
+    revenue: money(r.revenue),
+    share: share(r.revenue, total),
+  }));
   return base("category", ctx, {
     columns: [
       { key: "name", label: "Category", format: "text" },
@@ -183,7 +215,13 @@ async function byItem(ctx: ReportContext): Promise<ReportData> {
     .orderBy(desc(sql`4`), asc(sql`1`))
     .limit(ROW_LIMIT + 1);
   const total = data.reduce((acc, r) => acc.plus(r.revenue), new D(0)).toFixed(2);
-  const rows = data.map((r) => ({ name: r.name, category: r.category, qty: qty(r.qty), revenue: money(r.revenue), share: share(r.revenue, total) }));
+  const rows = data.map((r) => ({
+    name: r.name,
+    category: r.category,
+    qty: qty(r.qty),
+    revenue: money(r.revenue),
+    share: share(r.revenue, total),
+  }));
   return base("item", ctx, {
     columns: [
       { key: "name", label: "Item", format: "text" },
@@ -200,17 +238,21 @@ async function byItem(ctx: ReportContext): Promise<ReportData> {
 
 // ---- By cashier ------------------------------------------------------------
 async function byCashier(ctx: ReportContext): Promise<ReportData> {
+  // One row per person: the staff member named on the bill, else the account that saved it. Every bill lands
+  // in exactly one row, so the rows always add up to the overall total.
+  const person = sql`coalesce('s' || ${bills.cashierId}::text, 'u' || ${bills.createdUserId}::text)`;
   const data = await db
     .select({
-      name: sql<string>`coalesce(${users.name}, 'Removed user')`,
+      name: sql<string>`coalesce(max(${staffMembers.name}), max(${users.name}), 'Removed user')`,
       bills: sql<number>`count(*)`.mapWith(Number),
       discount: sql<string>`coalesce(sum(${bills.totalDiscount}), 0)`,
       total: sql<string>`coalesce(sum(${bills.totalAmount}), 0)`,
     })
     .from(bills)
     .leftJoin(users, eq(users.id, bills.createdUserId))
+    .leftJoin(staffMembers, eq(staffMembers.id, bills.cashierId))
     .where(and(...window(ctx)))
-    .groupBy(users.id, users.name)
+    .groupBy(person)
     .orderBy(desc(sql`4`));
   const rows = data.map((r) => ({
     name: r.name,
@@ -230,7 +272,12 @@ async function byCashier(ctx: ReportContext): Promise<ReportData> {
       { key: "average", label: "Avg bill", format: "money" },
     ],
     rows,
-    totals: { bills: String(totalBills), discount: sumColumn(rows, "discount"), total, average: totalBills > 0 ? new D(total).div(totalBills).toFixed(2) : "0.00" },
+    totals: {
+      bills: String(totalBills),
+      discount: sumColumn(rows, "discount"),
+      total,
+      average: totalBills > 0 ? new D(total).div(totalBills).toFixed(2) : "0.00",
+    },
     chart: { type: "bar", labelKey: "name", valueKey: "total", valueLabel: "Total", format: "money" },
   });
 }
@@ -251,7 +298,12 @@ async function byPayment(ctx: ReportContext): Promise<ReportData> {
     .groupBy(payments.method)
     .orderBy(desc(sql`3`));
   const total = data.reduce((acc, r) => acc.plus(r.amount), new D(0)).toFixed(2);
-  const rows = data.map((r) => ({ method: METHOD_LABELS[r.method] ?? r.method, bills: String(r.bills), amount: money(r.amount), share: share(r.amount, total) }));
+  const rows = data.map((r) => ({
+    method: METHOD_LABELS[r.method] ?? r.method,
+    bills: String(r.bills),
+    amount: money(r.amount),
+    share: share(r.amount, total),
+  }));
   return base("payment", ctx, {
     columns: [
       { key: "method", label: "Method", format: "text" },
@@ -305,7 +357,13 @@ async function tax(ctx: ReportContext): Promise<ReportData> {
       { key: "total", label: "Total", format: "money" },
     ],
     rows,
-    totals: { taxable: sumColumn(rows, "taxable"), sgst: sumColumn(rows, "sgst"), cgst: sumColumn(rows, "cgst"), tax: sumColumn(rows, "tax"), total: sumColumn(rows, "total") },
+    totals: {
+      taxable: sumColumn(rows, "taxable"),
+      sgst: sumColumn(rows, "sgst"),
+      cgst: sumColumn(rows, "cgst"),
+      tax: sumColumn(rows, "tax"),
+      total: sumColumn(rows, "total"),
+    },
     chart: { type: "bar", labelKey: "rate", valueKey: "tax", valueLabel: "Tax collected", format: "money" },
   });
 }
@@ -319,18 +377,23 @@ async function discounts(ctx: ReportContext): Promise<ReportData> {
       .select({
         billNo: bills.billNo,
         day: sql<string>`to_char(${local}, 'YYYY-MM-DD')`,
-        cashier: sql<string>`coalesce(${users.name}, 'Removed user')`,
+        cashier: sql<string>`coalesce(${staffMembers.name}, ${users.name}, 'Removed user')`,
         subtotal: bills.subtotal,
         discount: bills.totalDiscount,
         total: bills.totalAmount,
       })
       .from(bills)
       .leftJoin(users, eq(users.id, bills.createdUserId))
+      .leftJoin(staffMembers, eq(staffMembers.id, bills.cashierId))
       .where(where)
       .orderBy(desc(bills.createdAt))
       .limit(ROW_LIMIT + 1),
     db
-      .select({ day: sql<string>`to_char(${local}, 'YYYY-MM-DD')`, discount: sql<string>`coalesce(sum(${bills.totalDiscount}), 0)`, bills: sql<number>`count(*)`.mapWith(Number) })
+      .select({
+        day: sql<string>`to_char(${local}, 'YYYY-MM-DD')`,
+        discount: sql<string>`coalesce(sum(${bills.totalDiscount}), 0)`,
+        bills: sql<number>`count(*)`.mapWith(Number),
+      })
       .from(bills)
       .where(where)
       .groupBy(sql`1`)
@@ -382,10 +445,19 @@ async function valuation(ctx: ReportContext | null): Promise<ReportData> {
     .where(and(eq(menuItems.trackStock, true), sql`${menuItems.deletedAt} is null`))
     .orderBy(desc(sql`6`), asc(menuItems.name))
     .limit(ROW_LIMIT + 1);
-  const rows = data.map((r) => ({ name: r.name, category: r.category, unit: r.unit, stock: qty(r.stock), cost: money(r.cost), value: money(r.value) }));
+  const rows = data.map((r) => ({
+    name: r.name,
+    category: r.category,
+    unit: r.unit,
+    stock: qty(r.stock),
+    cost: money(r.cost),
+    value: money(r.value),
+  }));
   const byCat = new Map<string, Dec>();
   for (const r of rows) byCat.set(r.category, (byCat.get(r.category) ?? new D(0)).plus(r.value));
-  const chartRows = [...byCat].sort((a, b) => b[1].comparedTo(a[1])).map(([category, v]) => ({ category, value: v.toFixed(2) }));
+  const chartRows = [...byCat]
+    .sort((a, b) => b[1].comparedTo(a[1]))
+    .map(([category, v]) => ({ category, value: v.toFixed(2) }));
   return base("valuation", ctx, {
     columns: [
       { key: "name", label: "Item", format: "text" },
@@ -427,7 +499,15 @@ async function movements(ctx: ReportContext): Promise<ReportData> {
     .groupBy(menuItems.id, menuItems.name, menuItems.unit)
     .orderBy(desc(sql`4`), asc(menuItems.name))
     .limit(ROW_LIMIT + 1);
-  const rows = data.map((r) => ({ name: r.name, unit: r.unit, purchased: qty(r.purchased), sold: qty(r.sold), wasted: qty(r.wasted), adjusted: qty(r.adjusted), net: qty(r.net) }));
+  const rows = data.map((r) => ({
+    name: r.name,
+    unit: r.unit,
+    purchased: qty(r.purchased),
+    sold: qty(r.sold),
+    wasted: qty(r.wasted),
+    adjusted: qty(r.adjusted),
+    net: qty(r.net),
+  }));
   const col = (key: string) => sumQty(rows, key);
   return base("movements", ctx, {
     columns: [
@@ -440,22 +520,105 @@ async function movements(ctx: ReportContext): Promise<ReportData> {
       { key: "net", label: "Net change", format: "number" },
     ],
     rows,
-    totals: { purchased: col("purchased"), sold: col("sold"), wasted: col("wasted"), adjusted: col("adjusted"), net: col("net") },
+    totals: {
+      purchased: col("purchased"),
+      sold: col("sold"),
+      wasted: col("wasted"),
+      adjusted: col("adjusted"),
+      net: col("net"),
+    },
     chart: { type: "bar", labelKey: "name", valueKey: "sold", valueLabel: "Sold (net)", format: "number" },
+  });
+}
+
+// ---- Customer feedback -----------------------------------------------------
+/**
+ * Average ratings from submitted feedback forms whose answer arrived in the period. Counts every submitted form,
+ * whatever became of the bill afterwards, because the customer's opinion of the visit still stands.
+ */
+async function feedbackReport(ctx: ReportContext): Promise<ReportData> {
+  const submitted = and(
+    sql`${billFeedback.submittedAt} is not null`,
+    gte(billFeedback.submittedAt, zonedStartOfDay(ctx.range.from, ctx.timeZone)),
+    lt(billFeedback.submittedAt, zonedStartOfDay(nextDay(ctx.range.to), ctx.timeZone)),
+  );
+  const avg1 = (v: unknown) => (v === null || v === undefined ? "" : new D(v as string).toDecimalPlaces(1).toFixed(1));
+
+  const [[visit], items] = await Promise.all([
+    db
+      .select({
+        responses: sql<number>`count(*)`.mapWith(Number),
+        overall: sql<string | null>`avg(${billFeedback.overallRating})`,
+        ambience: sql<string | null>`avg(${billFeedback.ambienceRating})`,
+        service: sql<string | null>`avg(${billFeedback.serviceRating})`,
+        experience: sql<string | null>`avg(${billFeedback.experienceRating})`,
+        yes: sql<number>`count(*) filter (where ${billFeedback.wouldRecommend} is true)`.mapWith(Number),
+        answered: sql<number>`count(${billFeedback.wouldRecommend})`.mapWith(Number),
+      })
+      .from(billFeedback)
+      .where(submitted),
+    db
+      .select({
+        name: billFeedbackItems.itemName,
+        responses: sql<number>`count(*)`.mapWith(Number),
+        rating: sql<string>`avg(${billFeedbackItems.rating})`,
+      })
+      .from(billFeedbackItems)
+      .innerJoin(billFeedback, eq(billFeedback.id, billFeedbackItems.feedbackId))
+      .where(and(submitted, gt(billFeedbackItems.rating, 0)))
+      .groupBy(billFeedbackItems.itemName)
+      .orderBy(desc(sql`3`), asc(sql`1`))
+      .limit(ROW_LIMIT),
+  ]);
+
+  const responses = visit?.responses ?? 0;
+  const rows: Array<Record<string, string>> = [
+    { name: "Overall order", kind: "Visit", responses: String(responses), rating: avg1(visit?.overall) },
+    { name: "Ambience", kind: "Visit", responses: String(responses), rating: avg1(visit?.ambience) },
+    { name: "Service", kind: "Visit", responses: String(responses), rating: avg1(visit?.service) },
+    { name: "Overall experience", kind: "Visit", responses: String(responses), rating: avg1(visit?.experience) },
+    ...items.map((i) => ({ name: i.name, kind: "Item", responses: String(i.responses), rating: avg1(i.rating) })),
+  ];
+  const recommend =
+    visit && visit.answered > 0
+      ? `${((visit.yes / visit.answered) * 100).toFixed(1)}% of ${visit.answered} would recommend us`
+      : null;
+
+  return base("feedback", ctx, {
+    description: recommend ? `${REPORT_META.feedback.description} ${recommend}.` : REPORT_META.feedback.description,
+    columns: [
+      { key: "name", label: "Rated", format: "text" },
+      { key: "kind", label: "Type", format: "text" },
+      { key: "responses", label: "Responses", format: "number" },
+      { key: "rating", label: "Average (of 5)", format: "number" },
+    ],
+    rows,
+    chart: { type: "bar", labelKey: "name", valueKey: "rating", valueLabel: "Average rating", format: "number" },
   });
 }
 
 export async function getReport(kind: ReportKind, ctx: ReportContext): Promise<ReportData> {
   switch (kind) {
-    case "sales": return sales(ctx);
-    case "category": return byCategory(ctx);
-    case "item": return byItem(ctx);
-    case "cashier": return byCashier(ctx);
-    case "payment": return byPayment(ctx);
-    case "tax": return tax(ctx);
-    case "discount": return discounts(ctx);
-    case "valuation": return valuation(ctx);
-    case "movements": return movements(ctx);
+    case "sales":
+      return sales(ctx);
+    case "category":
+      return byCategory(ctx);
+    case "item":
+      return byItem(ctx);
+    case "cashier":
+      return byCashier(ctx);
+    case "payment":
+      return byPayment(ctx);
+    case "tax":
+      return tax(ctx);
+    case "discount":
+      return discounts(ctx);
+    case "valuation":
+      return valuation(ctx);
+    case "movements":
+      return movements(ctx);
+    case "feedback":
+      return feedbackReport(ctx);
   }
 }
 

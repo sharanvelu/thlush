@@ -12,6 +12,7 @@ export const GET = withAuth(
 );
 
 export const POST = withAuth(
-  async (req, { user }) => ok(await UserAdminService.createUser(await parseBody(req, createUserSchema), user), { status: 201 }),
+  async (req, { user }) =>
+    ok(await UserAdminService.createUser(await parseBody(req, createUserSchema), user), { status: 201 }),
   { permission: "users.manage" },
 );

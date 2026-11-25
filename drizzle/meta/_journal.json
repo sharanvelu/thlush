@@ -29,6 +29,20 @@
       "when": 1794832027093,
       "tag": "0003_packaging",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795557787574,
+      "tag": "0004_counter_role_and_staff",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795625555177,
+      "tag": "0005_feedback",
+      "breakpoints": true
     }
   ]
 }

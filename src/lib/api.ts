@@ -15,19 +15,11 @@ export function ok<T>(data: T, init?: ResponseInit): NextResponse<ApiSuccess<T>>
   return NextResponse.json({ success: true, data }, init);
 }
 
-export function paginated<T>(
-  data: T[],
-  pagination: Pagination,
-  init?: ResponseInit,
-): NextResponse<ApiSuccess<T[]>> {
+export function paginated<T>(data: T[], pagination: Pagination, init?: ResponseInit): NextResponse<ApiSuccess<T[]>> {
   return NextResponse.json({ success: true, data, pagination }, init);
 }
 
-export function fail(
-  error: string,
-  status = 400,
-  fieldErrors?: Record<string, string[]>,
-): NextResponse<ApiFailure> {
+export function fail(error: string, status = 400, fieldErrors?: Record<string, string[]>): NextResponse<ApiFailure> {
   const body: ApiFailure = fieldErrors ? { success: false, error, fieldErrors } : { success: false, error };
   return NextResponse.json(body, { status });
 }

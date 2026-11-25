@@ -25,7 +25,13 @@ export const updateUserSchema = z.object({
 export type UpdateUserInput = z.output<typeof updateUserSchema>;
 
 export const userListQuerySchema = z.object({
-  q: z.string().trim().max(100).transform((v) => v || undefined).optional().catch(undefined),
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .transform((v) => v || undefined)
+    .optional()
+    .catch(undefined),
   role: role.optional().catch(undefined),
   page: z.coerce.number().int().min(1).catch(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).catch(20).default(20),

@@ -9,18 +9,19 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { ItemThumb } from "@/components/menu/menu-primitives";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSet, FieldLegend } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldSet,
+  FieldLegend,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api, ApiClientError, errorMessage } from "@/lib/api-client";
@@ -51,7 +52,21 @@ interface MenuItemSheetProps {
 
 type ImageChange = { kind: "keep" } | { kind: "remove" } | { kind: "set"; dataUrl: string };
 
-const FIELD_KEYS = ["name", "description", "categoryId", "price", "sgst", "cgst", "currency", "sku", "status", "reorderLevel", "costPrice", "packagingCharge", "openingStock"] as const;
+const FIELD_KEYS = [
+  "name",
+  "description",
+  "categoryId",
+  "price",
+  "sgst",
+  "cgst",
+  "currency",
+  "sku",
+  "status",
+  "reorderLevel",
+  "costPrice",
+  "packagingCharge",
+  "openingStock",
+] as const;
 
 function emptyValues(defaults: MenuFormDefaults, categoryId?: number): MenuItemInput {
   return {
@@ -208,7 +223,9 @@ export function MenuItemSheet({
           <SheetHeader className="border-b p-4 pr-12">
             <SheetTitle>{item ? "Edit item" : "New item"}</SheetTitle>
             <SheetDescription>
-              {item ? "Changes apply to new bills. Past bills keep the details they were billed with." : "Add a product to your menu."}
+              {item
+                ? "Changes apply to new bills. Past bills keep the details they were billed with."
+                : "Add a product to your menu."}
             </SheetDescription>
           </SheetHeader>
 
@@ -217,7 +234,13 @@ export function MenuItemSheet({
               <FieldGroup>
                 <Field data-invalid={Boolean(errors.name)}>
                   <FieldLabel htmlFor="item-name">Name</FieldLabel>
-                  <Input id="item-name" autoFocus maxLength={120} aria-invalid={Boolean(errors.name)} {...register("name")} />
+                  <Input
+                    id="item-name"
+                    autoFocus
+                    maxLength={120}
+                    aria-invalid={Boolean(errors.name)}
+                    {...register("name")}
+                  />
                   <FieldError errors={[errors.name]} />
                 </Field>
 
@@ -259,28 +282,59 @@ export function MenuItemSheet({
                   <div className="grid grid-cols-2 gap-3">
                     <Field data-invalid={Boolean(errors.price)}>
                       <FieldLabel htmlFor="item-price">Price</FieldLabel>
-                      <Input id="item-price" inputMode="decimal" placeholder="0.00" aria-invalid={Boolean(errors.price)} {...register("price")} />
+                      <Input
+                        id="item-price"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        aria-invalid={Boolean(errors.price)}
+                        {...register("price")}
+                      />
                       <FieldError errors={[errors.price]} />
                     </Field>
                     <Field data-invalid={Boolean(errors.sgst)}>
                       <FieldLabel htmlFor="item-sgst">SGST %</FieldLabel>
-                      <Input id="item-sgst" inputMode="decimal" aria-invalid={Boolean(errors.sgst)} {...register("sgst")} />
+                      <Input
+                        id="item-sgst"
+                        inputMode="decimal"
+                        aria-invalid={Boolean(errors.sgst)}
+                        {...register("sgst")}
+                      />
                       <FieldError errors={[errors.sgst]} />
                     </Field>
                     <Field data-invalid={Boolean(errors.cgst)}>
                       <FieldLabel htmlFor="item-cgst">CGST %</FieldLabel>
-                      <Input id="item-cgst" inputMode="decimal" aria-invalid={Boolean(errors.cgst)} {...register("cgst")} />
+                      <Input
+                        id="item-cgst"
+                        inputMode="decimal"
+                        aria-invalid={Boolean(errors.cgst)}
+                        {...register("cgst")}
+                      />
                       <FieldError errors={[errors.cgst]} />
                     </Field>
                     <Field data-invalid={Boolean(errors.currency)}>
                       <FieldLabel htmlFor="item-currency">Currency</FieldLabel>
-                      <Input id="item-currency" maxLength={3} className="uppercase" aria-invalid={Boolean(errors.currency)} {...register("currency")} />
+                      <Input
+                        id="item-currency"
+                        maxLength={3}
+                        className="uppercase"
+                        aria-invalid={Boolean(errors.currency)}
+                        {...register("currency")}
+                      />
                       <FieldError errors={[errors.currency]} />
                     </Field>
                     <Field data-invalid={Boolean(errors.packagingCharge)} className="col-span-2">
                       <FieldLabel htmlFor="item-packaging">Packaging charge</FieldLabel>
-                      <Input id="item-packaging" inputMode="decimal" placeholder="0.00" aria-invalid={Boolean(errors.packagingCharge)} {...register("packagingCharge")} />
-                      <FieldDescription>Added to the bill as its own line for the order types chosen under Settings &gt; Billing. 0 means none.</FieldDescription>
+                      <Input
+                        id="item-packaging"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        aria-invalid={Boolean(errors.packagingCharge)}
+                        {...register("packagingCharge")}
+                      />
+                      <FieldDescription>
+                        Added to the bill as its own line for the order types chosen under Settings &gt; Billing. 0
+                        means none.
+                      </FieldDescription>
                       <FieldError errors={[errors.packagingCharge]} />
                     </Field>
                   </div>
@@ -289,7 +343,13 @@ export function MenuItemSheet({
 
                 <Field data-invalid={Boolean(errors.sku)}>
                   <FieldLabel htmlFor="item-sku">SKU / barcode (optional)</FieldLabel>
-                  <Input id="item-sku" maxLength={64} autoComplete="off" aria-invalid={Boolean(errors.sku)} {...register("sku")} />
+                  <Input
+                    id="item-sku"
+                    maxLength={64}
+                    autoComplete="off"
+                    aria-invalid={Boolean(errors.sku)}
+                    {...register("sku")}
+                  />
                   <FieldDescription>Scan or type a code to find this item quickly while billing.</FieldDescription>
                   <FieldError errors={[errors.sku]} />
                 </Field>
@@ -332,7 +392,12 @@ export function MenuItemSheet({
                         id="item-photo"
                         onChange={(e) => void pickImage(e.target.files?.[0])}
                       />
-                      <Button type="button" variant="outline" disabled={imageBusy} onClick={() => fileInput.current?.click()}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={imageBusy}
+                        onClick={() => fileInput.current?.click()}
+                      >
                         {imageBusy ? <LoaderCircle className="animate-spin" aria-hidden /> : <ImagePlus aria-hidden />}
                         {previewSrc ? "Replace photo" : "Upload photo"}
                       </Button>
@@ -348,23 +413,47 @@ export function MenuItemSheet({
 
                 <FieldSet>
                   <FieldLegend variant="label">Variants (optional)</FieldLegend>
-                  <FieldDescription>For example sizes. The price difference is added to the base price.</FieldDescription>
+                  <FieldDescription>
+                    For example sizes. The price difference is added to the base price.
+                  </FieldDescription>
                   {variants.fields.map((row, index) => (
                     <div key={row.id} className="flex items-start gap-2">
                       <Field data-invalid={Boolean(errors.variants?.[index]?.name)} className="flex-1">
-                        <Input aria-label={`Variant ${index + 1} name`} placeholder="Large" {...register(`variants.${index}.name`)} />
+                        <Input
+                          aria-label={`Variant ${index + 1} name`}
+                          placeholder="Large"
+                          {...register(`variants.${index}.name`)}
+                        />
                         <FieldError errors={[errors.variants?.[index]?.name]} />
                       </Field>
                       <Field data-invalid={Boolean(errors.variants?.[index]?.priceDelta)} className="w-28">
-                        <Input aria-label={`Variant ${index + 1} price difference`} inputMode="decimal" placeholder="+0.00" {...register(`variants.${index}.priceDelta`)} />
+                        <Input
+                          aria-label={`Variant ${index + 1} price difference`}
+                          inputMode="decimal"
+                          placeholder="+0.00"
+                          {...register(`variants.${index}.priceDelta`)}
+                        />
                         <FieldError errors={[errors.variants?.[index]?.priceDelta]} />
                       </Field>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => variants.remove(index)} aria-label={`Remove variant ${index + 1}`}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => variants.remove(index)}
+                        aria-label={`Remove variant ${index + 1}`}
+                      >
                         <Trash2 className="size-4" aria-hidden />
                       </Button>
                     </div>
                   ))}
-                  <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => variants.append({ name: "", priceDelta: "0" })} disabled={variants.fields.length >= 10}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                    onClick={() => variants.append({ name: "", priceDelta: "0" })}
+                    disabled={variants.fields.length >= 10}
+                  >
                     <Plus aria-hidden /> Add variant
                   </Button>
                 </FieldSet>
@@ -375,19 +464,41 @@ export function MenuItemSheet({
                   {addons.fields.map((row, index) => (
                     <div key={row.id} className="flex items-start gap-2">
                       <Field data-invalid={Boolean(errors.addons?.[index]?.name)} className="flex-1">
-                        <Input aria-label={`Add-on ${index + 1} name`} placeholder="Extra cheese" {...register(`addons.${index}.name`)} />
+                        <Input
+                          aria-label={`Add-on ${index + 1} name`}
+                          placeholder="Extra cheese"
+                          {...register(`addons.${index}.name`)}
+                        />
                         <FieldError errors={[errors.addons?.[index]?.name]} />
                       </Field>
                       <Field data-invalid={Boolean(errors.addons?.[index]?.price)} className="w-28">
-                        <Input aria-label={`Add-on ${index + 1} price`} inputMode="decimal" placeholder="0.00" {...register(`addons.${index}.price`)} />
+                        <Input
+                          aria-label={`Add-on ${index + 1} price`}
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          {...register(`addons.${index}.price`)}
+                        />
                         <FieldError errors={[errors.addons?.[index]?.price]} />
                       </Field>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => addons.remove(index)} aria-label={`Remove add-on ${index + 1}`}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => addons.remove(index)}
+                        aria-label={`Remove add-on ${index + 1}`}
+                      >
                         <Trash2 className="size-4" aria-hidden />
                       </Button>
                     </div>
                   ))}
-                  <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => addons.append({ name: "", price: "" })} disabled={addons.fields.length >= 20}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                    onClick={() => addons.append({ name: "", price: "" })}
+                    disabled={addons.fields.length >= 20}
+                  >
                     <Plus aria-hidden /> Add add-on
                   </Button>
                 </FieldSet>
@@ -431,30 +542,51 @@ export function MenuItemSheet({
                         />
                         <Field data-invalid={Boolean(errors.reorderLevel)}>
                           <FieldLabel htmlFor="item-reorder">Reorder level</FieldLabel>
-                          <Input id="item-reorder" inputMode="decimal" aria-invalid={Boolean(errors.reorderLevel)} {...register("reorderLevel")} />
+                          <Input
+                            id="item-reorder"
+                            inputMode="decimal"
+                            aria-invalid={Boolean(errors.reorderLevel)}
+                            {...register("reorderLevel")}
+                          />
                           <FieldError errors={[errors.reorderLevel]} />
                         </Field>
                         <Field data-invalid={Boolean(errors.costPrice)}>
                           <FieldLabel htmlFor="item-cost">Cost price</FieldLabel>
-                          <Input id="item-cost" inputMode="decimal" aria-invalid={Boolean(errors.costPrice)} {...register("costPrice")} />
+                          <Input
+                            id="item-cost"
+                            inputMode="decimal"
+                            aria-invalid={Boolean(errors.costPrice)}
+                            {...register("costPrice")}
+                          />
                           <FieldError errors={[errors.costPrice]} />
                         </Field>
                         {item ? (
                           <Field>
                             <FieldLabel>In stock now</FieldLabel>
-                            <p className="flex h-8 items-center text-sm tabular-nums">{new Decimal(item.stockQty).toString()} {item.unit}</p>
+                            <p className="flex h-8 items-center text-sm tabular-nums">
+                              {new Decimal(item.stockQty).toString()} {item.unit}
+                            </p>
                           </Field>
                         ) : (
                           <Field data-invalid={Boolean(errors.openingStock)}>
                             <FieldLabel htmlFor="item-opening">Opening stock</FieldLabel>
-                            <Input id="item-opening" inputMode="decimal" placeholder="0" aria-invalid={Boolean(errors.openingStock)} {...register("openingStock")} />
+                            <Input
+                              id="item-opening"
+                              inputMode="decimal"
+                              placeholder="0"
+                              aria-invalid={Boolean(errors.openingStock)}
+                              {...register("openingStock")}
+                            />
                             <FieldError errors={[errors.openingStock]} />
                           </Field>
                         )}
                       </div>
                     ) : null}
                     {trackStock && item ? (
-                      <FieldDescription>To change what is in stock, use Stock Adjustments or receive a purchase, so the change is recorded.</FieldDescription>
+                      <FieldDescription>
+                        To change what is in stock, use Stock Adjustments or receive a purchase, so the change is
+                        recorded.
+                      </FieldDescription>
                     ) : null}
                   </FieldSet>
                 ) : null}

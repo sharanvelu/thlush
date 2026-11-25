@@ -22,7 +22,9 @@ export function KpiCard({ label, value, change, quiet, comparedTo }: KpiCardProp
       ? quiet
         ? "No sales in either period"
         : `New ${comparedTo}`
-      : `${up ? "Up" : down ? "Down" : "Unchanged,"} ${change === 0 ? "" : `${Math.abs(change)}%`} ${comparedTo}`.replace(/\s+/g, " ").trim();
+      : `${up ? "Up" : down ? "Down" : "Unchanged,"} ${change === 0 ? "" : `${Math.abs(change)}%`} ${comparedTo}`
+          .replace(/\s+/g, " ")
+          .trim();
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-1">

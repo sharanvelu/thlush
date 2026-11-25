@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { settingsSchemas } from "@/lib/validation/settings";
-import { buildEndSessionUrl, discoverEndSessionEndpoint, discoverFlowExecutorUrl, flowExecutorUrl } from "@/lib/oidc-logout";
+import {
+  buildEndSessionUrl,
+  discoverEndSessionEndpoint,
+  discoverFlowExecutorUrl,
+  flowExecutorUrl,
+} from "@/lib/oidc-logout";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -26,7 +31,12 @@ describe("buildEndSessionUrl", () => {
   });
 
   it("keeps query parameters the provider already uses", () => {
-    const url = new URL(buildEndSessionUrl("https://sso.example.com/logout?tenant=a", { idToken: "t", postLogoutRedirectUri: "https://x.test/login" }));
+    const url = new URL(
+      buildEndSessionUrl("https://sso.example.com/logout?tenant=a", {
+        idToken: "t",
+        postLogoutRedirectUri: "https://x.test/login",
+      }),
+    );
     expect(url.searchParams.get("tenant")).toBe("a");
     expect(url.searchParams.has("client_id")).toBe(false);
   });

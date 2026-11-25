@@ -6,7 +6,14 @@ import { useEffect } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,7 +55,14 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Suppli
     if (!open) return;
     reset(
       supplier
-        ? { name: supplier.name, contactName: supplier.contactName ?? "", phone: supplier.phone ?? "", email: supplier.email ?? "", address: supplier.address ?? "", notes: supplier.notes ?? "" }
+        ? {
+            name: supplier.name,
+            contactName: supplier.contactName ?? "",
+            phone: supplier.phone ?? "",
+            email: supplier.email ?? "",
+            address: supplier.address ?? "",
+            notes: supplier.notes ?? "",
+          }
         : EMPTY,
     );
   }, [open, supplier, reset]);
@@ -63,7 +77,8 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Suppli
     } catch (error) {
       if (error instanceof ApiClientError && error.fieldErrors) {
         const [field, messages] = Object.entries(error.fieldErrors)[0] ?? [];
-        if (field && messages?.[0] && (FIELDS as string[]).includes(field)) setError(field as FieldName, { message: messages[0] });
+        if (field && messages?.[0] && (FIELDS as string[]).includes(field))
+          setError(field as FieldName, { message: messages[0] });
         else toast.error(errorMessage(error));
       } else toast.error(errorMessage(error));
     }
@@ -80,7 +95,13 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Suppli
           <FieldGroup>
             <Field data-invalid={Boolean(errors.name)}>
               <FieldLabel htmlFor="supplier-name">Name</FieldLabel>
-              <Input id="supplier-name" autoFocus maxLength={120} aria-invalid={Boolean(errors.name)} {...register("name")} />
+              <Input
+                id="supplier-name"
+                autoFocus
+                maxLength={120}
+                aria-invalid={Boolean(errors.name)}
+                {...register("name")}
+              />
               <FieldError errors={[errors.name]} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -97,7 +118,13 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Suppli
             </div>
             <Field data-invalid={Boolean(errors.email)}>
               <FieldLabel htmlFor="supplier-email">Email</FieldLabel>
-              <Input id="supplier-email" type="email" maxLength={120} aria-invalid={Boolean(errors.email)} {...register("email")} />
+              <Input
+                id="supplier-email"
+                type="email"
+                maxLength={120}
+                aria-invalid={Boolean(errors.email)}
+                {...register("email")}
+              />
               <FieldError errors={[errors.email]} />
             </Field>
             <Field data-invalid={Boolean(errors.address)}>
@@ -112,7 +139,9 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Suppli
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
               {supplier ? "Save changes" : "Add supplier"}

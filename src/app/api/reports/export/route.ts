@@ -11,12 +11,18 @@ export const GET = withAuth(
   async (req) => {
     const { format, r, range: rangeKey, from, to, group } = parseQuery(req, reportExportQuerySchema);
     const settings = await getSettings();
-    if (REPORT_META[r].needsInventory && !settings.features.inventory) throw HttpError.badRequest("Inventory is turned off.");
+    if (REPORT_META[r].needsInventory && !settings.features.inventory)
+      throw HttpError.badRequest("Inventory is turned off.");
 
     const { timezone, locale, currency } = settings.locale;
     const range = resolveRange(rangeKey ?? "30d", from, to, timezone);
     const report = await getReport(r, { range, group, timeZone: timezone, locale });
-    const name = exportFileName(r, REPORT_META[r].usesRange ? range.from : null, REPORT_META[r].usesRange ? range.to : null, format);
+    const name = exportFileName(
+      r,
+      REPORT_META[r].usesRange ? range.from : null,
+      REPORT_META[r].usesRange ? range.to : null,
+      format,
+    );
     const headers = { "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="${name}"` };
 
     if (format === "pdf") {
@@ -24,7 +30,11 @@ export const GET = withAuth(
         businessName: settings.business.name || "Thlush",
         currency,
         locale,
-        generatedAt: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date()),
+        generatedAt: new Intl.DateTimeFormat(locale, {
+          dateStyle: "medium",
+          timeStyle: "short",
+          timeZone: timezone,
+        }).format(new Date()),
       });
       return new Response(new Uint8Array(body), { headers: { ...headers, "Content-Type": "application/pdf" } });
     }

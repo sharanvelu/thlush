@@ -28,10 +28,7 @@ export const billKots = table(
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
-  (t) => [
-    uniqueIndex(ix("bill_kots_bill_seq_key")).on(t.billId, t.seq),
-    index(ix("bill_kots_bill_idx")).on(t.billId),
-  ],
+  (t) => [uniqueIndex(ix("bill_kots_bill_seq_key")).on(t.billId, t.seq), index(ix("bill_kots_bill_idx")).on(t.billId)],
 );
 
 export type BillKotRow = typeof billKots.$inferSelect;

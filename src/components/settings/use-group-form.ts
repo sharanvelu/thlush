@@ -43,5 +43,16 @@ export function useGroupForm<K extends SettingsKey>(group: K, initial: AppSettin
     }
   };
 
-  return { values, set, errors, dirty, saving, save, discard: () => { setValues(saved); setErrors({}); } };
+  return {
+    values,
+    set,
+    errors,
+    dirty,
+    saving,
+    save,
+    discard: () => {
+      setValues(saved);
+      setErrors({});
+    },
+  };
 }

@@ -75,7 +75,9 @@ function SortHeader({
       {label}
       <Icon className={cn("size-3.5", !active && "opacity-40")} aria-hidden />
       <span className="sr-only">
-        {active ? `, sorted ${sort.dir === "asc" ? "ascending" : "descending"}. Activate to reverse.` : ", not sorted. Activate to sort."}
+        {active
+          ? `, sorted ${sort.dir === "asc" ? "ascending" : "descending"}. Activate to reverse.`
+          : ", not sorted. Activate to sort."}
       </span>
     </Button>
   );
@@ -121,20 +123,20 @@ export function MenuTable({
     const categoryColumn: ColumnDef<MenuListItem>[] = grouped
       ? []
       : [
-        {
-          id: "category",
-          header: () => <SortHeader field="category" label="Category" sort={sort} onSort={onSort} />,
-          cell: ({ row }) => (
-            <span className="flex items-center gap-2">
-              {row.original.categoryName}
-              {row.original.categoryStatus === "disabled" ? (
-                <Badge variant="secondary" title="This category is hidden on the billing screen">
-                  Category off
-                </Badge>
-              ) : null}
-            </span>
-          ),
-        },
+          {
+            id: "category",
+            header: () => <SortHeader field="category" label="Category" sort={sort} onSort={onSort} />,
+            cell: ({ row }) => (
+              <span className="flex items-center gap-2">
+                {row.original.categoryName}
+                {row.original.categoryStatus === "disabled" ? (
+                  <Badge variant="secondary" title="This category is hidden on the billing screen">
+                    Category off
+                  </Badge>
+                ) : null}
+              </span>
+            ),
+          },
         ];
 
     const main: ColumnDef<MenuListItem>[] = [
@@ -270,7 +272,11 @@ export function MenuTable({
                   <TableHead
                     key={header.id}
                     aria-sort={
-                      isSortable && sort.field === sortField ? (sort.dir === "asc" ? "ascending" : "descending") : undefined
+                      isSortable && sort.field === sortField
+                        ? sort.dir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
                     }
                     className={cn(header.column.id === "select" && "w-10", header.column.id === "actions" && "w-12")}
                   >

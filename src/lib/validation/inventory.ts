@@ -2,12 +2,21 @@ import { z } from "zod";
 import { MANUAL_REASONS, reasonAllowsDirection } from "@/lib/inventory";
 import { idSchema, moneyString, optionalText, quantityField, statusSchema } from "@/lib/validation/common";
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)));
+const day = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)));
 
 // ---- Stock overview -------------------------------------------------------
 export const STOCK_SORTS = ["name_asc", "stock_asc", "stock_desc", "value_desc", "category_asc"] as const;
 export const stockListQuerySchema = z.object({
-  q: z.string().trim().max(100).transform((v) => v || undefined).optional().catch(undefined),
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .transform((v) => v || undefined)
+    .optional()
+    .catch(undefined),
   category: idSchema.optional().catch(undefined),
   status: z.enum(["in", "low", "out"]).optional().catch(undefined),
   sort: z.enum(STOCK_SORTS).catch("name_asc").default("name_asc"),
@@ -33,7 +42,10 @@ export type StockAdjustInput = z.output<typeof stockAdjustSchema>;
 
 export const movementQuerySchema = z.object({
   item: idSchema.optional().catch(undefined),
-  reason: z.enum(["purchase", "wastage", "damage", "correction", "return", "sale", "void", "refund"]).optional().catch(undefined),
+  reason: z
+    .enum(["purchase", "wastage", "damage", "correction", "return", "sale", "void", "refund"])
+    .optional()
+    .catch(undefined),
   from: day.optional().catch(undefined),
   to: day.optional().catch(undefined),
   page: z.coerce.number().int().min(1).catch(1).default(1),
@@ -61,7 +73,13 @@ export type SupplierData = z.output<typeof supplierSchema>;
 export const supplierPatchSchema = z.object(supplierSchema.shape).partial().extend({ status: statusSchema.optional() });
 
 export const supplierListQuerySchema = z.object({
-  q: z.string().trim().max(100).transform((v) => v || undefined).optional().catch(undefined),
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .transform((v) => v || undefined)
+    .optional()
+    .catch(undefined),
   page: z.coerce.number().int().min(1).catch(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).catch(25).default(25),
 });

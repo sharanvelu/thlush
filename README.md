@@ -6,14 +6,14 @@ Billing and point-of-sale for restaurants, cafés and small shops. Built with Ne
 
 ## Docs for developers and code agents
 
-| File | What it is for |
-| ---- | -------------- |
-| [AGENTS.md](AGENTS.md) | Start here. Reading order, setup, and the rules that are easy to get wrong. |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Stack, directory map, layering, auth, database, key flows, where to put new code. |
-| [STYLE.md](STYLE.md) | Code, commit and UI conventions, theming and accessibility. |
-| [CLAUDE.md](CLAUDE.md) | Hard project rules for Claude Code (imports AGENTS.md). |
-| [docs/SKILLS.md](docs/SKILLS.md) | Agent skills to install before implementing. |
-| [docs/online-orders-integration.md](docs/online-orders-integration.md) | Draft design for Swiggy/Zomato orders. Nothing built. |
+| File                                                                   | What it is for                                                                    |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [AGENTS.md](AGENTS.md)                                                 | Start here. Reading order, setup, and the rules that are easy to get wrong.       |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                                     | Stack, directory map, layering, auth, database, key flows, where to put new code. |
+| [STYLE.md](STYLE.md)                                                   | Code, commit and UI conventions, theming and accessibility.                       |
+| [CLAUDE.md](CLAUDE.md)                                                 | Hard project rules for Claude Code (imports AGENTS.md).                           |
+| [docs/SKILLS.md](docs/SKILLS.md)                                       | Agent skills to install before implementing.                                      |
+| [docs/online-orders-integration.md](docs/online-orders-integration.md) | Draft design for Swiggy/Zomato orders. Nothing built.                             |
 
 ## Quick start
 
@@ -39,20 +39,20 @@ The login page offers these as one-click fill-ins, but only when `NEXT_PUBLIC_AP
 
 ## Environment variables
 
-| Variable                                            | Required | Purpose                                                              |
-| --------------------------------------------------- | -------- | -------------------------------------------------------------------- |
-| `DATABASE_URL`                                      | yes      | Postgres connection string.                                          |
-| `AUTH_SECRET`                                       | yes      | Signs session cookies (`openssl rand -base64 32`).                   |
-| `NEXT_PUBLIC_BASE_URL`                              | yes      | Public URL of the app.                                               |
-| `NEXT_PUBLIC_APP_ENV`                               | yes      | `local`, `staging` or `production`. The seed refuses to run in production. |
-| `APP_DOMAIN_POS`, `APP_DOMAIN_CUSTOMER`             | no       | Hostnames (no `https://`) for the staff app and the customer site, both added as domains on the one Vercel project. Leave empty for local development. When set, any other host (including `*.vercel.app`) gets an empty 404. |
-| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | no     | Set all three to enable "Sign in with SSO". Works with Authentik and Keycloak. |
-| `AUTH_TRUST_HOST`                                   | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production. |
-| `DB_TABLE_PREFIX`                                   | no       | Table-name prefix, default `app_`.                                   |
-| `SEED_PASSWORD`                                     | no       | Password for seeded demo users.                                      |
-| `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | no | Neon Object Storage credentials for menu photos. Filled in by `neon deploy` / `neon env pull`. |
-| `OBJECT_STORAGE_BUCKET`                             | no       | Bucket for menu photos, default `uploads` (declared in `neon.ts`).   |
-| `NEXT_PUBLIC_PRINT_AGENT_URL`                       | no       | Where the optional print agent listens, default `http://127.0.0.1:9101`. |
+| Variable                                                                          | Required | Purpose                                                                                                                                                                                                                       |
+| --------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                                    | yes      | Postgres connection string.                                                                                                                                                                                                   |
+| `AUTH_SECRET`                                                                     | yes      | Signs session cookies (`openssl rand -base64 32`).                                                                                                                                                                            |
+| `NEXT_PUBLIC_BASE_URL`                                                            | yes      | Public URL of the app.                                                                                                                                                                                                        |
+| `NEXT_PUBLIC_APP_ENV`                                                             | yes      | `local`, `staging` or `production`. The seed refuses to run in production.                                                                                                                                                    |
+| `APP_DOMAIN_POS`, `APP_DOMAIN_CUSTOMER`                                           | no       | Hostnames (no `https://`) for the staff app and the customer site, both added as domains on the one Vercel project. Leave empty for local development. When set, any other host (including `*.vercel.app`) gets an empty 404. |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`                             | no       | Set all three to enable "Sign in with SSO". Works with Authentik and Keycloak.                                                                                                                                                |
+| `AUTH_TRUST_HOST`                                                                 | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production.                                                                                                                                           |
+| `DB_TABLE_PREFIX`                                                                 | no       | Table-name prefix, default `app_`.                                                                                                                                                                                            |
+| `SEED_PASSWORD`                                                                   | no       | Password for seeded demo users.                                                                                                                                                                                               |
+| `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | no       | Neon Object Storage credentials for menu photos. Filled in by `neon deploy` / `neon env pull`.                                                                                                                                |
+| `OBJECT_STORAGE_BUCKET`                                                           | no       | Bucket for menu photos, default `uploads` (declared in `neon.ts`).                                                                                                                                                            |
+| `NEXT_PUBLIC_PRINT_AGENT_URL`                                                     | no       | Where the optional print agent listens, default `http://127.0.0.1:9101`.                                                                                                                                                      |
 
 **Menu photos.** Photos are stored in a Neon Object Storage bucket (`src/lib/object-storage.ts`); the database keeps a reference like `s3:menu/<uuid>.webp`. When the `AWS_*` credentials are not set (a plain local database), new photos stay in the database as data URLs, and older `data:` or `https://` values keep working. The customer menu serves photos through `/api/c/menu/[id]/image`, only for items that are on the public menu.
 
@@ -62,23 +62,37 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 
 ## Scripts
 
-| Command               | What it does                                                         |
-| --------------------- | -------------------------------------------------------------------- |
-| `npm run dev`         | Start the dev server.                                                |
-| `npm run build`       | Production build.                                                    |
-| `npm run lint`        | ESLint (no `any` allowed).                                           |
-| `npm run typecheck`   | TypeScript in strict mode.                                           |
-| `npm test`            | Vitest unit tests.                                                   |
-| `npm run print-agent` | Local agent that sends receipts to the thermal printer (see below).  |
-| `npm run check`       | Lint, type check and tests in one go. Run before pushing.            |
-| `npm run db:generate` | Generate a new SQL migration in `drizzle/` after editing the schema. |
-| `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`.                          |
-| `npm run db:seed`     | Load demo data. Refuses to run in `production` unless `--force`.     |
-| `npm run db:studio`   | Browse the database in Drizzle Studio.                               |
+| Command               | What it does                                                          |
+| --------------------- | --------------------------------------------------------------------- |
+| `npm run dev`         | Start the dev server.                                                 |
+| `npm run build`       | Production build.                                                     |
+| `npm run lint`        | ESLint (no `any` allowed).                                            |
+| `npm run typecheck`   | TypeScript in strict mode.                                            |
+| `npm test`            | Vitest unit tests.                                                    |
+| `npm run print-agent` | Local agent that sends receipts to the thermal printer (see below).   |
+| `npm run format`      | Format everything with Prettier (CI runs `format:check`).             |
+| `npm run check`       | Lint, formatting, type check and tests in one go. Run before pushing. |
+| `npm run db:generate` | Generate a new SQL migration in `drizzle/` after editing the schema.  |
+| `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`.                           |
+| `npm run db:seed`     | Load demo data. Refuses to run in `production` unless `--force`.      |
+| `npm run db:studio`   | Browse the database in Drizzle Studio.                                |
 
 ### Pull request checks
 
-`.github/workflows/pr-checks.yml` runs on every pull request (and on pushes to `main` and `thlush-v2`): the PR title must follow Conventional Commits, then lint, type check, unit tests, a migration drift check (the schema must not differ from the committed `drizzle/` files; run `npm run db:generate` and commit if it fails) and a production build. It needs no secrets or database. To block merging on failures, mark **PR title (Conventional Commits)** and **Lint, types, tests, build** as required checks in the branch protection rules.
+Every pull request to `main` must pass these required checks (workflows in `.github/workflows/`, shared toolchain setup in `.github/actions/setup`). All of them are check-only: CI never rewrites code. None needs secrets or a database.
+
+| Required check         | Workflow                  | What it enforces                                                                                                         |
+| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `PR Title Lint`        | `pr-title.yml`            | PR title follows Conventional Commits (with squash-merge it becomes the commit message).                                 |
+| `Code Style Gate`      | `code-style.yml`          | `eslint .` and `prettier --check .` (fix locally with `npm run format`).                                                 |
+| `Static Analysis Gate` | `static-code-analyze.yml` | `npm run typecheck`; and, when `.github/**` changes, `actionlint` plus `zizmor` (workflow security audit).               |
+| `Tests Gate`           | `tests.yml`               | `npm test` (Vitest).                                                                                                     |
+| `Build Check Gate`     | `build-check.yml`         | Committed `drizzle/` migrations match the schema (run `npm run db:generate` and commit if not), then a production build. |
+| `Dependency Review`    | `dependency-review.yml`   | Blocks new dependencies with known vulnerabilities of moderate severity or higher.                                       |
+
+Only the `... Gate` jobs are required, because the jobs behind them are path-filtered and can be skipped legitimately. Also running, but not blocking: **CodeQL** (`codeql.yml`: on pushes to `main`, weekly, and on demand; findings appear under Security), **Dependabot** (`dependabot.yml`: weekly, grouped minor and patch updates titled `chore(deps): ...`; `dependabot-auto-merge.yml` turns on auto-merge for those once the required checks pass, majors stay manual), and a nightly **cleanup** of old workflow runs. `.github/CODEOWNERS` requests review from the owner. Third-party actions are pinned to full commit SHAs; keep them that way (Dependabot updates them). The branch and repository settings that make these checks mandatory are listed in [docs/GITHUB-SECURITY.md](docs/GITHUB-SECURITY.md).
+
+Run the same checks locally with `npm run check` (lint, formatting, type check, tests).
 
 The seed is safe to re-run: users, categories, items and settings are only inserted when missing, and demo bills are only created when there are none.
 
@@ -88,15 +102,16 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 2. **Import the repo.** In Vercel choose **Add New, Project**, pick `sharanvelu/thlush` and keep the detected Next.js settings. Set the production branch to `main`.
 3. **Environment variables** (Project Settings, Environment Variables):
 
-   | Variable | Production | Preview |
-   | -------- | ---------- | ------- |
-   | `DATABASE_URL` | production Neon URL | a separate Neon branch, never the production URL |
-   | `AUTH_SECRET` | a fresh `openssl rand -base64 32` | a different secret |
-   | `NEXT_PUBLIC_BASE_URL` | your public URL, e.g. `https://pos.example.com` | the preview URL, or the same placeholder |
-   | `NEXT_PUBLIC_APP_ENV` | `production` | `staging` |
-   | `OIDC_*` | optional, see above | optional |
+   | Variable               | Production                                      | Preview                                          |
+   | ---------------------- | ----------------------------------------------- | ------------------------------------------------ |
+   | `DATABASE_URL`         | production Neon URL                             | a separate Neon branch, never the production URL |
+   | `AUTH_SECRET`          | a fresh `openssl rand -base64 32`               | a different secret                               |
+   | `NEXT_PUBLIC_BASE_URL` | your public URL, e.g. `https://pos.example.com` | the preview URL, or the same placeholder         |
+   | `NEXT_PUBLIC_APP_ENV`  | `production`                                    | `staging`                                        |
+   | `OIDC_*`               | optional, see above                             | optional                                         |
 
    `NEXT_PUBLIC_*` values are baked in at build time, so set them before the first deploy and redeploy after changing them. You do not need `AUTH_TRUST_HOST` on Vercel.
+
 4. **Create the tables.** Migrations are not run by the build. From your machine, once per database and again after any new file appears in `drizzle/`:
 
    ```bash
@@ -104,6 +119,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
    ```
 
    Do this before the deploy that needs the new schema.
+
 5. **First admin.** The seed refuses to run against a production environment unless forced. To load the demo users (and demo data) into a new database:
 
    ```bash
@@ -111,6 +127,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
    ```
 
    Then sign in as `admin@thlush.local`, change the password, and delete the demo users in **Users & Roles**. Never leave the default `Password@123` on a public deployment. Set `SEED_PASSWORD` in that command to use a different one from the start.
+
 6. **Deploy.** Push to `main`. Every pull request also gets a preview deployment.
 7. **Check it.** Sign in, open **Reports** and download a PDF, and print a receipt. PDF export uses `pdfkit`, which reads font files at run time, so confirm it once on the first deployment.
 
@@ -126,19 +143,28 @@ A read-only menu for customers, served from the same app. On its own domain (`AP
 
 It supports light and dark: it follows the visitor's device until they choose Light, Dark or System with the toggle, saved in the browser under `customer-theme` (separate from the staff app's `theme`). Rules for building customer pages are in [STYLE.md](STYLE.md#customer-site).
 
+## Customer feedback
+
+After a bill is saved, the **Bill saved** screen stays open until the cashier closes it (there is no auto-close timer). Its **Get feedback** button, shown for completed bills when **Settings > Features > Customer feedback** is on, makes a feedback link and shows it as a **QR code** the customer scans with their phone. **Open on this device** opens the same form on the till, and **Copy link** copies the address.
+
+- **The link** carries a random 256-bit secret, not the bill number (a bill number can be guessed, a secret cannot), and works for **24 hours**. Each bill has one form: pressing Get feedback again before the customer answers makes a new link and the old one stops working. Once the customer submits, the form is closed for good, even after the 24 hours, and a repeat visit shows "we already have your feedback". Only a hash of the secret is stored. The link is on the customer domain (`https://<APP_DOMAIN_CUSTOMER>/feedback/<secret>`) or under `/c/feedback/<secret>` when no customer domain is set.
+- **The form** (public, mobile first, light and dark) asks for a 1 to 5 star rating for the whole order, ambience, service and overall experience (all required), an optional star rating and note for each item on the bill (packaging lines are left out), whether they would recommend you, and a comment of up to 1,000 characters. It asks for a name and phone number, optionally, only for what the bill's customer does not already have; a walk-in bill asks for both.
+- **Seeing it:** **Feedback** in the People menu (super admin and manager) lists answers with the four ratings, comment, per-item ratings and contact details, averages at the top, and filters for period, order rating and bill number. **Reports > Feedback** gives the same averages per item and for the visit, with CSV and PDF export.
+- Turning the feature off stops new links; feedback already received stays visible. Menu items renamed later keep the name the customer saw.
+
 ## Billing screen
 
 `/billing` is a two-pane POS: items on the left (search, category chips, grid or list), the bill on the right. On phones the bill opens from a bar at the bottom.
 
-| Shortcut                 | Action                                           |
-| ------------------------ | ------------------------------------------------ |
-| `/`                      | Focus the search box                             |
-| `Enter` in search        | Add the exact SKU match, or the only result      |
-| `Esc` in search          | Clear the search                                 |
-| `Ctrl/⌘ + Enter`         | Save & print                                     |
-| `Alt + K`                | Send new items to the kitchen                    |
-| `Alt + H`                | Hold bill                                        |
-| `Alt + Backspace`        | Clear the bill                                   |
+| Shortcut          | Action                                      |
+| ----------------- | ------------------------------------------- |
+| `/`               | Focus the search box                        |
+| `Enter` in search | Add the exact SKU match, or the only result |
+| `Esc` in search   | Clear the search                            |
+| `Ctrl/⌘ + Enter`  | Save & print                                |
+| `Alt + K`         | Send new items to the kitchen               |
+| `Alt + H`         | Hold bill                                   |
+| `Alt + Backspace` | Clear the bill                              |
 
 How a bill is saved:
 
@@ -202,9 +228,9 @@ After this, Windows' own "Printers & scanners" can no longer print to it; this a
 
 ### Troubleshooting
 
-- *"The printer is in use by another program or driver"*: on Windows, do the WinUSB step. On macOS, remove any print queue for the printer in System Settings, Printers & Scanners.
-- *No printer icon in the top bar*: the browser has no WebUSB (Safari, Firefox). Use Chrome or Edge.
-- *Prints but does not cut, or cuts through the paper*: the cut command is in `src/lib/escpos.ts` (`cut()`).
+- _"The printer is in use by another program or driver"_: on Windows, do the WinUSB step. On macOS, remove any print queue for the printer in System Settings, Printers & Scanners.
+- _No printer icon in the top bar_: the browser has no WebUSB (Safari, Firefox). Use Chrome or Edge.
+- _Prints but does not cut, or cuts through the paper_: the cut command is in `src/lib/escpos.ts` (`cut()`).
 
 ### Print agent (optional, developer use)
 
@@ -236,6 +262,7 @@ Only completed bills count as sales. Days and hours follow the business timezone
 ## Admin
 
 - **Users & Roles** (super admin only): add, edit, reset a password, change a role, delete. You can't delete yourself or change your own role, and the last super admin can't be removed or demoted. Passwords are hashed with bcrypt and need 8+ characters with a letter and a number. SSO accounts have no password and their name and email come from the identity provider.
+- **Staff** (super admin and manager): the people who work at the counter, with an optional title and a "can take payments" switch. They have no login. Turn someone off when they leave; someone who is on past bills can be turned off but not deleted, so those bills keep their name.
 - **Audit log** (super admin and manager): who did what and when, filterable by user, record type, action and date. It records sign-ins, menu and category changes, bills, voids, stock, users and settings. Passwords are never written to it.
 - **Settings** (super admin only), saved one section at a time with an audit entry for each: business profile and logo, currency, locale and time zone, tax, receipt text and paper width, bill number prefix and digits, accent colour (live preview, auto-picked readable text, AA contrast check) and feature toggles. Turning Inventory off hides its navigation; Discounts and Order types hide those controls on the billing screen.
 - **Profile**: everyone can edit their own name and email, change their password (not for SSO accounts) and save a theme that follows them to other devices.
@@ -251,16 +278,17 @@ Switch it on in Settings. Stock is only counted for items with **Track stock** t
 
 ## Reports
 
-`/reports` (super admin and manager) has nine reports. Each has a chart, a table with totals, and CSV and PDF export that uses the same query as the page, so the file always matches the screen.
+`/reports` (super admin and manager) has ten reports. Each has a chart, a table with totals, and CSV and PDF export that uses the same query as the page, so the file always matches the screen.
 
-| Report | What it shows |
-| ------ | ------------- |
-| Sales | Bills, items, subtotal, discount, tax and total per day, week or month |
-| By category / item / cashier / payment | Quantity, revenue and share for each, best first |
-| Tax | SGST and CGST collected per tax rate, reconciling to the bill totals |
-| Discounts | Every discounted bill with its cashier and percentage of subtotal |
-| Stock value | Tracked items valued at cost (a snapshot of today, so no date range) |
-| Stock movement | Received, sold, wasted and corrected quantities per item |
+| Report                                 | What it shows                                                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Sales                                  | Bills, items, subtotal, discount, tax and total per day, week or month                                                 |
+| By category / item / cashier / payment | Quantity, revenue and share for each, best first                                                                       |
+| Tax                                    | SGST and CGST collected per tax rate, reconciling to the bill totals                                                   |
+| Discounts                              | Every discounted bill with its cashier and percentage of subtotal                                                      |
+| Stock value                            | Tracked items valued at cost (a snapshot of today, so no date range)                                                   |
+| Stock movement                         | Received, sold, wasted and corrected quantities per item                                                               |
+| Feedback                               | Average star ratings for the order, ambience, service and experience, and for each item, from submitted feedback forms |
 
 The date range defaults to the last 30 days (Today, 7 days, 30 days or a custom range up to a year) and lives in the URL, so a view can be bookmarked. Figures count completed bills only; void, refunded and held bills are not sales. Tables stop at 500 rows and say so; narrow the range to see the rest. CSV files contain plain numbers and neutralise spreadsheet formulas. PDFs print amounts without a currency symbol (the built-in PDF fonts have no rupee glyph) and state the currency in the header. The two stock reports are hidden when Inventory is off.
 
@@ -298,36 +326,52 @@ docs/             Agent skills and design notes
 
 ### Roles
 
-| Capability                        | Super admin | Manager | Cashier  |
-| --------------------------------- | :---------: | :-----: | :------: |
-| Dashboard, New Bill               | yes         | yes     | yes      |
-| Customers                         | manage      | manage  | look up  |
-| Bill History                      | all bills   | all     | own only |
-| Menu                              | manage      | manage  | read     |
-| Categories, Inventory, Reports    | yes         | yes     | no       |
-| Void / refund bills               | yes         | yes     | no       |
-| Audit log                         | yes         | yes     | no       |
-| Users & roles, Settings           | yes         | no      | no       |
-| Custom Print (thermal)            | yes         | no      | no       |
+| Capability                     | Super admin | Manager | Cashier  |  Counter   |
+| ------------------------------ | :---------: | :-----: | :------: | :--------: |
+| Dashboard                      |     yes     |   yes   |   yes    |     no     |
+| New Bill                       |     yes     |   yes   |   yes    |    yes     |
+| Customers                      |   manage    | manage  | look up  | no (menus) |
+| Bill History                   |  all bills  |   all   | own only |  own only  |
+| Menu                           |   manage    | manage  |   read   | no (menus) |
+| Categories, Inventory, Reports |     yes     |   yes   |    no    |     no     |
+| Void / refund bills            |     yes     |   yes   |    no    |     no     |
+| Audit log                      |     yes     |   yes   |    no    |     no     |
+| Staff list                     |     yes     |   yes   |    no    |     no     |
+| Feedback page                  |     yes     |   yes   |    no    |     no     |
+| Users & roles, Settings        |     yes     |   no    |    no    |     no     |
+| Custom Print (thermal)         |     yes     |   no    |    no    |     no     |
+
+**Counter** is one shared login for a till that several people use. It signs in once, sees only New Bill and Bill History in the menus (it still reads the menu and customers behind the scenes, because the billing screen needs them), and lands on the billing screen. Each bill must name its cashier, picked from the **Staff** list; see [Shared till](#shared-till).
 
 Access is enforced in three places. The proxy (`src/proxy.ts`) does a coarse check from the session token. Server pages and `withAuth` re-read the user from the database on every request, so a revoked role or deleted account takes effect immediately. The sidebar hides what a role cannot open. Newly granted access reaches the proxy after the user signs in again.
 
+### Shared till
+
+For a till that several people share, create one user with the **Counter** role and add each person under **Admin → Staff**. Signed in as Counter, the billing screen shows a **Cashier** choice above the payment, and **Save & print** stays off until one is picked. The choice is cleared after every bill, so each bill names its own cashier.
+
+- The bill keeps two things apart: the account that saved it (the Counter login, which decides who may see it) and the cashier (the staff member picked, with their name saved on the bill so a later rename never changes an old receipt).
+- Receipts, Bill History (filter by cashier) and the By cashier and Discounts reports use the cashier when there is one, and the account otherwise. Each bill falls in exactly one group, so the per-cashier totals always add up to the overall total.
+- Bills made before this was set up have no cashier and keep showing the account that saved them. Nothing is rewritten.
+- Held bills belong to the account that created them, so finish or discard held bills before switching a till to the Counter login.
+- Anyone can pick any cashier; there is no PIN.
+
 ### Database
 
-Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots` (kitchen orders sent per bill), `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
+Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots` (kitchen orders sent per bill), `bill_feedback` and `bill_feedback_items` (customer feedback), `payments`, `staff_members` (the people picked as cashier on a shared till), `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
 
 ## Features
 
-| Area                                   | Milestone |
-| -------------------------------------- | :-------: |
-| Auth (password + optional SSO), roles, sidebar shell, theme, command palette | 1 (done) |
-| Categories (drag to reorder, block-delete) and Menu CRUD: table/grid, filters, bulk actions, photos, variants, CSV import/export | 2 (done) |
-| POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing | 3 (done) |
-| Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock | 4 (done) |
-| Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock | 5 (done) |
-| Customers, Users & Roles, Audit log, Settings, Profile | 6 (done) |
-| Inventory: stock, movements, alerts, suppliers | 7 (done) |
-| Reports, accessibility pass, docs      | 8 (done) |
+| Area                                                                                                                             | Milestone |
+| -------------------------------------------------------------------------------------------------------------------------------- | :-------: |
+| Auth (password + optional SSO), roles, sidebar shell, theme, command palette                                                     | 1 (done)  |
+| Categories (drag to reorder, block-delete) and Menu CRUD: table/grid, filters, bulk actions, photos, variants, CSV import/export | 2 (done)  |
+| POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing                                                          | 3 (done)  |
+| Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock                                              | 4 (done)  |
+| Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock                                  | 5 (done)  |
+| Customers, Users & Roles, Audit log, Settings, Profile                                                                           | 6 (done)  |
+| Inventory: stock, movements, alerts, suppliers                                                                                   | 7 (done)  |
+| Customer feedback: QR link after a bill, public form, Feedback page and report                                                   | 9 (done)  |
+| Reports, accessibility pass, docs                                                                                                | 8 (done)  |
 
 ## Roadmap
 

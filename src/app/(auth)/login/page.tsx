@@ -42,7 +42,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             Fast checkout, live stock and clear reports for restaurants, cafés and shops.
           </p>
         </div>
-        <p className="text-xs text-primary-foreground/70">&copy; {new Date().getFullYear()} {appConfig.appName}</p>
+        <p className="text-xs text-primary-foreground/70">
+          &copy; {new Date().getFullYear()} {appConfig.appName}
+        </p>
       </aside>
 
       <main className="flex items-center justify-center px-4 py-10 sm:px-8">
@@ -55,11 +57,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
           <p className="mt-1 mb-8 text-sm text-muted-foreground">Sign in to continue to your dashboard.</p>
-          <LoginForm
-            redirectTo={redirectTo}
-            ssoEnabled={isOidcEnabled()}
-            authError={first(params.error)}
-          />
+          <LoginForm redirectTo={redirectTo} ssoEnabled={isOidcEnabled()} authError={first(params.error)} />
         </div>
       </main>
     </div>

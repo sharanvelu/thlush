@@ -42,7 +42,11 @@ export function ReceiptView({ model }: { model: ReceiptModel }) {
         <header className="center">
           {model.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- a small logo saved in settings
-            <img src={model.logoUrl} alt="" style={{ maxHeight: 48, maxWidth: "60%", margin: "0 auto 4px", filter: "grayscale(1) contrast(1.2)" }} />
+            <img
+              src={model.logoUrl}
+              alt=""
+              style={{ maxHeight: 48, maxWidth: "60%", margin: "0 auto 4px", filter: "grayscale(1) contrast(1.2)" }}
+            />
           ) : null}
           <div className="name">{model.businessName}</div>
           {model.addressLines.map((line) => (
@@ -55,12 +59,36 @@ export function ReceiptView({ model }: { model: ReceiptModel }) {
         <hr />
 
         {model.statusNote ? <div className="center stamp">{model.statusNote}</div> : null}
-        <div className="kv"><span>Bill no</span><span className="bold">{model.billNo}</span></div>
-        <div className="kv"><span>Date</span><span>{model.dateText}</span></div>
-        <div className="kv"><span>Customer</span><span>{model.customerName}</span></div>
-        {model.customerPhone ? <div className="kv"><span>Phone</span><span>{model.customerPhone}</span></div> : null}
-        {model.cashierName ? <div className="kv"><span>Cashier</span><span>{model.cashierName}</span></div> : null}
-        {model.orderLine ? <div className="kv"><span>Order</span><span>{model.orderLine}</span></div> : null}
+        <div className="kv">
+          <span>Bill no</span>
+          <span className="bold">{model.billNo}</span>
+        </div>
+        <div className="kv">
+          <span>Date</span>
+          <span>{model.dateText}</span>
+        </div>
+        <div className="kv">
+          <span>Customer</span>
+          <span>{model.customerName}</span>
+        </div>
+        {model.customerPhone ? (
+          <div className="kv">
+            <span>Phone</span>
+            <span>{model.customerPhone}</span>
+          </div>
+        ) : null}
+        {model.cashierName ? (
+          <div className="kv">
+            <span>Cashier</span>
+            <span>{model.cashierName}</span>
+          </div>
+        ) : null}
+        {model.orderLine ? (
+          <div className="kv">
+            <span>Order</span>
+            <span>{model.orderLine}</span>
+          </div>
+        ) : null}
         <hr />
 
         <table>
@@ -99,29 +127,60 @@ export function ReceiptView({ model }: { model: ReceiptModel }) {
         </table>
         <hr />
 
-        <div className="kv"><span>Items</span><span>{model.itemCount}</span></div>
-        <div className="kv"><span>Subtotal</span><span>{m(model.totals.subtotal)}</span></div>
+        <div className="kv">
+          <span>Items</span>
+          <span>{model.itemCount}</span>
+        </div>
+        <div className="kv">
+          <span>Subtotal</span>
+          <span>{m(model.totals.subtotal)}</span>
+        </div>
         {new D(model.totals.discount).greaterThan(0) ? (
-          <div className="kv"><span>Discount</span><span>-{m(model.totals.discount)}</span></div>
+          <div className="kv">
+            <span>Discount</span>
+            <span>-{m(model.totals.discount)}</span>
+          </div>
         ) : null}
         {model.showTax ? (
           <>
-            <div className="kv"><span>SGST</span><span>{m(model.totals.sgst)}</span></div>
-            <div className="kv"><span>CGST</span><span>{m(model.totals.cgst)}</span></div>
+            <div className="kv">
+              <span>SGST</span>
+              <span>{m(model.totals.sgst)}</span>
+            </div>
+            <div className="kv">
+              <span>CGST</span>
+              <span>{m(model.totals.cgst)}</span>
+            </div>
           </>
         ) : null}
         <hr />
-        <div className="kv total"><span>TOTAL</span><span>{total}</span></div>
+        <div className="kv total">
+          <span>TOTAL</span>
+          <span>{total}</span>
+        </div>
         <hr />
 
         {model.payments.map((p, index) => (
           <div className="kv" key={`${p.label}-${index}`}>
-            <span>Paid by {p.label}{p.reference ? ` (${p.reference})` : ""}</span>
+            <span>
+              Paid by {p.label}
+              {p.reference ? ` (${p.reference})` : ""}
+            </span>
             <span>{m(p.amount)}</span>
           </div>
         ))}
-        {model.received ? <div className="kv"><span>Cash received</span><span>{m(model.received)}</span></div> : null}
-        {model.change ? <div className="kv"><span>Change</span><span>{m(model.change)}</span></div> : null}
+        {model.received ? (
+          <div className="kv">
+            <span>Cash received</span>
+            <span>{m(model.received)}</span>
+          </div>
+        ) : null}
+        {model.change ? (
+          <div className="kv">
+            <span>Change</span>
+            <span>{m(model.change)}</span>
+          </div>
+        ) : null}
         {model.notes ? <div style={{ marginTop: 4 }}>Note: {model.notes}</div> : null}
 
         {model.footerText ? (

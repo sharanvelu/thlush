@@ -45,8 +45,20 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
         />
       )}
       {withReceipt ? <ReceiptView model={model} /> : null}
-      {kot ? <KitchenSlip model={buildKitchenSlipModel(bill, settings, kot)} paperSize={model.paperSize} standalone={!withReceipt} /> : null}
-      {!kot && withKitchen ? <KitchenSlip model={buildKitchenSlipModel(bill, settings)} paperSize={model.paperSize} standalone={!withReceipt} /> : null}
+      {kot ? (
+        <KitchenSlip
+          model={buildKitchenSlipModel(bill, settings, kot)}
+          paperSize={model.paperSize}
+          standalone={!withReceipt}
+        />
+      ) : null}
+      {!kot && withKitchen ? (
+        <KitchenSlip
+          model={buildKitchenSlipModel(bill, settings)}
+          paperSize={model.paperSize}
+          standalone={!withReceipt}
+        />
+      ) : null}
       {autoPrint ? <AutoPrint /> : null}
     </div>
   );

@@ -30,6 +30,7 @@ import { printReceipt } from "@/lib/print";
 import type { HeldBillSummary, SavedBill } from "@/types/bill";
 import type { BillDetail } from "@/types/bill";
 import type { AppSettings } from "@/types/settings";
+import type { CashierOption } from "@/services/StaffService";
 
 interface PosScreenProps {
   items: PosItem[];
@@ -37,6 +38,8 @@ interface PosScreenProps {
   settings: PosSettings & { timezone: string };
   appSettings: AppSettings;
   initialHeld: HeldBillSummary[];
+  /** The shared Counter login picks a cashier on every bill. Null for ordinary accounts. */
+  cashiers: CashierOption[] | null;
 }
 
 const INITIAL_PAYMENT: PaymentState = { split: false, method: "upi", received: "", reference: "", rows: [] };
@@ -54,7 +57,7 @@ function isTyping(target: EventTarget | null): boolean {
   return Boolean(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable));
 }
 
-export function PosScreen({ items, categories, settings, appSettings, initialHeld }: PosScreenProps) {
+export function PosScreen({ items, categories, settings, appSettings, initialHeld, cashiers }: PosScreenProps) {
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const attempt = useRef({ signature: "", ref: "" });
@@ -63,6 +66,10 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
   const [details, setDetails] = useState<BillDetailsDraft>(EMPTY_DETAILS);
   const [payment, setPayment] = useState<PaymentState>(INITIAL_PAYMENT);
   const [heldBillId, setHeldBillId] = useState<number | null>(null);
+  // Picked fresh for every bill: it is cleared when a bill is saved, so each one names its own cashier.
+  const [pickedCashier, setPickedCashier] = useState<number | null>(null);
+  // Someone turned off since the list loaded no longer counts as picked.
+  const cashierId = cashiers?.some((c) => c.id === pickedCashier) ? pickedCashier : null;
   const [held, setHeld] = useState(initialHeld);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState<SavedBill | null>(null);
@@ -108,6 +115,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
     setDetails(EMPTY_DETAILS);
     setPayment(INITIAL_PAYMENT);
     setHeldBillId(null);
+    setPickedCashier(null);
     attempt.current = { signature: "", ref: "" };
     setCartOpen(false);
   }, []);
@@ -143,12 +151,19 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         return void toast.error(paymentResult.message ?? "Collect the full amount first.");
       }
 
+      if (action === "complete" && cashiers && cashierId === null)
+        return void toast.error("Choose who is taking this payment.");
+
       const c = details.customer;
       const body = {
         action,
         heldBillId,
         customer:
-          c.kind === "walkin" ? null : c.kind === "existing" ? { id: c.id } : { name: c.name, phone: c.phone.trim() || null },
+          c.kind === "walkin"
+            ? null
+            : c.kind === "existing"
+              ? { id: c.id }
+              : { name: c.name, phone: c.phone.trim() || null },
         lines: lines.map((l) => ({
           menuItemId: l.item.id,
           quantity: l.quantity,
@@ -163,6 +178,7 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         payments: action === "complete" ? paymentResult.payments : [],
         sendRemainder: action === "complete" && appSettings.receipt.printKitchenByDefault,
         cashTendered: action === "complete" ? paymentResult.cashTendered : null,
+        cashierId: cashiers ? cashierId : null,
       };
 
       // Pressing Save twice, or retrying after a dropped connection, reuses the same reference,
@@ -175,7 +191,9 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         const response = await api.post<SavedBill>("/api/bills", { ...body, clientRef: attempt.current.ref });
         const bill = response.data;
         if (action === "kot") {
-          toast.success(`Sent to the kitchen (KOT #${bill.newKotSeq ?? bill.kots.length}). The order stays open under Held bills.`);
+          toast.success(
+            `Sent to the kitchen (KOT #${bill.newKotSeq ?? bill.kots.length}). The order stays open under Held bills.`,
+          );
           if (bill.newKotSeq !== null) void printReceipt(bill.id, { kot: bill.newKotSeq, receipt: false });
           void refreshHeld();
           resetBill();
@@ -198,7 +216,22 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         setPending(false);
       }
     },
-    [pending, lines, problem, paymentResult, details, heldBillId, billDiscount, settings.orderTypesEnabled, resetBill, refreshHeld, router, appSettings.receipt.printKitchenByDefault],
+    [
+      pending,
+      lines,
+      problem,
+      paymentResult,
+      details,
+      heldBillId,
+      cashiers,
+      cashierId,
+      billDiscount,
+      settings.orderTypesEnabled,
+      resetBill,
+      refreshHeld,
+      router,
+      appSettings.receipt.printKitchenByDefault,
+    ],
   );
 
   const resume = useCallback(
@@ -237,13 +270,20 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         dispatch({ type: "replace", lines: restored });
         setDetails({
           customer: bill.customer
-            ? { kind: "existing", id: bill.customer.id, name: bill.customer.name, phone: bill.customer.phone, email: bill.customer.email }
+            ? {
+                kind: "existing",
+                id: bill.customer.id,
+                name: bill.customer.name,
+                phone: bill.customer.phone,
+                email: bill.customer.email,
+              }
             : { kind: "walkin" },
           orderType: bill.orderType,
           tableNo: bill.tableNo ?? "",
           notes: bill.notes ?? "",
           discountKind: bill.discountType ?? "percent",
-          discountValue: bill.discountType && new D(bill.discountValue).greaterThan(0) ? new D(bill.discountValue).toString() : "",
+          discountValue:
+            bill.discountType && new D(bill.discountValue).greaterThan(0) ? new D(bill.discountValue).toString() : "",
         });
         setPayment(INITIAL_PAYMENT);
         setHeldBillId(id);
@@ -356,6 +396,9 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       settings={settings}
       pending={pending}
       resumedFromHold={heldBillId !== null}
+      cashiers={cashiers}
+      cashierId={cashierId}
+      onCashier={setPickedCashier}
       problem={problem}
       onSave={() => void submit("complete")}
       onHold={() => void submit("hold")}
@@ -372,7 +415,15 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       <h1 className="sr-only">New bill</h1>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 @min-[1000px]/pos:h-[calc(100dvh-8.25rem)] @min-[1000px]/pos:grid-cols-[minmax(0,1fr)_24rem]">
-        <ProductPanel items={items} categories={categories} lines={lines} settings={settings} searchRef={searchRef} onPick={pick} onDecrement={decrement} />
+        <ProductPanel
+          items={items}
+          categories={categories}
+          lines={lines}
+          settings={settings}
+          searchRef={searchRef}
+          onPick={pick}
+          onDecrement={decrement}
+        />
         <aside className="hidden min-h-0 flex-col gap-3 @min-[1000px]/pos:flex">
           {heldPanel}
           <div className="min-h-0 flex-1">{cart}</div>
@@ -384,7 +435,11 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         <Button size="lg" className="h-12 w-full justify-between text-base shadow-lg" onClick={() => setCartOpen(true)}>
           <span className="flex items-center gap-2">
             <ShoppingBag aria-hidden /> View bill
-            {lines.length > 0 ? <span className="rounded-full bg-primary-foreground/20 px-2 text-sm tabular-nums">{itemCount.toString()}</span> : null}
+            {lines.length > 0 ? (
+              <span className="rounded-full bg-primary-foreground/20 px-2 text-sm tabular-nums">
+                {itemCount.toString()}
+              </span>
+            ) : null}
           </span>
           <span className="tabular-nums">{money(totals.grandTotal)}</span>
         </Button>
@@ -429,7 +484,11 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         open={confirmClear}
         onOpenChange={setConfirmClear}
         title="Clear this bill?"
-        description={heldBillId ? "The items are removed from the screen. The held bill stays in Held bills." : "All items and details on the bill are removed."}
+        description={
+          heldBillId
+            ? "The items are removed from the screen. The held bill stays in Held bills."
+            : "All items and details on the bill are removed."
+        }
         confirmLabel="Clear bill"
         destructive
         onConfirm={() => {

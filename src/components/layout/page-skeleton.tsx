@@ -33,7 +33,11 @@ export function SkeletonHeader({ title, description, actions = [] }: SkeletonHea
     <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
-        {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : <Skeleton className="mt-2 h-4 w-64 max-w-full" />}
+        {description ? (
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        ) : (
+          <Skeleton className="mt-2 h-4 w-64 max-w-full" />
+        )}
       </div>
       {actions.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -69,7 +73,15 @@ export function CardsSkeleton({ count = 4, className }: { count?: number; classN
 }
 
 /** A table with a header row and `rows` rows of `columns` cells. The first cell is wider. */
-export function TableSkeleton({ columns = 5, rows = 8, className }: { columns?: number; rows?: number; className?: string }) {
+export function TableSkeleton({
+  columns = 5,
+  rows = 8,
+  className,
+}: {
+  columns?: number;
+  rows?: number;
+  className?: string;
+}) {
   return (
     <div className={cn("overflow-hidden rounded-xl border bg-card shadow-card", className)}>
       <div className="flex items-center gap-4 border-b bg-muted/40 p-3">

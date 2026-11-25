@@ -25,7 +25,10 @@ describe("routeForHost", () => {
 
   it("maps the customer API under /api/c and never reaches staff API routes", () => {
     expect(routeForHost("order.shop.in", "/api/bills", both)).toEqual({ kind: "rewrite", path: "/api/c/bills" });
-    expect(routeForHost("order.shop.in", "/api/auth/signin", both)).toEqual({ kind: "rewrite", path: "/api/c/auth/signin" });
+    expect(routeForHost("order.shop.in", "/api/auth/signin", both)).toEqual({
+      kind: "rewrite",
+      path: "/api/c/auth/signin",
+    });
   });
 
   it("shares the brand icon", () => {

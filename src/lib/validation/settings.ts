@@ -22,17 +22,39 @@ export const settingsSchemas = {
     logoUrl: z
       .string()
       .max(MAX_LOGO_CHARS, "The logo is too large")
-      .refine((v) => /^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(v) || /^https:\/\/\S+$/.test(v), "Logo must be a PNG, JPEG or WebP image")
+      .refine(
+        (v) => /^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(v) || /^https:\/\/\S+$/.test(v),
+        "Logo must be a PNG, JPEG or WebP image",
+      )
       .nullable(),
     address: text(300, "Address"),
     phone: text(30, "Phone"),
     email: text(120, "Email").refine((v) => v === "" || z.email().safeParse(v).success, "Enter a valid email address"),
-    gstin: text(20, "GSTIN").transform((v) => v.toUpperCase()).refine((v) => v === "" || /^[0-9A-Z]{5,20}$/.test(v), "Letters and numbers only, no spaces"),
+    gstin: text(20, "GSTIN")
+      .transform((v) => v.toUpperCase())
+      .refine((v) => v === "" || /^[0-9A-Z]{5,20}$/.test(v), "Letters and numbers only, no spaces"),
   }),
   locale: z.object({
-    currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, "Use a 3-letter code like INR").refine((v) => validIn(() => new Intl.NumberFormat("en", { style: "currency", currency: v })), "That isn't a known currency"),
-    locale: z.string().trim().min(2).max(20).refine((v) => validIn(() => Intl.getCanonicalLocales(v)), "Use a locale like en-IN"),
-    timezone: z.string().trim().min(1, "Choose a timezone").refine((v) => validIn(() => new Intl.DateTimeFormat("en", { timeZone: v })), "That isn't a known timezone"),
+    currency: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{3}$/, "Use a 3-letter code like INR")
+      .refine(
+        (v) => validIn(() => new Intl.NumberFormat("en", { style: "currency", currency: v })),
+        "That isn't a known currency",
+      ),
+    locale: z
+      .string()
+      .trim()
+      .min(2)
+      .max(20)
+      .refine((v) => validIn(() => Intl.getCanonicalLocales(v)), "Use a locale like en-IN"),
+    timezone: z
+      .string()
+      .trim()
+      .min(1, "Choose a timezone")
+      .refine((v) => validIn(() => new Intl.DateTimeFormat("en", { timeZone: v })), "That isn't a known timezone"),
   }),
   tax: z.object({ ignoreTax: z.boolean(), defaultSgst: percentString("SGST"), defaultCgst: percentString("CGST") }),
   receipt: z.object({
@@ -42,20 +64,31 @@ export const settingsSchemas = {
     printKitchenByDefault: z.boolean(),
   }),
   billing: z.object({
-    billPrefix: z.string().trim().regex(/^[A-Za-z0-9_-]{0,10}$/, "Up to 10 letters, numbers, dashes or underscores"),
+    billPrefix: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9_-]{0,10}$/, "Up to 10 letters, numbers, dashes or underscores"),
     sequencePadding: z.number().int().min(1, "At least 1").max(8, "At most 8"),
     defaultCustomerName: text(60, "Name"),
     blockOutOfStock: z.boolean(),
   }),
   packaging: z.object({
-    orderTypes: z.array(z.enum(["dine_in", "takeaway", "delivery"])).max(3).transform((v) => [...new Set(v)]),
+    orderTypes: z
+      .array(z.enum(["dine_in", "takeaway", "delivery"]))
+      .max(3)
+      .transform((v) => [...new Set(v)]),
     mode: z.enum(["per_unit", "per_line", "per_bill"]),
     taxed: z.boolean(),
     billAmount: moneyString("Packaging charge"),
   }),
   sso: z.object({ logout: z.enum(["off", "background", "redirect"]) }),
   appearance: z.object({ accent: z.string().refine(isHexColor, "Use a colour like #cc3300").nullable() }),
-  features: z.object({ inventory: z.boolean(), discounts: z.boolean(), orderTypes: z.boolean() }),
+  features: z.object({
+    inventory: z.boolean(),
+    discounts: z.boolean(),
+    orderTypes: z.boolean(),
+    feedback: z.boolean(),
+  }),
 } satisfies Record<SettingsKey, z.ZodType>;
 
 export const SETTINGS_GROUPS = Object.keys(settingsSchemas) as SettingsKey[];

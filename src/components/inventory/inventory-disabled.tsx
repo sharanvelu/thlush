@@ -9,8 +9,18 @@ export function InventoryDisabled({ canChange }: { canChange: boolean }) {
     <EmptyState
       icon={PackageX}
       title="Inventory is turned off"
-      description={canChange ? "Turn it on in Settings to track stock, record purchases and get low-stock alerts." : "Ask a super admin to turn on Inventory in Settings."}
-      action={canChange ? <Button asChild><Link href="/admin/settings">Open Settings</Link></Button> : undefined}
+      description={
+        canChange
+          ? "Turn it on in Settings to track stock, record purchases and get low-stock alerts."
+          : "Ask a super admin to turn on Inventory in Settings."
+      }
+      action={
+        canChange ? (
+          <Button asChild>
+            <Link href="/admin/settings">Open Settings</Link>
+          </Button>
+        ) : undefined
+      }
     />
   );
 }

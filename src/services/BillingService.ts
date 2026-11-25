@@ -18,7 +18,8 @@ import type { AppSettings } from "@/types/settings";
 import type { BillDetail, HeldBillSummary, SavedBill } from "@/types/bill";
 import type { SessionUser } from "@/types/user";
 
-const { bills, billItems, billKots, payments, menuItems, categories, customers, users, stockMovements } = schema;
+const { bills, billItems, billKots, payments, menuItems, categories, customers, users, stockMovements, staffMembers } =
+  schema;
 
 // ---------------------------------------------------------------------------
 // Reading
@@ -69,7 +70,13 @@ export async function getBill(id: number, user: SessionUser, executor: DbExecuto
     notes: bill.notes,
     voidReason: bill.voidReason,
     customer: row.customer?.id ? row.customer : null,
-    cashier: row.cashier?.id ? row.cashier : null,
+    // A shared till names the cashier on the bill itself; otherwise it is the account that saved it.
+    cashier:
+      bill.cashierId !== null
+        ? { id: `s${bill.cashierId}`, name: bill.cashierName ?? "Staff" }
+        : row.cashier?.id
+          ? row.cashier
+          : null,
     items: items.map((i) => ({
       id: i.id,
       menuItemId: i.menuItemId,
@@ -98,7 +105,10 @@ export async function listHeldBills(user: SessionUser): Promise<HeldBillSummary[
       tableNo: bills.tableNo,
       total: bills.totalAmount,
       customerName: customers.name,
-      itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(Number),
+      itemCount:
+        sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(
+          Number,
+        ),
       kotCount: sql<number>`(select count(*) from ${billKots} where ${billKots.billId} = ${bills.id})`.mapWith(Number),
     })
     .from(bills)
@@ -119,11 +129,21 @@ export async function listHeldBills(user: SessionUser): Promise<HeldBillSummary[
 
 export async function discardHeldBill(id: number, user: SessionUser): Promise<void> {
   await db.transaction(async (tx) => {
-    const [bill] = await tx.select().from(bills).where(and(eq(bills.id, id), eq(bills.status, "held"))).for("update");
+    const [bill] = await tx
+      .select()
+      .from(bills)
+      .where(and(eq(bills.id, id), eq(bills.status, "held")))
+      .for("update");
     if (!bill || !canSee(user, bill.createdUserId)) throw HttpError.notFound("Held bill not found.");
     await tx.delete(bills).where(eq(bills.id, id)); // Items cascade.
     await AuditService.record(
-      { userId: user.id, action: "bill.discard_held", entity: "bill", entityId: id, metadata: { total: bill.totalAmount } },
+      {
+        userId: user.id,
+        action: "bill.discard_held",
+        entity: "bill",
+        entityId: id,
+        metadata: { total: bill.totalAmount },
+      },
       tx,
     );
   });
@@ -175,6 +195,39 @@ async function loadPlanItems(tx: Transaction, ids: number[], lock: boolean): Pro
   return new Map(rows.map((r) => [r.id, { ...r, deleted: r.deletedAt !== null } satisfies PlanItem]));
 }
 
+/**
+ * Who is taking this payment. The shared Counter login must name a cashier to finish a bill; anyone may
+ * name one. The person has to be active and marked as a cashier, so a stale screen can't use someone
+ * who has since left.
+ */
+async function resolveCashier(
+  tx: Transaction,
+  input: BillSaveInput,
+  user: SessionUser,
+): Promise<{ id: number; name: string } | null> {
+  if (input.cashierId === null) {
+    if (user.role === "counter" && input.action === "complete") {
+      throw HttpError.badRequest("Choose who is taking this payment.", { cashierId: ["Choose the cashier."] });
+    }
+    return null;
+  }
+  const [row] = await tx
+    .select({
+      id: staffMembers.id,
+      name: staffMembers.name,
+      status: staffMembers.status,
+      isCashier: staffMembers.isCashier,
+    })
+    .from(staffMembers)
+    .where(eq(staffMembers.id, input.cashierId));
+  if (!row || row.status !== "active" || !row.isCashier) {
+    throw HttpError.badRequest("That cashier is no longer available. Pick someone else.", {
+      cashierId: ["Pick another cashier."],
+    });
+  }
+  return { id: row.id, name: row.name };
+}
+
 async function findByClientRef(clientRef: string) {
   const [row] = await db
     .select({ id: bills.id, createdUserId: bills.createdUserId })
@@ -218,6 +271,8 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
         }
       }
 
+      const cashier = await resolveCashier(tx, input, user);
+
       const ids = [...new Set(input.lines.map((l) => l.menuItemId))];
       const items = await loadPlanItems(tx, ids, completing);
       const plan = planBill(input, items, {
@@ -239,12 +294,15 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
         customerId = await CustomerService.resolveNewCustomer(input.customer, tx);
       }
 
-      const billNo = completing ? await nextBillNo(tx, now, settings) : (held?.billNo ?? `HOLD-${randomUUID().slice(0, 8)}`);
+      const billNo = completing
+        ? await nextBillNo(tx, now, settings)
+        : (held?.billNo ?? `HOLD-${randomUUID().slice(0, 8)}`);
       const header = billHeader(plan, {
         billNo,
         customerId,
         currency: settings.locale.currency,
         userId: user.id,
+        cashier,
         clientRef: input.clientRef,
         now,
       });
@@ -253,7 +311,12 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
       // What the kitchen already has, read before the lines are rewritten.
       const previous = held
         ? await tx
-            .select({ menuItemId: billItems.menuItemId, name: billItems.name, options: billItems.options, sentQty: billItems.sentQty })
+            .select({
+              menuItemId: billItems.menuItemId,
+              name: billItems.name,
+              options: billItems.options,
+              sentQty: billItems.sentQty,
+            })
             .from(billItems)
             .where(eq(billItems.billId, held.id))
         : [];
@@ -297,7 +360,10 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
 
       let newKotSeq: number | null = null;
       if (allocation.fresh.length > 0) {
-        const [last] = await tx.select({ seq: max(billKots.seq) }).from(billKots).where(eq(billKots.billId, id));
+        const [last] = await tx
+          .select({ seq: max(billKots.seq) })
+          .from(billKots)
+          .where(eq(billKots.billId, id));
         newKotSeq = (last?.seq ?? 0) + 1;
         await tx.insert(billKots).values({
           billId: id,
@@ -329,7 +395,14 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
           action: completing ? "bill.create" : input.action === "kot" ? "bill.kot" : "bill.hold",
           entity: "bill",
           entityId: id,
-          metadata: { billNo, total: plan.totals.grandTotal, items: plan.lines.length, fromHold: held?.id ?? null, kot: newKotSeq },
+          metadata: {
+            billNo,
+            total: plan.totals.grandTotal,
+            items: plan.lines.length,
+            fromHold: held?.id ?? null,
+            kot: newKotSeq,
+            ...(cashier ? { cashier: cashier.name } : {}),
+          },
         },
         tx,
       );
@@ -357,7 +430,15 @@ function withKotSeq(bill: BillDetail, input: BillSaveInput): SavedBill {
 
 function billHeader(
   plan: BillPlan,
-  ctx: { billNo: string; customerId: number | null; currency: string; userId: string; clientRef: string; now: Date },
+  ctx: {
+    billNo: string;
+    customerId: number | null;
+    currency: string;
+    userId: string;
+    cashier: { id: number; name: string } | null;
+    clientRef: string;
+    now: Date;
+  },
 ): typeof bills.$inferInsert {
   const held = plan.status === "held";
   return {
@@ -379,6 +460,8 @@ function billHeader(
     heldAt: held ? ctx.now : null,
     clientRef: ctx.clientRef,
     createdUserId: ctx.userId,
+    cashierId: ctx.cashier?.id ?? null,
+    cashierName: ctx.cashier?.name ?? null,
     // The bill's date is when it was paid, so a resumed bill takes the time it is finished.
     createdAt: ctx.now,
   };

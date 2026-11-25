@@ -7,14 +7,9 @@ export const table = pgTableCreator((name) => prefixed(name));
 /** Prefixed names for indexes and constraints, so two installs never collide. */
 export const ix = (name: string): string => prefixed(name);
 
-export const userRole = pgEnum(prefixed("user_role"), ["super_admin", "manager", "billing"]);
+export const userRole = pgEnum(prefixed("user_role"), ["super_admin", "manager", "billing", "counter"]);
 export const entityStatus = pgEnum(prefixed("entity_status"), ["active", "disabled"]);
-export const billStatus = pgEnum(prefixed("bill_status"), [
-  "completed",
-  "held",
-  "void",
-  "refunded",
-]);
+export const billStatus = pgEnum(prefixed("bill_status"), ["completed", "held", "void", "refunded"]);
 export const orderType = pgEnum(prefixed("order_type"), ["dine_in", "takeaway", "delivery"]);
 export const paymentMethod = pgEnum(prefixed("payment_method"), ["cash", "card", "upi", "other"]);
 export const discountType = pgEnum(prefixed("discount_type"), ["percent", "flat"]);

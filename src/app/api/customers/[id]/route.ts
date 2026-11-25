@@ -10,7 +10,8 @@ export const GET = withAuth<Params>(
 );
 
 export const PATCH = withAuth<Params>(
-  async (req, { user, params }) => ok(await CustomerService.updateCustomer(parseId(params.id), await parseBody(req, customerPatchSchema), user.id)),
+  async (req, { user, params }) =>
+    ok(await CustomerService.updateCustomer(parseId(params.id), await parseBody(req, customerPatchSchema), user.id)),
   { permission: "customers.manage" },
 );
 

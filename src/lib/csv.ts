@@ -23,9 +23,7 @@ export function toCsv(rows: CsvCell[][]): string {
 
 /** Reverses the formula-injection prefix added by `toCsv`. */
 export function unescapeCell(value: string): string {
-  return value.length > 1 && value.startsWith("'") && FORMULA_START.test(value.slice(1))
-    ? value.slice(1)
-    : value;
+  return value.length > 1 && value.startsWith("'") && FORMULA_START.test(value.slice(1)) ? value.slice(1) : value;
 }
 
 /** Parses CSV text into rows of strings. Handles quotes, escaped quotes, CRLF and a BOM. */

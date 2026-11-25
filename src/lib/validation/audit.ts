@@ -1,7 +1,17 @@
 import { z } from "zod";
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)));
-const text = (max: number) => z.string().trim().max(max).transform((v) => v || undefined).optional().catch(undefined);
+const day = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)));
+const text = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => v || undefined)
+    .optional()
+    .catch(undefined);
 
 export const auditQuerySchema = z.object({
   user: z.string().uuid().optional().catch(undefined),

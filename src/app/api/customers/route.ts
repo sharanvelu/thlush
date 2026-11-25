@@ -20,6 +20,7 @@ export const GET = withAuth(
 );
 
 export const POST = withAuth(
-  async (req, { user }) => ok(await CustomerService.createCustomer(await parseBody(req, customerSchema), user.id), { status: 201 }),
+  async (req, { user }) =>
+    ok(await CustomerService.createCustomer(await parseBody(req, customerSchema), user.id), { status: 201 }),
   { permission: "customers.manage" },
 );

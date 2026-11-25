@@ -142,7 +142,10 @@ export async function listUserOptions(): Promise<UserOption[]> {
 
 /** Name, email and theme. SSO accounts get name and email from the identity provider, so those stay read-only. */
 export async function updateOwnProfile(userId: string, patch: ProfileInput): Promise<void> {
-  const [row] = await db.select({ password: schema.users.password }).from(schema.users).where(eq(schema.users.id, userId));
+  const [row] = await db
+    .select({ password: schema.users.password })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId));
   if (!row) throw HttpError.notFound("User not found.");
   if (row.password === null && (patch.name !== undefined || patch.email !== undefined)) {
     throw HttpError.badRequest("Your name and email come from single sign-on and can't be changed here.");
@@ -160,16 +163,30 @@ export async function updateOwnProfile(userId: string, patch: ProfileInput): Pro
     }
     throw error;
   }
-  await AuditService.log({ userId, action: "profile.update", entity: "user", entityId: userId, metadata: { fields: Object.keys(values) } });
+  await AuditService.log({
+    userId,
+    action: "profile.update",
+    entity: "user",
+    entityId: userId,
+    metadata: { fields: Object.keys(values) },
+  });
 }
 
 export async function changeOwnPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
-  const [row] = await db.select({ password: schema.users.password }).from(schema.users).where(eq(schema.users.id, userId));
+  const [row] = await db
+    .select({ password: schema.users.password })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId));
   if (!row) throw HttpError.notFound("User not found.");
   if (row.password === null) throw HttpError.badRequest("Your account uses single sign-on and has no password.");
   if (!(await verifyPassword(currentPassword, row.password))) {
-    throw new HttpError(400, "Your current password is not correct.", { currentPassword: ["That isn't your current password."] });
+    throw new HttpError(400, "Your current password is not correct.", {
+      currentPassword: ["That isn't your current password."],
+    });
   }
-  await db.update(schema.users).set({ password: await hashPassword(newPassword) }).where(eq(schema.users.id, userId));
+  await db
+    .update(schema.users)
+    .set({ password: await hashPassword(newPassword) })
+    .where(eq(schema.users.id, userId));
   await AuditService.log({ userId, action: "profile.password_change", entity: "user", entityId: userId });
 }

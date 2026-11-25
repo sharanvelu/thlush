@@ -13,12 +13,34 @@ import {
 } from "@/components/pos/pos-cart";
 
 const dosa: PosItem = {
-  id: 1, name: "Masala Dosa", price: "100.00", sgst: "2.50", cgst: "2.50", categoryId: 1, categoryName: "South Indian",
-  sku: "SIN-001", isVeg: true, imageSrc: null, variants: [], addons: [], unit: "pcs", trackStock: false, stockQty: "0.000", status: "active", packagingCharge: "0.00",
+  id: 1,
+  name: "Masala Dosa",
+  price: "100.00",
+  sgst: "2.50",
+  cgst: "2.50",
+  categoryId: 1,
+  categoryName: "South Indian",
+  sku: "SIN-001",
+  isVeg: true,
+  imageSrc: null,
+  variants: [],
+  addons: [],
+  unit: "pcs",
+  trackStock: false,
+  stockQty: "0.000",
+  status: "active",
+  packagingCharge: "0.00",
 };
 const coffee: PosItem = {
-  ...dosa, id: 2, name: "Cold Coffee", price: "90.00", sku: "BEV-003",
-  variants: [{ name: "Regular", priceDelta: "0" }, { name: "Large", priceDelta: "30" }],
+  ...dosa,
+  id: 2,
+  name: "Cold Coffee",
+  price: "90.00",
+  sku: "BEV-003",
+  variants: [
+    { name: "Regular", priceDelta: "0" },
+    { name: "Large", priceDelta: "30" },
+  ],
   addons: [{ name: "Extra shot", price: "25" }],
 };
 const rice: PosItem = { ...dosa, id: 3, name: "Basmati", price: "200.00", unit: "kg" };
@@ -53,7 +75,13 @@ describe("cartReducer", () => {
   });
 
   it("treats add-on order as irrelevant", () => {
-    const item: PosItem = { ...coffee, addons: [{ name: "A", price: "1" }, { name: "B", price: "2" }] };
+    const item: PosItem = {
+      ...coffee,
+      addons: [
+        { name: "A", price: "1" },
+        { name: "B", price: "2" },
+      ],
+    };
     expect(lineKey(item.id, null, [x("A"), x("B")])).toBe(lineKey(item.id, null, [x("B"), x("A")]));
   });
 
@@ -129,9 +157,19 @@ describe("cartTotals", () => {
 });
 
 const single = (overrides: Partial<PaymentState> = {}): PaymentState => ({
-  split: false, method: "cash", received: "", reference: "", rows: [], ...overrides,
+  split: false,
+  method: "cash",
+  received: "",
+  reference: "",
+  rows: [],
+  ...overrides,
 });
-const row = (method: "cash" | "card" | "upi" | "other", amount: string, id = Math.random().toString()) => ({ id, method, amount, reference: "" });
+const row = (method: "cash" | "card" | "upi" | "other", amount: string, id = Math.random().toString()) => ({
+  id,
+  method,
+  amount,
+  reference: "",
+});
 
 describe("resolvePayment: single method", () => {
   it("takes exact cash by default", () => {

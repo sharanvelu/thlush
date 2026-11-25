@@ -3,7 +3,18 @@ import { D, round2 } from "@/lib/money";
 import { savedLineTax } from "@/services/calculations";
 import type { BillStatus } from "@/types/bill";
 
-export const EXPORT_HEADER = ["Bill ID", "Date", "Customer", "Item", "Qty", "Currency", "Price", "Tax", "Total", "Status"] as const;
+export const EXPORT_HEADER = [
+  "Bill ID",
+  "Date",
+  "Customer",
+  "Item",
+  "Qty",
+  "Currency",
+  "Price",
+  "Tax",
+  "Total",
+  "Status",
+] as const;
 /** Columns holding amounts, which the XLSX export writes as numbers. */
 export const EXPORT_NUMERIC_COLUMNS = [4, 6, 7, 8] as const;
 
@@ -14,7 +25,15 @@ export interface ExportBill {
   status: BillStatus;
   customerName: string | null;
   totalTax: string;
-  items: Array<{ name: string; quantity: string; price: string; discount: string; sgst: string; cgst: string; total: string }>;
+  items: Array<{
+    name: string;
+    quantity: string;
+    price: string;
+    discount: string;
+    sgst: string;
+    cgst: string;
+    total: string;
+  }>;
 }
 
 /**

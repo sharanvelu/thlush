@@ -15,7 +15,14 @@ const text = (max: number) =>
     .optional()
     .catch(undefined);
 
-export const BILL_SORTS = ["date_desc", "date_asc", "total_desc", "total_asc", "customer_asc", "customer_desc"] as const;
+export const BILL_SORTS = [
+  "date_desc",
+  "date_asc",
+  "total_desc",
+  "total_asc",
+  "customer_asc",
+  "customer_desc",
+] as const;
 export type BillSort = (typeof BILL_SORTS)[number];
 
 export const BILL_STATUSES = ["completed", "void", "refunded", "held"] as const;
@@ -31,7 +38,12 @@ export const billFilterSchema = z.object({
   method: z.enum(["cash", "card", "upi", "other"]).optional().catch(undefined),
   /** Left out, held bills are hidden; pick "held" to see them. */
   status: z.enum(BILL_STATUSES).optional().catch(undefined),
-  cashier: z.string().uuid().optional().catch(undefined),
+  /** An account (uuid) or a staff member picked on a shared till ("s12"). */
+  cashier: z
+    .string()
+    .regex(/^(s\d{1,9}|[0-9a-fA-F-]{36})$/)
+    .optional()
+    .catch(undefined),
   sort: z.enum(BILL_SORTS).catch("date_desc").default("date_desc"),
 });
 export type BillFilters = z.output<typeof billFilterSchema>;
@@ -48,7 +60,11 @@ export const billExportQuerySchema = billFilterSchema.extend({
 
 export const billReverseSchema = z.object({
   type: z.enum(["void", "refund"]),
-  reason: z.string().trim().min(3, "Give a reason (at least 3 characters)").max(200, "Keep the reason under 200 characters"),
+  reason: z
+    .string()
+    .trim()
+    .min(3, "Give a reason (at least 3 characters)")
+    .max(200, "Keep the reason under 200 characters"),
 });
 export type BillReverseInput = z.output<typeof billReverseSchema>;
 

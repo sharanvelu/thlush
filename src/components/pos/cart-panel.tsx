@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import type { CashierOption } from "@/services/StaffService";
 import { addonLabel } from "@/lib/addons";
 import { D, formatMoney } from "@/lib/money";
 import { ORDER_TYPE_LABELS, type OrderType } from "@/types/bill";
@@ -49,6 +50,10 @@ interface CartPanelProps {
   settings: PosSettings;
   pending: boolean;
   resumedFromHold: boolean;
+  /** On the shared Counter login: who can be picked as the cashier. Null for everyone else, who bill as themselves. */
+  cashiers: CashierOption[] | null;
+  cashierId: number | null;
+  onCashier: (id: number | null) => void;
   /** Something typed on the bill is invalid (e.g. a discount). Blocks saving. */
   problem: string | null;
   onSave: () => void;
@@ -75,6 +80,9 @@ export function CartPanel(props: CartPanelProps) {
     settings,
     pending,
     resumedFromHold,
+    cashiers,
+    cashierId,
+    onCashier,
     problem,
     onSave,
     onHold,
@@ -92,7 +100,7 @@ export function CartPanel(props: CartPanelProps) {
 
   const empty = lines.length === 0;
   const total = totals.grandTotal;
-  const canSave = !empty && !pending && paymentResult.valid && !problem;
+  const canSave = !empty && !pending && paymentResult.valid && !problem && (!cashiers || cashierId !== null);
   // Items beyond what the kitchen already has. Nothing new means nothing to send.
   const hasNewItems = lines.some((l) => new D(l.quantity).greaterThan(l.sentQty));
   const canSend = !empty && !pending && !problem && hasNewItems;
@@ -203,7 +211,8 @@ export function CartPanel(props: CartPanelProps) {
                       </Button>
                     </div>
                     <div className="flex items-center gap-1">
-                      {(line.item.variants.length > 0 || line.item.addons.length > 0) && new D(line.sentQty).isZero() ? (
+                      {(line.item.variants.length > 0 || line.item.addons.length > 0) &&
+                      new D(line.sentQty).isZero() ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -265,7 +274,9 @@ export function CartPanel(props: CartPanelProps) {
                   <Package className="size-4 text-muted-foreground" aria-hidden /> Packaging
                   <span className="text-xs text-muted-foreground">added automatically</span>
                 </span>
-                <span className="font-semibold tabular-nums">{money(totals.lines[lines.length + index]?.total ?? "0.00")}</span>
+                <span className="font-semibold tabular-nums">
+                  {money(totals.lines[lines.length + index]?.total ?? "0.00")}
+                </span>
               </li>
             ))}
           </ul>
@@ -273,7 +284,9 @@ export function CartPanel(props: CartPanelProps) {
 
         <div className="mt-4 flex flex-col divide-y border-t">
           <section aria-labelledby={`${baseId}-customer`} className="flex flex-col gap-1.5 py-4">
-            <h3 id={`${baseId}-customer`} className="text-sm font-medium">Customer</h3>
+            <h3 id={`${baseId}-customer`} className="text-sm font-medium">
+              Customer
+            </h3>
             <CustomerPicker
               value={details.customer}
               onChange={(customer) => onDetails({ customer })}
@@ -283,7 +296,9 @@ export function CartPanel(props: CartPanelProps) {
 
           {settings.orderTypesEnabled || settings.discountsEnabled ? (
             <section aria-labelledby={`${baseId}-details`} className="flex flex-col gap-4 py-4">
-              <h3 id={`${baseId}-details`} className="text-sm font-medium">Order details</h3>
+              <h3 id={`${baseId}-details`} className="text-sm font-medium">
+                Order details
+              </h3>
               {settings.orderTypesEnabled ? (
                 <div className="flex flex-col gap-1.5">
                   <p className="text-xs font-medium text-muted-foreground">Order type</p>
@@ -364,8 +379,45 @@ export function CartPanel(props: CartPanelProps) {
             </section>
           ) : null}
 
+          {cashiers ? (
+            <section aria-labelledby={`${baseId}-cashier`} className="flex flex-col gap-1.5 py-4">
+              <h3 id={`${baseId}-cashier`} className="text-sm font-medium">
+                Cashier
+              </h3>
+              {cashiers.length === 0 ? (
+                <p role="alert" className="text-xs text-destructive">
+                  No cashiers on the list yet. A manager can add them under Staff.
+                </p>
+              ) : (
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  value={cashierId === null ? "" : String(cashierId)}
+                  onValueChange={(v) => onCashier(v ? Number(v) : null)}
+                  className="flex flex-wrap justify-start gap-2"
+                  aria-label="Cashier"
+                >
+                  {cashiers.map((c) => (
+                    <ToggleGroupItem key={c.id} value={String(c.id)} className="h-10 min-w-24 flex-1 px-4 text-sm">
+                      {c.name}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              )}
+              {cashierId === null && cashiers.length > 0 ? (
+                <p className="text-xs text-muted-foreground">Choose who is taking this payment.</p>
+              ) : null}
+            </section>
+          ) : null}
+
           <section aria-label="Payment" className="py-4 pb-1">
-            <PaymentPanel state={payment} onChange={onPayment} total={total} result={paymentResult} settings={settings} />
+            <PaymentPanel
+              state={payment}
+              onChange={onPayment}
+              total={total}
+              result={paymentResult}
+              settings={settings}
+            />
           </section>
         </div>
       </div>
@@ -373,7 +425,9 @@ export function CartPanel(props: CartPanelProps) {
       <footer className="flex flex-col gap-3 border-t bg-card px-4 py-3">
         <dl className="flex flex-col gap-1 text-sm">
           <Row label="Subtotal" value={money(totals.subtotal)} />
-          {new D(totals.totalDiscount).greaterThan(0) ? <Row label="Discount" value={`-${money(totals.totalDiscount)}`} /> : null}
+          {new D(totals.totalDiscount).greaterThan(0) ? (
+            <Row label="Discount" value={`-${money(totals.totalDiscount)}`} />
+          ) : null}
           {!settings.ignoreTax ? (
             <>
               <Row label="SGST" value={money(totals.sgst)} />
@@ -414,7 +468,13 @@ export function CartPanel(props: CartPanelProps) {
           >
             <ChefHat aria-hidden /> Send to kitchen
           </Button>
-          <Button variant="ghost" disabled={empty || pending} onClick={onHold} aria-keyshortcuts="Alt+H" className="border">
+          <Button
+            variant="ghost"
+            disabled={empty || pending}
+            onClick={onHold}
+            aria-keyshortcuts="Alt+H"
+            className="border"
+          >
             <Archive aria-hidden /> {resumedFromHold ? "Update held" : "Hold bill"}
           </Button>
         </div>

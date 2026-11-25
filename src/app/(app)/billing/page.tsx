@@ -6,6 +6,7 @@ import { requireAccess } from "@/services/AuthService";
 import { listHeldBills } from "@/services/BillingService";
 import { getCachedPosCatalog, getPosStock } from "@/services/PosCatalogService";
 import { getSettings } from "@/services/SettingsService";
+import { listCashierOptions } from "@/services/StaffService";
 
 export const metadata: Metadata = { title: "New Bill" };
 
@@ -14,11 +15,13 @@ export default async function BillingPage() {
   if (!allowed) return <Forbidden />;
 
   // The menu comes from the cache (cleared by any menu or category edit); stock and held bills are live.
-  const [cached, stock, appSettings, held] = await Promise.all([
+  const [cached, stock, appSettings, held, cashiers] = await Promise.all([
     getCachedPosCatalog(),
     getPosStock(),
     getSettings(),
     listHeldBills(user),
+    // Only the shared Counter login picks a cashier on each bill; everyone else bills as themselves.
+    user.role === "counter" ? listCashierOptions() : Promise.resolve(null),
   ]);
 
   const categories = cached.categories;
@@ -34,6 +37,7 @@ export default async function BillingPage() {
       items={items}
       categories={categories}
       initialHeld={held}
+      cashiers={cashiers}
       appSettings={appSettings}
       settings={{
         currency: appSettings.locale.currency,

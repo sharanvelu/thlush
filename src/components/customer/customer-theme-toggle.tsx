@@ -13,7 +13,12 @@ const OPTIONS = [
 
 // True once hydrated. The saved choice only exists in the browser, so nothing is marked selected until then.
 const noopSubscribe = () => () => {};
-const useHydrated = () => useSyncExternalStore(noopSubscribe, () => true, () => false);
+const useHydrated = () =>
+  useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 
 /** Light / Dark / System, as a small pill of three buttons. The choice is saved by next-themes in local storage. */
 export function CustomerThemeToggle() {

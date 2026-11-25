@@ -4,18 +4,18 @@ How Thlush is put together. Read this before changing code; it should save you f
 
 ## Stack
 
-| Layer | Choice |
-| --- | --- |
-| Framework | Next.js 16 App Router, React 19, TypeScript (strict, `noUncheckedIndexedAccess`). **Not the Next.js in your training data**: read `node_modules/next/dist/docs/` first. `middleware` is now `src/proxy.ts`. |
-| Styling / UI | Tailwind CSS v4 (tokens in `src/app/globals.css`), shadcn/ui (`radix-nova` style, config in `components.json`), lucide icons, `sonner` toasts, `next-themes` |
-| Data | Neon Postgres via `@neondatabase/serverless` (WebSocket pool, so interactive transactions work), Drizzle ORM, migrations in `drizzle/` |
-| Auth | Auth.js v5 (`next-auth` beta): email + password, optional OIDC SSO. Session is a signed JWT cookie |
-| Validation | Zod 4, schemas in `src/lib/validation/` shared by client forms (react-hook-form) and API routes |
-| Money | `decimal.js` through `src/lib/money.ts` |
-| Files | Neon Object Storage (S3 API, `src/lib/object-storage.ts`) for menu photos; falls back to the database when the `AWS_*` vars are unset |
-| Output | PDFs with `pdfkit`, XLSX with `exceljs`, thermal printing as raw ESC/POS bytes |
-| Tests | Vitest (`tests/**/*.test.ts`), node environment, no database or network |
-| Hosting | Vercel (`vercel.json`, region `sin1`) + Neon |
+| Layer        | Choice                                                                                                                                                                                                      |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework    | Next.js 16 App Router, React 19, TypeScript (strict, `noUncheckedIndexedAccess`). **Not the Next.js in your training data**: read `node_modules/next/dist/docs/` first. `middleware` is now `src/proxy.ts`. |
+| Styling / UI | Tailwind CSS v4 (tokens in `src/app/globals.css`), shadcn/ui (`radix-nova` style, config in `components.json`), lucide icons, `sonner` toasts, `next-themes`                                                |
+| Data         | Neon Postgres via `@neondatabase/serverless` (WebSocket pool, so interactive transactions work), Drizzle ORM, migrations in `drizzle/`                                                                      |
+| Auth         | Auth.js v5 (`next-auth` beta): email + password, optional OIDC SSO. Session is a signed JWT cookie                                                                                                          |
+| Validation   | Zod 4, schemas in `src/lib/validation/` shared by client forms (react-hook-form) and API routes                                                                                                             |
+| Money        | `decimal.js` through `src/lib/money.ts`                                                                                                                                                                     |
+| Files        | Neon Object Storage (S3 API, `src/lib/object-storage.ts`) for menu photos; falls back to the database when the `AWS_*` vars are unset                                                                       |
+| Output       | PDFs with `pdfkit`, XLSX with `exceljs`, thermal printing as raw ESC/POS bytes, QR codes with `qrcode`                                                                                                      |
+| Tests        | Vitest (`tests/**/*.test.ts`), node environment, no database or network                                                                                                                                     |
+| Hosting      | Vercel (`vercel.json`, region `sin1`) + Neon                                                                                                                                                                |
 
 ## Two sites, one app
 
@@ -36,7 +36,7 @@ src/
   env.ts              Zod-validated env vars. config.ts: static app config + default runtime settings
   app/
     (app)/            Staff pages: billing, bills, menu, categories, customers, inventory, reports,
-                      admin/{users,settings,audit-log}, profile, thermal-print/custom, forbidden
+                      admin/{users,staff,settings,audit-log}, feedback, profile, thermal-print/custom, forbidden
     (auth)/login      Sign-in page
     (print)/receipt/[id]   Printable receipt page
     (customer)/c      Public customer menu (own layout + theme toggle)
@@ -85,7 +85,7 @@ client components ──fetch──> route.ts   (via lib/api-client.ts)
 
 ## Auth and permissions
 
-- Roles: `super_admin`, `manager`, `billing` (shown as **Cashier**). SSO users start as `billing`.
+- Roles: `super_admin`, `manager`, `billing` (shown as **Cashier**) and `counter`. SSO users start as `billing`. `counter` is one shared login for a till: it can bill and see its own bills, the sidebar shows it only Billing and Bill History (`COUNTER_NAV` in `config/navigation.ts`), and `/` redirects it to `/billing`.
 - `src/config/permissions.ts` is the **only** place defining who can do what: `ROLE_PERMISSIONS` (role to permission set) and `ROUTE_PERMISSIONS` (URL prefix to permission). Keep it free of server-only imports.
 - Enforced in three layers: proxy (coarse, from the token, so role changes apply after next sign-in), `withAuth` / `requireAccess` (re-read the user from the DB every request, so revocation is immediate), and the sidebar (`config/navigation.ts`) hiding what a role cannot open.
 - Cashiers only ever see their own bills, enforced in the service, not just the UI.
@@ -93,7 +93,7 @@ client components ──fetch──> route.ts   (via lib/api-client.ts)
 ## Database
 
 - All tables are created through `table()` in `src/db/schema/_shared.ts`, which applies the `DB_TABLE_PREFIX` (default `app_`). Enums and indexes use `prefixed()` / `ix()` too. Never hard-code a table name in SQL.
-- Tables: `users` (uuid id), `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots`, `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Other ids are `bigint identity` (`bigId()`), timestamps are `timestamptz`.
+- Tables: `users` (uuid id), `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots`, `bill_feedback`, `bill_feedback_items`, `staff_members`, `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Other ids are `bigint identity` (`bigId()`), timestamps are `timestamptz`.
 - Runtime settings are key/value rows in `settings`, merged over `defaultSettings` in `src/config.ts` (`SettingsService.getSettings`). Add a new setting by extending `AppSettings` (`src/types/settings.ts`), `defaultSettings` and the Zod schema in `src/lib/validation/settings.ts`.
 - **Schema change workflow**: edit `src/db/schema/*`, run `npm run db:generate`, commit the new `drizzle/*.sql` and meta. CI fails on drift. Migrations are applied by hand with `npm run db:migrate`, never by the build.
 - Bill lines snapshot name, price and tax, so menu edits never alter history. Soft-deleted ("archived") menu items stay referenced.
@@ -109,6 +109,8 @@ Business-day logic uses the configured business timezone (`src/lib/dates.ts`, `f
 ## Key flows
 
 - **Saving a bill** (`BillingService`, `bill-plan.ts`): the browser sends ids, quantities, discounts and payments; the server prices everything from the catalog. One transaction writes customer, bill, lines, payments, stock movements and the audit entry. Bill numbers `{prefix}{YYYYMMDD}-{seq}` are taken under a per-day lock. Each save carries a `clientRef`, so a retry returns the same bill. Held bills carry a temporary number.
+- **Shared till and cashier** (`StaffService`, `staff_members`, `BillingService`): the Counter login saves every bill, so `bills.created_user_id` decides who may see it, while `bills.cashier_id` and `cashier_name` record the staff member picked on that bill (name snapshotted, `ON DELETE RESTRICT`). Staff are not accounts: nobody signs in as one, and they are managed at `/admin/staff` (permission `staff.manage`, super admin and manager). Receipts, Bill History and the cashier/discount reports use the cashier when set and the account otherwise, so per-cashier totals always add up. Held bills belong to the creating account.
+- **Customer feedback** (`FeedbackService`, `lib/feedback.ts`, tables `bill_feedback` and `bill_feedback_items`): `POST /api/bills/[id]/feedback-link` (permission `bills.create`) creates or replaces the bill's single form row with a new 256-bit secret (only its SHA-256 is stored) and a 24-hour `expires_at`, and returns the URL; the billing success dialog draws it as a QR with the `qrcode` package. The customer opens `(customer)/c/feedback/[token]` and posts to `/api/c/feedback/[token]` (public, the secret is the credential). Submission is guarded by `WHERE submitted_at IS NULL AND expires_at > now()`, so a form is answered once. `bills.status` must be `completed`. Contact fields are asked only when the bill's customer lacks a name or phone. Staff read it on `/feedback` (permission `feedback.view`, super admin and manager) and in the `feedback` report. The feature is `features.feedback` in settings.
 - **KOT / running orders** (`kot-plan.ts`, `bill_kots`): "Send to kitchen" saves a held bill and prints only items not yet sent.
 - **Void / refund** (`BillHistoryService`): needs a reason, restocks exactly what the sale deducted (read from `stock_movements`), only once per bill.
 - **POS catalog cache** (`lib/catalog-cache.ts`): the billing screen's catalog is cached with tag `pos-catalog`. Anything that changes menu items, categories or prices must call `invalidatePosCatalog()`.
@@ -119,19 +121,19 @@ Business-day logic uses the configured business timezone (`src/lib/dates.ts`, `f
 
 ## Testing
 
-`npm test` runs Vitest. Tests cover pure logic (calculations, bill and KOT planning, escpos, csv, validation, host routing, settings, reports, dashboards). There are no component or database tests, so keep new logic in pure functions where you can and test it in `tests/<module>.test.ts`. `npm run check` = lint + typecheck + tests, and is what CI runs before a build.
+`npm test` runs Vitest. Tests cover pure logic (calculations, bill and KOT planning, escpos, csv, validation, host routing, settings, reports, dashboards). There are no component or database tests, so keep new logic in pure functions where you can and test it in `tests/<module>.test.ts`. `npm run check` = lint + Prettier check + typecheck + tests. CI runs the same checks as separate required jobs (see "Pull request checks" in the README), plus a migration drift check and a production build.
 
 ## Where to put new things
 
-| You are adding | Put it in |
-| --- | --- |
-| A page | `src/app/(app)/<area>/page.tsx` (server), with `export const metadata`, `requireAccess`, and a client `*-view.tsx` in `src/components/<area>/` |
-| A sidebar entry | `src/config/navigation.ts` (each item still needs a `milestone` number; nothing reads it any more, so use the highest existing one) plus a route permission in `src/config/permissions.ts` |
-| An API endpoint | `src/app/api/<resource>/route.ts` using `withAuth` |
-| Business logic | `src/services/<Name>Service.ts` (pure parts in a lower-case sibling, tested) |
-| A form schema | `src/lib/validation/<area>.ts`, shared by form and route |
-| A table or column | `src/db/schema/<table>.ts`, export from `schema/index.ts`, then `npm run db:generate` |
-| A permission | `PERMISSIONS` and `ROLE_PERMISSIONS` in `src/config/permissions.ts`, and update the role table in README |
-| A setting | See "Database" above |
-| A customer page | Under `src/app/(customer)/c/`, so it inherits the theme toggle |
-| A shadcn component | `npx shadcn add <name>` (writes to `src/components/ui`) |
+| You are adding     | Put it in                                                                                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A page             | `src/app/(app)/<area>/page.tsx` (server), with `export const metadata`, `requireAccess`, and a client `*-view.tsx` in `src/components/<area>/`                                             |
+| A sidebar entry    | `src/config/navigation.ts` (each item still needs a `milestone` number; nothing reads it any more, so use the highest existing one) plus a route permission in `src/config/permissions.ts` |
+| An API endpoint    | `src/app/api/<resource>/route.ts` using `withAuth`                                                                                                                                         |
+| Business logic     | `src/services/<Name>Service.ts` (pure parts in a lower-case sibling, tested)                                                                                                               |
+| A form schema      | `src/lib/validation/<area>.ts`, shared by form and route                                                                                                                                   |
+| A table or column  | `src/db/schema/<table>.ts`, export from `schema/index.ts`, then `npm run db:generate`                                                                                                      |
+| A permission       | `PERMISSIONS` and `ROLE_PERMISSIONS` in `src/config/permissions.ts`, and update the role table in README                                                                                   |
+| A setting          | See "Database" above                                                                                                                                                                       |
+| A customer page    | Under `src/app/(customer)/c/`, so it inherits the theme toggle                                                                                                                             |
+| A shadcn component | `npx shadcn add <name>` (writes to `src/components/ui`)                                                                                                                                    |

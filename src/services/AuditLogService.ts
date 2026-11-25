@@ -17,7 +17,10 @@ export interface AuditRow {
   metadata: Record<string, unknown> | null;
 }
 
-export async function listAuditLogs(query: Omit<AuditQuery, "pageSize" | "page"> & { page: number; pageSize: number }, timeZone: string) {
+export async function listAuditLogs(
+  query: Omit<AuditQuery, "pageSize" | "page"> & { page: number; pageSize: number },
+  timeZone: string,
+) {
   const { start, end } = zonedDayRange(query.from, query.to, timeZone);
   const where = and(
     query.user ? eq(auditLogs.userId, query.user) : undefined,
@@ -44,7 +47,10 @@ export async function listAuditLogs(query: Omit<AuditQuery, "pageSize" | "page">
       .orderBy(desc(auditLogs.createdAt), desc(auditLogs.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(auditLogs).where(where),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(auditLogs)
+      .where(where),
   ]);
   return {
     rows: rows.map((r): AuditRow => ({ ...r, createdAt: r.createdAt.toISOString() })),
@@ -54,6 +60,10 @@ export async function listAuditLogs(query: Omit<AuditQuery, "pageSize" | "page">
 
 /** The entity types that appear in the log, for the filter dropdown. */
 export async function listAuditEntities(): Promise<string[]> {
-  const rows = await db.selectDistinct({ entity: auditLogs.entity }).from(auditLogs).orderBy(auditLogs.entity).limit(100);
+  const rows = await db
+    .selectDistinct({ entity: auditLogs.entity })
+    .from(auditLogs)
+    .orderBy(auditLogs.entity)
+    .limit(100);
   return rows.map((r) => r.entity);
 }

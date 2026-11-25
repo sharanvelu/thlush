@@ -41,7 +41,11 @@ export function flowExecutorUrl(endSessionEndpoint: string, location: string | n
 /** Asks the end-session endpoint where it redirects to, without following it, and turns that into the flow's API address. */
 export async function discoverFlowExecutorUrl(endSessionEndpoint: string, timeoutMs = 3000): Promise<string | null> {
   try {
-    const response = await fetch(endSessionEndpoint, { redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
+    const response = await fetch(endSessionEndpoint, {
+      redirect: "manual",
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     return flowExecutorUrl(endSessionEndpoint, response.headers.get("location"));
   } catch {
     return null;

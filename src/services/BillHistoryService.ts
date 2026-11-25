@@ -65,11 +65,20 @@ function conditions(filters: ScopedBillFilters, timeZone: string): SQL[] {
   if (filters.min !== undefined) out.push(gte(bills.totalAmount, filters.min));
   if (filters.max !== undefined) out.push(lte(bills.totalAmount, filters.max));
   if (filters.method) {
-    out.push(sql`exists (select 1 from ${payments} where ${payments.billId} = ${bills.id} and ${payments.method} = ${filters.method})`);
+    out.push(
+      sql`exists (select 1 from ${payments} where ${payments.billId} = ${bills.id} and ${payments.method} = ${filters.method})`,
+    );
   }
   // Held bills are unfinished drafts, so they only show when asked for.
   out.push(filters.status ? eq(bills.status, filters.status) : ne(bills.status, "held"));
-  if (filters.cashier) out.push(eq(bills.createdUserId, filters.cashier));
+  if (filters.cashier) {
+    // "s12" is a staff member picked on a shared till; anything else is the account that saved the bill.
+    out.push(
+      filters.cashier.startsWith("s")
+        ? eq(bills.cashierId, Number(filters.cashier.slice(1)))
+        : eq(bills.createdUserId, filters.cashier),
+    );
+  }
   if (filters.customerId !== undefined) out.push(eq(bills.customerId, filters.customerId));
   return out;
 }
@@ -91,9 +100,14 @@ export async function listBills(
         status: bills.status,
         total: bills.totalAmount,
         customerName: customers.name,
-        cashierName: users.name,
-        itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(Number),
-        methods: sql<string | null>`(select string_agg(distinct ${payments.method}::text, ',') from ${payments} where ${payments.billId} = ${bills.id})`,
+        cashierName: sql<string | null>`coalesce(${bills.cashierName}, ${users.name})`,
+        itemCount:
+          sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(
+            Number,
+          ),
+        methods: sql<
+          string | null
+        >`(select string_agg(distinct ${payments.method}::text, ',') from ${payments} where ${payments.billId} = ${bills.id})`,
       })
       .from(bills)
       .leftJoin(customers, eq(customers.id, bills.customerId))
@@ -165,7 +179,12 @@ export async function listBillsForExport(
   const items = await db
     .select()
     .from(billItems)
-    .where(inArray(billItems.billId, page.map((b) => b.id)))
+    .where(
+      inArray(
+        billItems.billId,
+        page.map((b) => b.id),
+      ),
+    )
     .orderBy(asc(billItems.billId), asc(billItems.id));
   const byBill = new Map<number, typeof items>();
   for (const item of items) byBill.set(item.billId, [...(byBill.get(item.billId) ?? []), item]);
@@ -205,7 +224,9 @@ export async function reverseBill(id: number, input: BillReverseInput, user: Ses
     if (!bill) throw HttpError.notFound("Bill not found.");
     if (bill.status !== "completed") {
       throw HttpError.conflict(
-        bill.status === "held" ? "A held bill can't be voided. Discard it instead." : `This bill is already ${bill.status}.`,
+        bill.status === "held"
+          ? "A held bill can't be voided. Discard it instead."
+          : `This bill is already ${bill.status}.`,
       );
     }
 

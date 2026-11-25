@@ -9,7 +9,16 @@ import { ReceiveStockDialog } from "@/components/inventory/receive-stock-dialog"
 import { SupplierDialog } from "@/components/inventory/supplier-dialog";
 import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -35,7 +44,18 @@ interface SuppliersViewProps {
   settings: { currency: string; locale: string; timezone: string };
 }
 
-export function SuppliersView({ tab, page, pageSize, purchases, suppliers, supplierOptions, items, canManage, today, settings }: SuppliersViewProps) {
+export function SuppliersView({
+  tab,
+  page,
+  pageSize,
+  purchases,
+  suppliers,
+  supplierOptions,
+  items,
+  canManage,
+  today,
+  settings,
+}: SuppliersViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -70,7 +90,11 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
     if (!deleting) return;
     try {
       const res = await api.delete<{ purchasesKept: number }>(`/api/inventory/suppliers/${deleting.id}`);
-      toast.success(res.data.purchasesKept > 0 ? `${deleting.name} removed. Its ${res.data.purchasesKept} purchases were kept.` : `${deleting.name} removed`);
+      toast.success(
+        res.data.purchasesKept > 0
+          ? `${deleting.name} removed. Its ${res.data.purchasesKept} purchases were kept.`
+          : `${deleting.name} removed`,
+      );
       setDeleting(null);
       refresh();
     } catch (error) {
@@ -86,14 +110,22 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
         actions={
           canManage ? (
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setEditing({ supplier: null })}><Plus aria-hidden /> Add supplier</Button>
-              <Button onClick={() => setReceiving(true)}><PackagePlus aria-hidden /> Receive stock</Button>
+              <Button variant="outline" onClick={() => setEditing({ supplier: null })}>
+                <Plus aria-hidden /> Add supplier
+              </Button>
+              <Button onClick={() => setReceiving(true)}>
+                <PackagePlus aria-hidden /> Receive stock
+              </Button>
             </div>
           ) : null
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => setParams({ tab: v === "purchases" ? null : v, page: null })} className="mb-4">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setParams({ tab: v === "purchases" ? null : v, page: null })}
+        className="mb-4"
+      >
         <TabsList>
           <TabsTrigger value="purchases">Purchases</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
@@ -103,7 +135,12 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
       <div className={cn("transition-opacity", pending && "opacity-60")} aria-busy={pending}>
         {tab === "purchases" ? (
           purchases.total === 0 ? (
-            <EmptyState icon={PackagePlus} title="No purchases yet" description="When a delivery arrives, record it here to add the stock and track what you paid." action={canManage ? <Button onClick={() => setReceiving(true)}>Receive stock</Button> : undefined} />
+            <EmptyState
+              icon={PackagePlus}
+              title="No purchases yet"
+              description="When a delivery arrives, record it here to add the stock and track what you paid."
+              action={canManage ? <Button onClick={() => setReceiving(true)}>Receive stock</Button> : undefined}
+            />
           ) : (
             <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
               <Table>
@@ -121,11 +158,17 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
                   {purchases.rows.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="whitespace-nowrap">
-                        <button type="button" onClick={() => setViewing(p.id)} className="font-medium underline-offset-2 hover:underline focus-visible:underline">
+                        <button
+                          type="button"
+                          onClick={() => setViewing(p.id)}
+                          className="font-medium underline-offset-2 hover:underline focus-visible:underline"
+                        >
                           {formatDate(p.purchasedAt, dateOpts)}
                         </button>
                       </TableCell>
-                      <TableCell>{p.supplierName ?? <span className="text-muted-foreground">No supplier</span>}</TableCell>
+                      <TableCell>
+                        {p.supplierName ?? <span className="text-muted-foreground">No supplier</span>}
+                      </TableCell>
                       <TableCell className="hidden text-muted-foreground sm:table-cell">{p.invoiceNo ?? "–"}</TableCell>
                       <TableCell className="hidden text-right tabular-nums md:table-cell">{p.itemCount}</TableCell>
                       <TableCell className="text-right tabular-nums">{money(p.total)}</TableCell>
@@ -137,7 +180,14 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
             </div>
           )
         ) : suppliers.total === 0 ? (
-          <EmptyState icon={Truck} title="No suppliers yet" description="Add the people you buy from so each delivery can be traced back to them." action={canManage ? <Button onClick={() => setEditing({ supplier: null })}>Add supplier</Button> : undefined} />
+          <EmptyState
+            icon={Truck}
+            title="No suppliers yet"
+            description="Add the people you buy from so each delivery can be traced back to them."
+            action={
+              canManage ? <Button onClick={() => setEditing({ supplier: null })}>Add supplier</Button> : undefined
+            }
+          />
         ) : (
           <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
             <Table>
@@ -148,7 +198,11 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
                   <TableHead className="hidden md:table-cell">Phone</TableHead>
                   <TableHead className="text-right">Purchases</TableHead>
                   <TableHead>Status</TableHead>
-                  {canManage ? <TableHead className="w-24"><span className="sr-only">Actions</span></TableHead> : null}
+                  {canManage ? (
+                    <TableHead className="w-24">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -158,12 +212,30 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
                     <TableCell className="hidden text-muted-foreground sm:table-cell">{s.contactName ?? "–"}</TableCell>
                     <TableCell className="hidden text-muted-foreground md:table-cell">{s.phone ?? "–"}</TableCell>
                     <TableCell className="text-right tabular-nums">{s.purchases}</TableCell>
-                    <TableCell><Badge variant={s.status === "active" ? "secondary" : "outline"}>{s.status === "active" ? "Active" : "Disabled"}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant={s.status === "active" ? "secondary" : "outline"}>
+                        {s.status === "active" ? "Active" : "Disabled"}
+                      </Badge>
+                    </TableCell>
                     {canManage ? (
                       <TableCell>
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" aria-label={`Edit ${s.name}`} onClick={() => setEditing({ supplier: s })}><Pencil className="size-4" aria-hidden /></Button>
-                          <Button variant="ghost" size="icon" aria-label={`Delete ${s.name}`} onClick={() => setDeleting(s)}><Trash2 className="size-4" aria-hidden /></Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Edit ${s.name}`}
+                            onClick={() => setEditing({ supplier: s })}
+                          >
+                            <Pencil className="size-4" aria-hidden />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Delete ${s.name}`}
+                            onClick={() => setDeleting(s)}
+                          >
+                            <Trash2 className="size-4" aria-hidden />
+                          </Button>
                         </div>
                       </TableCell>
                     ) : null}
@@ -177,17 +249,50 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
 
       {total > 0 ? (
         <nav aria-label="Pagination" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <p className="text-muted-foreground" aria-live="polite">Showing {first}–{last} of {total}</p>
+          <p className="text-muted-foreground" aria-live="polite">
+            Showing {first}–{last} of {total}
+          </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" disabled={page <= 1} onClick={() => setParams({ page: String(page - 1) })} aria-label="Previous page"><ChevronLeft className="size-4" aria-hidden /></Button>
-            <span className="min-w-16 text-center tabular-nums">{page} / {totalPages}</span>
-            <Button variant="outline" size="icon" disabled={page >= totalPages} onClick={() => setParams({ page: String(page + 1) })} aria-label="Next page"><ChevronRight className="size-4" aria-hidden /></Button>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={page <= 1}
+              onClick={() => setParams({ page: String(page - 1) })}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4" aria-hidden />
+            </Button>
+            <span className="min-w-16 text-center tabular-nums">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={page >= totalPages}
+              onClick={() => setParams({ page: String(page + 1) })}
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4" aria-hidden />
+            </Button>
           </div>
         </nav>
       ) : null}
 
-      <ReceiveStockDialog open={receiving} onOpenChange={setReceiving} items={items} suppliers={supplierOptions} settings={settings} today={today} onSaved={refresh} />
-      <SupplierDialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)} supplier={editing?.supplier ?? null} onSaved={refresh} />
+      <ReceiveStockDialog
+        open={receiving}
+        onOpenChange={setReceiving}
+        items={items}
+        suppliers={supplierOptions}
+        settings={settings}
+        today={today}
+        onSaved={refresh}
+      />
+      <SupplierDialog
+        open={editing !== null}
+        onOpenChange={(open) => !open && setEditing(null)}
+        supplier={editing?.supplier ?? null}
+        onSaved={refresh}
+      />
       <PurchaseDetailDialog purchaseId={viewing} onClose={() => setViewing(null)} settings={settings} />
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
@@ -195,7 +300,9 @@ export function SuppliersView({ tab, page, pageSize, purchases, suppliers, suppl
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {deleting?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleting && deleting.purchases > 0 ? `Its ${deleting.purchases} past purchases stay on record without a supplier name.` : "This supplier has no purchases."}
+              {deleting && deleting.purchases > 0
+                ? `Its ${deleting.purchases} past purchases stay on record without a supplier name.`
+                : "This supplier has no purchases."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

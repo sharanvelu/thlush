@@ -4,10 +4,9 @@ import * as MenuService from "@/services/MenuService";
 
 type Params = { id: string };
 
-export const GET = withAuth<Params>(
-  async (_req, { params }) => ok(await MenuService.getMenuItem(parseId(params.id))),
-  { permission: "menu.view" },
-);
+export const GET = withAuth<Params>(async (_req, { params }) => ok(await MenuService.getMenuItem(parseId(params.id))), {
+  permission: "menu.view",
+});
 
 export const PATCH = withAuth<Params>(
   async (req, { user, params }) => {
