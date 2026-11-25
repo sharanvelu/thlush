@@ -1,3 +1,13 @@
+# Thlush
+
+@AGENTS.md
+
+## Before you start
+
+1. Check the skills listed in `docs/SKILLS.md` and install any required ones that are missing, **before** implementing anything. Tell the user if one cannot be installed.
+2. Use `ARCHITECTURE.md` (where things go) and `STYLE.md` (conventions) instead of exploring the repo or choosing your own patterns.
+3. Run `npm run check` before finishing; it is what CI runs.
+
 # Project rules
 
 ## Customer pages: light and dark theme support

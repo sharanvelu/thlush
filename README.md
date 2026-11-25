@@ -4,6 +4,17 @@ Billing and point-of-sale for restaurants, cafés and small shops. Built with Ne
 
 **Status:** all 8 milestones done (reports, accessibility pass and docs added in milestone 8). See [Roadmap](#roadmap).
 
+## Docs for developers and code agents
+
+| File | What it is for |
+| ---- | -------------- |
+| [AGENTS.md](AGENTS.md) | Start here. Reading order, setup, and the rules that are easy to get wrong. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Stack, directory map, layering, auth, database, key flows, where to put new code. |
+| [STYLE.md](STYLE.md) | Code, commit and UI conventions, theming and accessibility. |
+| [CLAUDE.md](CLAUDE.md) | Hard project rules for Claude Code (imports AGENTS.md). |
+| [docs/SKILLS.md](docs/SKILLS.md) | Agent skills to install before implementing. |
+| [docs/online-orders-integration.md](docs/online-orders-integration.md) | Draft design for Swiggy/Zomato orders. Nothing built. |
+
 ## Quick start
 
 Requires Node 22 or newer (developed on Node 24) and a PostgreSQL database. Neon is the target.
