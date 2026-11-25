@@ -37,6 +37,7 @@ export const PERMISSIONS = [
   "audit.view",
   "settings.manage",
   "print.custom",
+  "feedback.view",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -92,6 +93,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<readonly [prefix: string, permissi
   ["/customers", "customers.view"],
   ["/reports", "reports.view"],
   ["/thermal-print", "print.custom"],
+  ["/feedback", "feedback.view"],
   ["/profile", null],
   ["/forbidden", null],
   ["/admin", "users.manage"],

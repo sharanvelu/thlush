@@ -358,6 +358,7 @@ function FeaturesForm({ initial }: GroupProps<"features">) {
         <ToggleRow id="ft-inv" label="Inventory" hint="Stock overview, adjustments, suppliers and low-stock alerts. Hides the Inventory section when off." checked={v.inventory} onChange={(on) => set({ inventory: on })} />
         <ToggleRow id="ft-disc" label="Discounts" hint="Line and bill discounts on the billing screen." checked={v.discounts} onChange={(on) => set({ discounts: on })} />
         <ToggleRow id="ft-order" label="Order types" hint="Dine-in, takeaway and delivery, with table numbers." checked={v.orderTypes} onChange={(on) => set({ orderTypes: on })} />
+        <ToggleRow id="ft-feedback" label="Customer feedback" hint="A Get feedback button on the bill saved screen shows a QR code to a 24-hour feedback form, plus the Feedback page and report." checked={v.feedback} onChange={(on) => set({ feedback: on })} />
       </FieldGroup>
     </Section>
   );

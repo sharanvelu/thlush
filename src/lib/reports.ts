@@ -2,7 +2,7 @@ import { z } from "zod";
 import { toCsv, type CsvCell } from "@/lib/csv";
 import { D, formatMoney } from "@/lib/money";
 
-export const REPORT_KINDS = ["sales", "category", "item", "cashier", "payment", "tax", "discount", "valuation", "movements"] as const;
+export const REPORT_KINDS = ["sales", "category", "item", "cashier", "payment", "tax", "discount", "valuation", "movements", "feedback"] as const;
 export type ReportKind = (typeof REPORT_KINDS)[number];
 
 export const REPORT_META: Record<ReportKind, { label: string; title: string; description: string; usesRange: boolean; needsInventory: boolean }> = {
@@ -14,6 +14,7 @@ export const REPORT_META: Record<ReportKind, { label: string; title: string; des
   tax: { label: "Tax", title: "Tax report", description: "SGST and CGST collected, grouped by tax rate.", usesRange: true, needsInventory: false },
   discount: { label: "Discounts", title: "Discount report", description: "Every completed bill that had a discount.", usesRange: true, needsInventory: false },
   valuation: { label: "Stock value", title: "Inventory valuation", description: "Stock on hand today, valued at cost.", usesRange: false, needsInventory: true },
+  feedback: { label: "Feedback", title: "Customer feedback", description: "Average star ratings from customers who answered the feedback form, for the visit and for each item.", usesRange: true, needsInventory: false },
   movements: { label: "Stock movement", title: "Stock movement", description: "What came in and went out of stock, per item.", usesRange: true, needsInventory: true },
 };
 

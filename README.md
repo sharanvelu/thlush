@@ -126,6 +126,15 @@ A read-only menu for customers, served from the same app. On its own domain (`AP
 
 It supports light and dark: it follows the visitor's device until they choose Light, Dark or System with the toggle, saved in the browser under `customer-theme` (separate from the staff app's `theme`). Rules for building customer pages are in [STYLE.md](STYLE.md#customer-site).
 
+## Customer feedback
+
+After a bill is saved, the **Bill saved** screen stays open until the cashier closes it (there is no auto-close timer). Its **Get feedback** button, shown for completed bills when **Settings > Features > Customer feedback** is on, makes a feedback link and shows it as a **QR code** the customer scans with their phone. **Open on this device** opens the same form on the till, and **Copy link** copies the address.
+
+- **The link** carries a random 256-bit secret, not the bill number (a bill number can be guessed, a secret cannot), and works for **24 hours**. Each bill has one form: pressing Get feedback again before the customer answers makes a new link and the old one stops working. Once the customer submits, the form is closed for good, even after the 24 hours, and a repeat visit shows "we already have your feedback". Only a hash of the secret is stored. The link is on the customer domain (`https://<APP_DOMAIN_CUSTOMER>/feedback/<secret>`) or under `/c/feedback/<secret>` when no customer domain is set.
+- **The form** (public, mobile first, light and dark) asks for a 1 to 5 star rating for the whole order, ambience, service and overall experience (all required), an optional star rating and note for each item on the bill (packaging lines are left out), whether they would recommend you, and a comment of up to 1,000 characters. It asks for a name and phone number, optionally, only for what the bill's customer does not already have; a walk-in bill asks for both.
+- **Seeing it:** **Feedback** in the People menu (super admin and manager) lists answers with the four ratings, comment, per-item ratings and contact details, averages at the top, and filters for period, order rating and bill number. **Reports > Feedback** gives the same averages per item and for the visit, with CSV and PDF export.
+- Turning the feature off stops new links; feedback already received stays visible. Menu items renamed later keep the name the customer saw.
+
 ## Billing screen
 
 `/billing` is a two-pane POS: items on the left (search, category chips, grid or list), the bill on the right. On phones the bill opens from a bar at the bottom.
@@ -251,7 +260,7 @@ Switch it on in Settings. Stock is only counted for items with **Track stock** t
 
 ## Reports
 
-`/reports` (super admin and manager) has nine reports. Each has a chart, a table with totals, and CSV and PDF export that uses the same query as the page, so the file always matches the screen.
+`/reports` (super admin and manager) has ten reports. Each has a chart, a table with totals, and CSV and PDF export that uses the same query as the page, so the file always matches the screen.
 
 | Report | What it shows |
 | ------ | ------------- |
@@ -260,6 +269,7 @@ Switch it on in Settings. Stock is only counted for items with **Track stock** t
 | Tax | SGST and CGST collected per tax rate, reconciling to the bill totals |
 | Discounts | Every discounted bill with its cashier and percentage of subtotal |
 | Stock value | Tracked items valued at cost (a snapshot of today, so no date range) |
+| Feedback | Average star ratings for the order, ambience, service and experience, and for each item, from submitted feedback forms |
 | Stock movement | Received, sold, wasted and corrected quantities per item |
 
 The date range defaults to the last 30 days (Today, 7 days, 30 days or a custom range up to a year) and lives in the URL, so a view can be bookmarked. Figures count completed bills only; void, refunded and held bills are not sales. Tables stop at 500 rows and say so; narrow the range to see the rest. CSV files contain plain numbers and neutralise spreadsheet formulas. PDFs print amounts without a currency symbol (the built-in PDF fonts have no rupee glyph) and state the currency in the header. The two stock reports are hidden when Inventory is off.
@@ -307,6 +317,7 @@ docs/             Agent skills and design notes
 | Categories, Inventory, Reports    | yes         | yes     | no       |
 | Void / refund bills               | yes         | yes     | no       |
 | Audit log                         | yes         | yes     | no       |
+| Feedback page                     | yes         | yes     | no       |
 | Users & roles, Settings           | yes         | no      | no       |
 | Custom Print (thermal)            | yes         | no      | no       |
 
@@ -314,7 +325,7 @@ Access is enforced in three places. The proxy (`src/proxy.ts`) does a coarse che
 
 ### Database
 
-Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots` (kitchen orders sent per bill), `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
+Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots` (kitchen orders sent per bill), `bill_feedback` and `bill_feedback_items` (customer feedback), `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Ids are `bigint identity` (users use `uuid`) and timestamps are `timestamptz`. Bill lines store a snapshot of name, price and tax, so menu edits never change old bills.
 
 ## Features
 
@@ -327,6 +338,7 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 | Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock | 5 (done) |
 | Customers, Users & Roles, Audit log, Settings, Profile | 6 (done) |
 | Inventory: stock, movements, alerts, suppliers | 7 (done) |
+| Customer feedback: QR link after a bill, public form, Feedback page and report | 9 (done) |
 | Reports, accessibility pass, docs      | 8 (done) |
 
 ## Roadmap
