@@ -1,0 +1,28 @@
+# Shared toolchain setup used by every workflow: one place to change the
+# Node version / install strategy so individual workflows can't drift.
+#
+# Installs the exact dependency tree from package-lock.json via `npm ci`,
+# with the npm cache keyed on the lockfile.
+
+name: Setup Node toolchain
+description: Install Node with npm caching, then dependencies via npm ci.
+
+inputs:
+  node-version:
+    description: Node.js version to install.
+    required: false
+    default: "24"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Node ${{ inputs.node-version }}
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci

@@ -1,0 +1,50 @@
+# CodeQL security scanning for the TypeScript/JavaScript source and GitHub
+# Actions workflows.
+#
+# NOT a required check: findings land in the Security tab (SARIF upload),
+# they alert rather than block. Runs on merges to main, a weekly cron, and
+# on demand. The cron is guarded by repository owner so forks don't burn
+# minutes on scheduled scans.
+
+name: codeql
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "26 7 * * 1" # weekly, Monday 07:26 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    if: github.event_name != 'schedule' || github.repository_owner == 'sharanvelu'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write # upload SARIF results
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          category: "/language:${{ matrix.language }}"
