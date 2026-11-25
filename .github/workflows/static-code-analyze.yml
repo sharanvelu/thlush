@@ -1,0 +1,121 @@
+# Static analysis for every PR.
+#   types      next typegen + tsc --noEmit over the whole app (strict, config in tsconfig.json).
+#   workflows  runs ONLY when .github/** changes: actionlint (syntax/shell mistakes) +
+#              zizmor (workflow security audit).
+#
+# Required status check: "Static Analysis Gate" (only the gate: the work jobs are
+# path-filtered and may legitimately be skipped).
+
+name: static analysis
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: static-analyze-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      site: ${{ steps.filter.outputs.site || 'true' }}
+      workflows: ${{ steps.filter.outputs.workflows || 'true' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # On workflow_dispatch there is no PR diff: the step is skipped and the
+      # `|| 'true'` fallback above forces every domain on.
+      - name: Filter changed paths
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            site:
+              - 'src/**'
+              - 'tests/**'
+              - 'drizzle/**'
+              - 'scripts/**'
+              - 'public/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+              - 'next.config.ts'
+              - 'vitest.config.mts'
+              - 'drizzle.config.ts'
+              - 'eslint.config.mjs'
+              - 'components.json'
+              - 'neon.ts'
+              - 'vercel.json'
+              - '.github/workflows/static-code-analyze.yml'
+              - '.github/actions/setup/**'
+            workflows:
+              - '.github/**'
+
+  types:
+    name: tsc --noEmit
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - name: Type check
+        run: npm run typecheck
+
+  workflows:
+    name: workflow lint + audit
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: actionlint
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+        with:
+          fail-on-error: true
+
+      # advanced-security: false = report findings in the job log and fail the
+      # job, instead of uploading SARIF (which would need GHAS + extra perms).
+      - name: zizmor security audit
+        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
+        with:
+          advanced-security: false
+
+  gate:
+    name: Static Analysis Gate
+    needs: [changes, types, workflows]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any needed job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: All good
+        run: echo "All jobs succeeded or were skipped as not relevant."

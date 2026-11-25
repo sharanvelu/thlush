@@ -4,18 +4,18 @@ How Thlush is put together. Read this before changing code; it should save you f
 
 ## Stack
 
-| Layer | Choice |
-| --- | --- |
-| Framework | Next.js 16 App Router, React 19, TypeScript (strict, `noUncheckedIndexedAccess`). **Not the Next.js in your training data**: read `node_modules/next/dist/docs/` first. `middleware` is now `src/proxy.ts`. |
-| Styling / UI | Tailwind CSS v4 (tokens in `src/app/globals.css`), shadcn/ui (`radix-nova` style, config in `components.json`), lucide icons, `sonner` toasts, `next-themes` |
-| Data | Neon Postgres via `@neondatabase/serverless` (WebSocket pool, so interactive transactions work), Drizzle ORM, migrations in `drizzle/` |
-| Auth | Auth.js v5 (`next-auth` beta): email + password, optional OIDC SSO. Session is a signed JWT cookie |
-| Validation | Zod 4, schemas in `src/lib/validation/` shared by client forms (react-hook-form) and API routes |
-| Money | `decimal.js` through `src/lib/money.ts` |
-| Files | Neon Object Storage (S3 API, `src/lib/object-storage.ts`) for menu photos; falls back to the database when the `AWS_*` vars are unset |
-| Output | PDFs with `pdfkit`, XLSX with `exceljs`, thermal printing as raw ESC/POS bytes |
-| Tests | Vitest (`tests/**/*.test.ts`), node environment, no database or network |
-| Hosting | Vercel (`vercel.json`, region `sin1`) + Neon |
+| Layer        | Choice                                                                                                                                                                                                      |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework    | Next.js 16 App Router, React 19, TypeScript (strict, `noUncheckedIndexedAccess`). **Not the Next.js in your training data**: read `node_modules/next/dist/docs/` first. `middleware` is now `src/proxy.ts`. |
+| Styling / UI | Tailwind CSS v4 (tokens in `src/app/globals.css`), shadcn/ui (`radix-nova` style, config in `components.json`), lucide icons, `sonner` toasts, `next-themes`                                                |
+| Data         | Neon Postgres via `@neondatabase/serverless` (WebSocket pool, so interactive transactions work), Drizzle ORM, migrations in `drizzle/`                                                                      |
+| Auth         | Auth.js v5 (`next-auth` beta): email + password, optional OIDC SSO. Session is a signed JWT cookie                                                                                                          |
+| Validation   | Zod 4, schemas in `src/lib/validation/` shared by client forms (react-hook-form) and API routes                                                                                                             |
+| Money        | `decimal.js` through `src/lib/money.ts`                                                                                                                                                                     |
+| Files        | Neon Object Storage (S3 API, `src/lib/object-storage.ts`) for menu photos; falls back to the database when the `AWS_*` vars are unset                                                                       |
+| Output       | PDFs with `pdfkit`, XLSX with `exceljs`, thermal printing as raw ESC/POS bytes                                                                                                                              |
+| Tests        | Vitest (`tests/**/*.test.ts`), node environment, no database or network                                                                                                                                     |
+| Hosting      | Vercel (`vercel.json`, region `sin1`) + Neon                                                                                                                                                                |
 
 ## Two sites, one app
 
@@ -120,19 +120,19 @@ Business-day logic uses the configured business timezone (`src/lib/dates.ts`, `f
 
 ## Testing
 
-`npm test` runs Vitest. Tests cover pure logic (calculations, bill and KOT planning, escpos, csv, validation, host routing, settings, reports, dashboards). There are no component or database tests, so keep new logic in pure functions where you can and test it in `tests/<module>.test.ts`. `npm run check` = lint + typecheck + tests, and is what CI runs before a build.
+`npm test` runs Vitest. Tests cover pure logic (calculations, bill and KOT planning, escpos, csv, validation, host routing, settings, reports, dashboards). There are no component or database tests, so keep new logic in pure functions where you can and test it in `tests/<module>.test.ts`. `npm run check` = lint + Prettier check + typecheck + tests. CI runs the same checks as separate required jobs (see "Pull request checks" in the README), plus a migration drift check and a production build.
 
 ## Where to put new things
 
-| You are adding | Put it in |
-| --- | --- |
-| A page | `src/app/(app)/<area>/page.tsx` (server), with `export const metadata`, `requireAccess`, and a client `*-view.tsx` in `src/components/<area>/` |
-| A sidebar entry | `src/config/navigation.ts` (each item still needs a `milestone` number; nothing reads it any more, so use the highest existing one) plus a route permission in `src/config/permissions.ts` |
-| An API endpoint | `src/app/api/<resource>/route.ts` using `withAuth` |
-| Business logic | `src/services/<Name>Service.ts` (pure parts in a lower-case sibling, tested) |
-| A form schema | `src/lib/validation/<area>.ts`, shared by form and route |
-| A table or column | `src/db/schema/<table>.ts`, export from `schema/index.ts`, then `npm run db:generate` |
-| A permission | `PERMISSIONS` and `ROLE_PERMISSIONS` in `src/config/permissions.ts`, and update the role table in README |
-| A setting | See "Database" above |
-| A customer page | Under `src/app/(customer)/c/`, so it inherits the theme toggle |
-| A shadcn component | `npx shadcn add <name>` (writes to `src/components/ui`) |
+| You are adding     | Put it in                                                                                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A page             | `src/app/(app)/<area>/page.tsx` (server), with `export const metadata`, `requireAccess`, and a client `*-view.tsx` in `src/components/<area>/`                                             |
+| A sidebar entry    | `src/config/navigation.ts` (each item still needs a `milestone` number; nothing reads it any more, so use the highest existing one) plus a route permission in `src/config/permissions.ts` |
+| An API endpoint    | `src/app/api/<resource>/route.ts` using `withAuth`                                                                                                                                         |
+| Business logic     | `src/services/<Name>Service.ts` (pure parts in a lower-case sibling, tested)                                                                                                               |
+| A form schema      | `src/lib/validation/<area>.ts`, shared by form and route                                                                                                                                   |
+| A table or column  | `src/db/schema/<table>.ts`, export from `schema/index.ts`, then `npm run db:generate`                                                                                                      |
+| A permission       | `PERMISSIONS` and `ROLE_PERMISSIONS` in `src/config/permissions.ts`, and update the role table in README                                                                                   |
+| A setting          | See "Database" above                                                                                                                                                                       |
+| A customer page    | Under `src/app/(customer)/c/`, so it inherits the theme toggle                                                                                                                             |
+| A shadcn component | `npx shadcn add <name>` (writes to `src/components/ui`)                                                                                                                                    |

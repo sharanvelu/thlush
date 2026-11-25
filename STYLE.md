@@ -8,18 +8,18 @@ Conventions for code and UI. Follow what is here instead of inventing a new patt
 - **Imports** use the `@/` alias for everything under `src/`. Services are imported as namespaces: `import * as BillingService from "@/services/BillingService"`.
 - **Files**: components and hooks are `kebab-case.tsx` (`customer-picker.tsx`, `use-mobile.ts`); services are `PascalCaseService.ts`; pure service helpers and `lib/` files are `kebab-case.ts`; tests are `tests/<module>.test.ts`.
 - **Server vs client**: components are server components by default. Add `"use client"` only to the interactive leaf (usually the `*-view.tsx`). Never import `@/db` or services into a client component.
-- **Comments** explain *why*, in plain sentences, and doc comments sit on exported functions and non-obvious rules. Don't narrate what the code does.
+- **Comments** explain _why_, in plain sentences, and doc comments sit on exported functions and non-obvious rules. Don't narrate what the code does.
 - **Validation** is Zod, defined once in `src/lib/validation/` and reused by the form (react-hook-form + `@hookform/resolvers`) and the route.
 - **Errors**: throw `HttpError.*` in services; show `errorMessage(error)` in a `toast.error` on the client. Messages are for the cashier: short, plain, no jargon or stack traces.
 - **Money** only through `src/lib/money.ts` (`Decimal`). Never `+`, `*` or `toFixed` on amounts.
 - **Database names** only through `table()`, `prefixed()` and `ix()`.
 - **No new dependency** without a reason. Check `package.json` and `src/lib` first; there is already a helper for dates, CSV, formatting, debouncing and mobile detection.
-- **Formatting**: 2 spaces, double quotes, semicolons, trailing commas, lines up to about 120 characters. Match the surrounding file; `npm run lint` is the arbiter.
+- **Formatting** is Prettier (`.prettierrc.json`, 120 columns). Run `npm run format` before committing; CI runs `prettier --check .` and fails on any difference. Lint is ESLint (`npm run lint`).
 
 ## Commits and pull requests
 
 - Conventional Commits for **both** commit messages and PR titles: `feat: ...`, `fix(scope): ...`. Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore. CI rejects other titles.
-- One concern per PR. Run `npm run check` (and `npm run build` for UI or routing changes) before pushing.
+- One concern per PR. Never edit `.github/workflows` to weaken or skip a required check, and pin any new action to a full commit SHA. Run `npm run check` (and `npm run build` for UI or routing changes) before pushing.
 - If you changed `src/db/schema`, commit the generated `drizzle/` files. If you added an env var, update `.env.example`, `src/env.ts` and the README table.
 - Update the docs your change touches in the same PR, each in its owning file (table in [AGENTS.md](AGENTS.md#keep-the-docs-in-step-with-every-change)).
 
