@@ -51,7 +51,9 @@ export function OptionDialog({
   if (!item) return null;
   const money = (v: string) => formatMoney(v, { currency: settings.currency, locale: settings.locale });
   // In the menu's order, so the same choices always make the same line.
-  const addons: AddonChoice[] = item.addons.flatMap((a) => ((counts[a.name] ?? 0) > 0 ? [{ name: a.name, quantity: counts[a.name]! }] : []));
+  const addons: AddonChoice[] = item.addons.flatMap((a) =>
+    (counts[a.name] ?? 0) > 0 ? [{ name: a.name, quantity: counts[a.name]! }] : [],
+  );
   const price = unitPriceOf(item, variant, addons);
   const signed = (delta: string) => `${Number(delta) >= 0 ? "+" : "-"}${money(String(Math.abs(Number(delta))))}`;
 
@@ -71,10 +73,15 @@ export function OptionDialog({
               <legend className="mb-2 text-sm font-medium">Size</legend>
               <RadioGroup value={variant ?? ""} onValueChange={setVariant} className="gap-2">
                 {item.variants.map((v) => (
-                  <label key={v.name} className="flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent/50">
+                  <label
+                    key={v.name}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent/50"
+                  >
                     <RadioGroupItem value={v.name} />
                     <span className="flex-1">{v.name}</span>
-                    {Number(v.priceDelta) !== 0 ? <span className="text-muted-foreground tabular-nums">{signed(v.priceDelta)}</span> : null}
+                    {Number(v.priceDelta) !== 0 ? (
+                      <span className="text-muted-foreground tabular-nums">{signed(v.priceDelta)}</span>
+                    ) : null}
                   </label>
                 ))}
               </RadioGroup>
@@ -137,7 +144,11 @@ export function OptionDialog({
             <Button variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button onClick={() => onConfirm(variant, addons)} disabled={item.variants.length > 0 && !variant} autoFocus>
+            <Button
+              onClick={() => onConfirm(variant, addons)}
+              disabled={item.variants.length > 0 && !variant}
+              autoFocus
+            >
               {confirmLabel}
             </Button>
           </div>

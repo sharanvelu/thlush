@@ -34,7 +34,16 @@ interface MenuGridProps {
 
 const GRID = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
 
-export function MenuGrid({ items, money, statusOf, actions, grouped, groupTotals, collapsed, onToggleGroup }: MenuGridProps) {
+export function MenuGrid({
+  items,
+  money,
+  statusOf,
+  actions,
+  grouped,
+  groupTotals,
+  collapsed,
+  onToggleGroup,
+}: MenuGridProps) {
   if (!grouped) return <ItemCards items={items} money={money} statusOf={statusOf} actions={actions} />;
 
   // Items arrive ordered by category, so consecutive runs form the sections.
@@ -74,7 +83,12 @@ export function MenuGrid({ items, money, statusOf, actions, grouped, groupTotals
   );
 }
 
-function ItemCards({ items, money, statusOf, actions }: Pick<MenuGridProps, "items" | "money" | "statusOf" | "actions">) {
+function ItemCards({
+  items,
+  money,
+  statusOf,
+  actions,
+}: Pick<MenuGridProps, "items" | "money" | "statusOf" | "actions">) {
   return (
     <ul className={GRID}>
       {items.map((item) => {

@@ -18,5 +18,13 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
   const query = customerListQuerySchema.parse(flat);
   const [{ rows, total }, locale] = await Promise.all([listCustomerRecords(query), getSettingsGroup("locale")]);
 
-  return <CustomersView rows={rows} total={total} query={query} canManage={hasPermission(user.role, "customers.manage")} settings={locale} />;
+  return (
+    <CustomersView
+      rows={rows}
+      total={total}
+      query={query}
+      canManage={hasPermission(user.role, "customers.manage")}
+      settings={locale}
+    />
+  );
 }

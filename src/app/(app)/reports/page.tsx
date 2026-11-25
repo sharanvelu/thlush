@@ -17,7 +17,9 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   const settings = await getSettings();
   const { timezone, locale, currency } = settings.locale;
   const raw = await searchParams;
-  const query = reportQuerySchema.parse(Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])));
+  const query = reportQuerySchema.parse(
+    Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
+  );
 
   const kinds = REPORT_KINDS.filter((k) => settings.features.inventory || !REPORT_META[k].needsInventory);
   const kind = kinds.includes(query.r) ? query.r : "sales";
@@ -25,5 +27,14 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   const range = resolveRange(query.range ?? "30d", query.from, query.to, timezone);
   const report = await getReport(kind, { range, group: query.group, timeZone: timezone, locale });
 
-  return <ReportsView report={report} kinds={kinds} group={query.group} range={range} today={todayIn(timezone)} settings={{ currency, locale }} />;
+  return (
+    <ReportsView
+      report={report}
+      kinds={kinds}
+      group={query.group}
+      range={range}
+      today={todayIn(timezone)}
+      settings={{ currency, locale }}
+    />
+  );
 }

@@ -18,7 +18,12 @@ export function ShortcutsHelp() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Keyboard shortcuts" className="hidden size-10 shrink-0 lg:inline-flex">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Keyboard shortcuts"
+          className="hidden size-10 shrink-0 lg:inline-flex"
+        >
           <Keyboard className="size-4" aria-hidden />
         </Button>
       </PopoverTrigger>

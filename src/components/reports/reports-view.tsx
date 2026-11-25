@@ -75,10 +75,16 @@ export function ReportsView({ report, kinds, group, range, today, settings }: Re
         })}
       </nav>
 
-      <section aria-labelledby="report-title" className={cn("space-y-6 transition-opacity", pending && "opacity-60")} aria-busy={pending}>
+      <section
+        aria-labelledby="report-title"
+        className={cn("space-y-6 transition-opacity", pending && "opacity-60")}
+        aria-busy={pending}
+      >
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 id="report-title" className="text-lg font-semibold">{report.title}</h2>
+            <h2 id="report-title" className="text-lg font-semibold">
+              {report.title}
+            </h2>
             <p className="text-sm text-muted-foreground">
               {report.description}
               {report.period ? ` ${report.period}.` : ""}
@@ -86,27 +92,51 @@ export function ReportsView({ report, kinds, group, range, today, settings }: Re
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {report.kind === "sales" ? (
-              <ToggleGroup type="single" variant="outline" size="sm" value={group} onValueChange={(v) => v && setParam("group", v === "day" ? null : v)} aria-label="Group by">
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={group}
+                onValueChange={(v) => v && setParam("group", v === "day" ? null : v)}
+                aria-label="Group by"
+              >
                 {GROUPS.map((g) => (
-                  <ToggleGroupItem key={g} value={g}>{GROUP_LABELS[g]}</ToggleGroupItem>
+                  <ToggleGroupItem key={g} value={g}>
+                    {GROUP_LABELS[g]}
+                  </ToggleGroupItem>
                 ))}
               </ToggleGroup>
             ) : null}
             <Button asChild variant="outline" size="sm">
-              <a href={exportHref("csv")} download><FileSpreadsheet aria-hidden /> CSV</a>
+              <a href={exportHref("csv")} download>
+                <FileSpreadsheet aria-hidden /> CSV
+              </a>
             </Button>
             <Button asChild variant="outline" size="sm">
-              <a href={exportHref("pdf")} download><FileText aria-hidden /> PDF</a>
+              <a href={exportHref("pdf")} download>
+                <FileText aria-hidden /> PDF
+              </a>
             </Button>
           </div>
         </div>
 
         {report.rows.length === 0 ? (
-          <EmptyState icon={Download} title="No data for this period" description={meta.usesRange ? "Try a wider date range." : "Nothing to show yet."} />
+          <EmptyState
+            icon={Download}
+            title="No data for this period"
+            description={meta.usesRange ? "Try a wider date range." : "Nothing to show yet."}
+          />
         ) : (
           <>
             {report.chart ? (
-              <ChartCard title={report.chart.valueLabel} description={report.chart.type === "bar" && report.rows.length > 10 ? "Top 10 shown. The table lists everything." : undefined}>
+              <ChartCard
+                title={report.chart.valueLabel}
+                description={
+                  report.chart.type === "bar" && report.rows.length > 10
+                    ? "Top 10 shown. The table lists everything."
+                    : undefined
+                }
+              >
                 <ReportChart report={report} {...settings} />
               </ChartCard>
             ) : null}
@@ -116,7 +146,9 @@ export function ReportsView({ report, kinds, group, range, today, settings }: Re
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     {report.columns.map((c) => (
-                      <TableHead key={c.key} className={cn(c.format !== "text" && "text-right")}>{c.label}</TableHead>
+                      <TableHead key={c.key} className={cn(c.format !== "text" && "text-right")}>
+                        {c.label}
+                      </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -124,7 +156,10 @@ export function ReportsView({ report, kinds, group, range, today, settings }: Re
                   {report.rows.map((r, i) => (
                     <TableRow key={i}>
                       {report.columns.map((c, ci) => (
-                        <TableCell key={c.key} className={cn(c.format !== "text" && "text-right tabular-nums", ci === 0 && "font-medium")}>
+                        <TableCell
+                          key={c.key}
+                          className={cn(c.format !== "text" && "text-right tabular-nums", ci === 0 && "font-medium")}
+                        >
                           {formatCell(r[c.key], c.format, settings)}
                         </TableCell>
                       ))}
@@ -135,8 +170,13 @@ export function ReportsView({ report, kinds, group, range, today, settings }: Re
                   <TableFooter>
                     <TableRow>
                       {report.columns.map((c, ci) => (
-                        <TableCell key={c.key} className={cn("font-semibold", c.format !== "text" && "text-right tabular-nums")}>
-                          {ci === 0 ? (report.totals?.[c.key] ?? "Total") : formatCell(report.totals?.[c.key], c.format, settings)}
+                        <TableCell
+                          key={c.key}
+                          className={cn("font-semibold", c.format !== "text" && "text-right tabular-nums")}
+                        >
+                          {ci === 0
+                            ? (report.totals?.[c.key] ?? "Total")
+                            : formatCell(report.totals?.[c.key], c.format, settings)}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -144,7 +184,11 @@ export function ReportsView({ report, kinds, group, range, today, settings }: Re
                 ) : null}
               </Table>
             </div>
-            {report.truncated ? <p className="text-sm text-muted-foreground">Only the first rows are listed. Narrow the date range to see the rest.</p> : null}
+            {report.truncated ? (
+              <p className="text-sm text-muted-foreground">
+                Only the first rows are listed. Narrow the date range to see the rest.
+              </p>
+            ) : null}
           </>
         )}
       </section>

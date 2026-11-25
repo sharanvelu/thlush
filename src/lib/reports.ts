@@ -2,19 +2,86 @@ import { z } from "zod";
 import { toCsv, type CsvCell } from "@/lib/csv";
 import { D, formatMoney } from "@/lib/money";
 
-export const REPORT_KINDS = ["sales", "category", "item", "cashier", "payment", "tax", "discount", "valuation", "movements"] as const;
+export const REPORT_KINDS = [
+  "sales",
+  "category",
+  "item",
+  "cashier",
+  "payment",
+  "tax",
+  "discount",
+  "valuation",
+  "movements",
+] as const;
 export type ReportKind = (typeof REPORT_KINDS)[number];
 
-export const REPORT_META: Record<ReportKind, { label: string; title: string; description: string; usesRange: boolean; needsInventory: boolean }> = {
-  sales: { label: "Sales", title: "Sales summary", description: "Completed bills grouped by day, week or month.", usesRange: true, needsInventory: false },
-  category: { label: "By category", title: "Sales by category", description: "What each menu category brought in.", usesRange: true, needsInventory: false },
-  item: { label: "By item", title: "Sales by item", description: "Quantity and revenue for every item sold, best sellers first.", usesRange: true, needsInventory: false },
-  cashier: { label: "By cashier", title: "Sales by cashier", description: "Bills and revenue for each person who billed.", usesRange: true, needsInventory: false },
-  payment: { label: "By payment", title: "Sales by payment method", description: "How customers paid.", usesRange: true, needsInventory: false },
-  tax: { label: "Tax", title: "Tax report", description: "SGST and CGST collected, grouped by tax rate.", usesRange: true, needsInventory: false },
-  discount: { label: "Discounts", title: "Discount report", description: "Every completed bill that had a discount.", usesRange: true, needsInventory: false },
-  valuation: { label: "Stock value", title: "Inventory valuation", description: "Stock on hand today, valued at cost.", usesRange: false, needsInventory: true },
-  movements: { label: "Stock movement", title: "Stock movement", description: "What came in and went out of stock, per item.", usesRange: true, needsInventory: true },
+export const REPORT_META: Record<
+  ReportKind,
+  { label: string; title: string; description: string; usesRange: boolean; needsInventory: boolean }
+> = {
+  sales: {
+    label: "Sales",
+    title: "Sales summary",
+    description: "Completed bills grouped by day, week or month.",
+    usesRange: true,
+    needsInventory: false,
+  },
+  category: {
+    label: "By category",
+    title: "Sales by category",
+    description: "What each menu category brought in.",
+    usesRange: true,
+    needsInventory: false,
+  },
+  item: {
+    label: "By item",
+    title: "Sales by item",
+    description: "Quantity and revenue for every item sold, best sellers first.",
+    usesRange: true,
+    needsInventory: false,
+  },
+  cashier: {
+    label: "By cashier",
+    title: "Sales by cashier",
+    description: "Bills and revenue for each person who billed.",
+    usesRange: true,
+    needsInventory: false,
+  },
+  payment: {
+    label: "By payment",
+    title: "Sales by payment method",
+    description: "How customers paid.",
+    usesRange: true,
+    needsInventory: false,
+  },
+  tax: {
+    label: "Tax",
+    title: "Tax report",
+    description: "SGST and CGST collected, grouped by tax rate.",
+    usesRange: true,
+    needsInventory: false,
+  },
+  discount: {
+    label: "Discounts",
+    title: "Discount report",
+    description: "Every completed bill that had a discount.",
+    usesRange: true,
+    needsInventory: false,
+  },
+  valuation: {
+    label: "Stock value",
+    title: "Inventory valuation",
+    description: "Stock on hand today, valued at cost.",
+    usesRange: false,
+    needsInventory: true,
+  },
+  movements: {
+    label: "Stock movement",
+    title: "Stock movement",
+    description: "What came in and went out of stock, per item.",
+    usesRange: true,
+    needsInventory: true,
+  },
 };
 
 export const GROUPS = ["day", "week", "month"] as const;
@@ -79,7 +146,11 @@ export function sumColumn(rows: Array<Record<string, string>>, key: string, plac
 }
 
 /** A cell as the screen shows it. */
-export function formatCell(value: string | undefined, format: ColumnFormat, fmt: { currency: string; locale: string }): string {
+export function formatCell(
+  value: string | undefined,
+  format: ColumnFormat,
+  fmt: { currency: string; locale: string },
+): string {
   if (value === undefined || value === "") return "";
   if (format === "money") return formatMoney(value, fmt);
   if (format === "percent") return `${value}%`;
@@ -91,7 +162,9 @@ export function formatCell(value: string | undefined, format: ColumnFormat, fmt:
 export function reportToCsv(report: ReportData): string {
   const header: CsvCell[] = report.columns.map((c) => c.label);
   const body: CsvCell[][] = report.rows.map((r) => report.columns.map((c) => r[c.key] ?? ""));
-  const totals: CsvCell[][] = report.totals ? [report.columns.map((c, i) => (i === 0 ? "Total" : (report.totals?.[c.key] ?? "")))] : [];
+  const totals: CsvCell[][] = report.totals
+    ? [report.columns.map((c, i) => (i === 0 ? "Total" : (report.totals?.[c.key] ?? "")))]
+    : [];
   return `﻿${toCsv([header, ...body, ...totals])}`;
 }
 

@@ -1,0 +1,11 @@
+.next/
+out/
+node_modules/
+package-lock.json
+next-env.d.ts
+drizzle/
+coverage/
+*.tsbuildinfo
+.neon
+.idea/
+.playwright-mcp/

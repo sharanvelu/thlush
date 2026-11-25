@@ -11,7 +11,13 @@ import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -88,7 +94,9 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
     try {
       const response = await api.delete<{ billsKept: number }>(`/api/customers/${deleting.id}`);
       const kept = response.data.billsKept;
-      toast.success(`Deleted ${deleting.name}.${kept > 0 ? ` Their ${kept} ${kept === 1 ? "bill" : "bills"} stay in history as walk-in.` : ""}`);
+      toast.success(
+        `Deleted ${deleting.name}.${kept > 0 ? ` Their ${kept} ${kept === 1 ? "bill" : "bills"} stay in history as walk-in.` : ""}`,
+      );
       setDeleting(null);
       router.refresh();
     } catch (error) {
@@ -119,8 +127,18 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
 
       <div className="mb-4 flex flex-wrap items-center gap-2" role="search">
         <div className="relative min-w-52 flex-1 sm:max-w-sm">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, phone, email or tag" aria-label="Search customers" className="pl-8" />
+          <Search
+            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, phone, email or tag"
+            aria-label="Search customers"
+            className="pl-8"
+          />
         </div>
         <Select value={query.sort} onValueChange={(v) => setParams({ sort: v === "name_asc" ? null : v })}>
           <SelectTrigger className="w-52" aria-label="Sort customers">
@@ -141,14 +159,29 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
           <EmptyState
             icon={Users}
             title={query.q ? "No customers match" : "No customers yet"}
-            description={query.q ? "Try a different name, phone number or tag." : "Customers appear here when you add them, or when you type a new name while billing."}
+            description={
+              query.q
+                ? "Try a different name, phone number or tag."
+                : "Customers appear here when you add them, or when you type a new name while billing."
+            }
             action={
               query.q ? (
-                <Button variant="outline" onClick={() => { setSearch(""); setParams({ q: null }); }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearch("");
+                    setParams({ q: null });
+                  }}
+                >
                   Clear search
                 </Button>
               ) : canManage ? (
-                <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
+                <Button
+                  onClick={() => {
+                    setEditing(null);
+                    setFormOpen(true);
+                  }}
+                >
                   <Plus aria-hidden /> Add customer
                 </Button>
               ) : undefined
@@ -164,7 +197,11 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
                   <TableHead className="text-right">Orders</TableHead>
                   <TableHead className="text-right">Lifetime spend</TableHead>
                   <TableHead className="hidden lg:table-cell">Last visit</TableHead>
-                  {canManage ? <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead> : null}
+                  {canManage ? (
+                    <TableHead className="w-12">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -177,7 +214,9 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
                       {c.tags.length > 0 ? (
                         <span className="mt-1 flex flex-wrap gap-1">
                           {c.tags.map((t) => (
-                            <Badge key={t} variant="secondary">{t}</Badge>
+                            <Badge key={t} variant="secondary">
+                              {t}
+                            </Badge>
                           ))}
                         </span>
                       ) : null}
@@ -200,7 +239,12 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setEditing(c); setFormOpen(true); }}>
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                setEditing(c);
+                                setFormOpen(true);
+                              }}
+                            >
                               <Pencil aria-hidden /> Edit
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -221,13 +265,29 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
 
       {total > 0 ? (
         <nav aria-label="Pagination" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <p className="text-muted-foreground" aria-live="polite">Showing {first}–{last} of {total}</p>
+          <p className="text-muted-foreground" aria-live="polite">
+            Showing {first}–{last} of {total}
+          </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" disabled={query.page <= 1} onClick={() => setParams({ page: String(query.page - 1) }, false)} aria-label="Previous page">
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={query.page <= 1}
+              onClick={() => setParams({ page: String(query.page - 1) }, false)}
+              aria-label="Previous page"
+            >
               <ChevronLeft className="size-4" aria-hidden />
             </Button>
-            <span className="min-w-16 text-center tabular-nums">{query.page} / {totalPages}</span>
-            <Button variant="outline" size="icon" disabled={query.page >= totalPages} onClick={() => setParams({ page: String(query.page + 1) }, false)} aria-label="Next page">
+            <span className="min-w-16 text-center tabular-nums">
+              {query.page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={query.page >= totalPages}
+              onClick={() => setParams({ page: String(query.page + 1) }, false)}
+              aria-label="Next page"
+            >
               <ChevronRight className="size-4" aria-hidden />
             </Button>
           </div>
@@ -236,7 +296,12 @@ export function CustomersView({ rows, total, query, canManage, settings }: Custo
 
       {canManage ? (
         <>
-          <CustomerFormDialog open={formOpen} onOpenChange={setFormOpen} customer={editing} onSaved={() => router.refresh()} />
+          <CustomerFormDialog
+            open={formOpen}
+            onOpenChange={setFormOpen}
+            customer={editing}
+            onSaved={() => router.refresh()}
+          />
           <ConfirmDialog
             open={deleting !== null}
             onOpenChange={(o) => !o && setDeleting(null)}

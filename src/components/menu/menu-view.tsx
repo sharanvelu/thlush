@@ -58,7 +58,16 @@ interface MenuViewProps {
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
-export function MenuView({ items, total, groupTotals, query, categories, canManage, defaults, openNew }: MenuViewProps) {
+export function MenuView({
+  items,
+  total,
+  groupTotals,
+  query,
+  categories,
+  canManage,
+  defaults,
+  openNew,
+}: MenuViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -118,7 +127,13 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
     setRowSelection({});
   }
   const statusOf = useCallback((item: MenuListItem) => overrides[item.id] ?? item.status, [overrides]);
-  const selectedIds = useMemo(() => Object.keys(rowSelection).filter((k) => rowSelection[k]).map(Number), [rowSelection]);
+  const selectedIds = useMemo(
+    () =>
+      Object.keys(rowSelection)
+        .filter((k) => rowSelection[k])
+        .map(Number),
+    [rowSelection],
+  );
 
   // ---- Dialogs --------------------------------------------------------------
   const [sheetOpen, setSheetOpen] = useState(openNew && canManage);
@@ -135,22 +150,19 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
     setSheetOpen(true);
   };
 
-  const toggleStatus = useCallback(
-    async (item: MenuListItem, active: boolean) => {
-      const status = active ? "active" : "disabled";
-      setOverrides((o) => ({ ...o, [item.id]: status }));
-      try {
-        await api.patch(`/api/menu/${item.id}`, { status });
-      } catch (error) {
-        setOverrides((o) => {
-          const { [item.id]: _removed, ...rest } = o;
-          return rest;
-        });
-        toast.error(errorMessage(error));
-      }
-    },
-    [],
-  );
+  const toggleStatus = useCallback(async (item: MenuListItem, active: boolean) => {
+    const status = active ? "active" : "disabled";
+    setOverrides((o) => ({ ...o, [item.id]: status }));
+    try {
+      await api.patch(`/api/menu/${item.id}`, { status });
+    } catch (error) {
+      setOverrides((o) => {
+        const { [item.id]: _removed, ...rest } = o;
+        return rest;
+      });
+      toast.error(errorMessage(error));
+    }
+  }, []);
 
   const actions = useMemo<MenuItemActions | null>(
     () =>
@@ -198,7 +210,9 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
     }
   };
 
-  const runBulk = async (body: { action: "enable" | "disable" | "delete" } | { action: "move"; categoryId: number }) => {
+  const runBulk = async (
+    body: { action: "enable" | "disable" | "delete" } | { action: "move"; categoryId: number },
+  ) => {
     if (selectedIds.length === 0) return;
     setPending(true);
     try {
@@ -206,9 +220,7 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
       const { affected, archived } = response.data;
       const noun = affected === 1 ? "item" : "items";
       const verb = { enable: "enabled", disable: "disabled", delete: "removed", move: "moved" }[body.action];
-      toast.success(
-        `${affected} ${noun} ${verb}${archived > 0 ? ` (${archived} billed before, so archived)` : ""}`,
-      );
+      toast.success(`${affected} ${noun} ${verb}${archived > 0 ? ` (${archived} billed before, so archived)` : ""}`);
       setRowSelection({});
       setBulkDeleteOpen(false);
       refresh();
@@ -274,7 +286,10 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
       {/* Toolbar */}
       <div className="mb-4 flex flex-wrap items-center gap-2" role="search">
         <div className="relative min-w-52 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Search
+            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <Input
             type="search"
             value={search}
@@ -332,7 +347,12 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
           </Button>
         ) : null}
 
-        <label className={cn("flex items-center gap-2 text-sm", !(grouped && !query.q && pageCategoryIds.length > 1) && "ml-auto")}>
+        <label
+          className={cn(
+            "flex items-center gap-2 text-sm",
+            !(grouped && !query.q && pageCategoryIds.length > 1) && "ml-auto",
+          )}
+        >
           <Switch
             checked={grouped}
             onCheckedChange={(checked) => setParams({ group: checked ? null : "none" }, false)}
@@ -371,7 +391,11 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
           <Button size="sm" variant="outline" disabled={pending} onClick={() => runBulk({ action: "disable" })}>
             <EyeOff aria-hidden /> Disable
           </Button>
-          <Select value="" onValueChange={(value) => void runBulk({ action: "move", categoryId: Number(value) })} disabled={pending}>
+          <Select
+            value=""
+            onValueChange={(value) => void runBulk({ action: "move", categoryId: Number(value) })}
+            disabled={pending}
+          >
             <SelectTrigger size="sm" className="w-44" aria-label="Move selected items to a category">
               <FolderInput className="size-3.5" aria-hidden />
               <SelectValue placeholder="Move to category" />
@@ -422,17 +446,34 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
             icon={Search}
             title="No items match your filters"
             description="Try a different search or clear the filters."
-            action={<Button variant="outline" onClick={resetFilters}>Reset filters</Button>}
+            action={
+              <Button variant="outline" onClick={resetFilters}>
+                Reset filters
+              </Button>
+            }
           />
         ) : items.length === 0 ? (
           <EmptyState
             icon={UtensilsCrossed}
             title="That page is empty"
             description="Items were removed since you loaded this page."
-            action={<Button variant="outline" onClick={() => setParams({ page: null }, false)}>Go to the first page</Button>}
+            action={
+              <Button variant="outline" onClick={() => setParams({ page: null }, false)}>
+                Go to the first page
+              </Button>
+            }
           />
         ) : query.view === "grid" ? (
-          <MenuGrid items={items} money={money} statusOf={statusOf} actions={actions} grouped={grouped} groupTotals={groupTotals} collapsed={collapsed} onToggleGroup={accordion.toggle} />
+          <MenuGrid
+            items={items}
+            money={money}
+            statusOf={statusOf}
+            actions={actions}
+            grouped={grouped}
+            groupTotals={groupTotals}
+            collapsed={collapsed}
+            onToggleGroup={accordion.toggle}
+          />
         ) : (
           <MenuTable
             items={items}
@@ -463,7 +504,9 @@ export function MenuView({ items, total, groupTotals, query, categories, canMana
               <Select
                 value={String(query.pageSize)}
                 onValueChange={(value) =>
-                  setParams({ pageSize: Number(value) === (grouped ? GROUPED_PAGE_SIZE : FLAT_PAGE_SIZE) ? null : value })
+                  setParams({
+                    pageSize: Number(value) === (grouped ? GROUPED_PAGE_SIZE : FLAT_PAGE_SIZE) ? null : value,
+                  })
                 }
               >
                 <SelectTrigger size="sm" className="w-18" aria-label="Rows per page">

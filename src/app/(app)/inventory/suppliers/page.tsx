@@ -35,7 +35,9 @@ export default async function SuppliersPage({ searchParams }: PageProps<"/invent
   }
 
   const raw = await searchParams;
-  const { tab, page } = querySchema.parse(Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])));
+  const { tab, page } = querySchema.parse(
+    Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
+  );
   const empty = { rows: [], total: 0 };
   const [purchases, suppliers, supplierOptions, items] = await Promise.all([
     tab === "purchases" ? listPurchases({ page, pageSize: PAGE_SIZE }) : empty,
@@ -55,7 +57,11 @@ export default async function SuppliersPage({ searchParams }: PageProps<"/invent
       items={items}
       canManage
       today={todayIn(settings.locale.timezone)}
-      settings={{ currency: settings.locale.currency, locale: settings.locale.locale, timezone: settings.locale.timezone }}
+      settings={{
+        currency: settings.locale.currency,
+        locale: settings.locale.locale,
+        timezone: settings.locale.timezone,
+      }}
     />
   );
 }

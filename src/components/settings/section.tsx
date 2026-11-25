@@ -37,7 +37,11 @@ export function Section({ title, description, dirty, saving, onSave, onDiscard, 
           <Button type="button" variant="ghost" disabled={!dirty || saving} onClick={onDiscard}>
             Discard
           </Button>
-          {dirty ? <span className="text-xs text-muted-foreground" role="status">Unsaved changes</span> : null}
+          {dirty ? (
+            <span className="text-xs text-muted-foreground" role="status">
+              Unsaved changes
+            </span>
+          ) : null}
         </CardFooter>
       </form>
     </Card>

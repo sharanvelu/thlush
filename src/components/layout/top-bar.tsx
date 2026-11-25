@@ -33,7 +33,15 @@ function useBreadcrumb(pathname: string): { group: string | null; page: string }
   return { group: null, page: "" };
 }
 
-export function TopBar({ user, features, alerts }: { user: SessionUser; features: { inventory: boolean }; alerts: LowStockAlerts | null }) {
+export function TopBar({
+  user,
+  features,
+  alerts,
+}: {
+  user: SessionUser;
+  features: { inventory: boolean };
+  alerts: LowStockAlerts | null;
+}) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const pathname = usePathname();
   const { group, page } = useBreadcrumb(pathname);

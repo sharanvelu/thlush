@@ -10,8 +10,21 @@ const save = { action: "complete", clientRef: "ref-12345678", lines: [line] };
 
 describe("Counter role (shared till login)", () => {
   it("can bill and look at its own bills, and nothing more", () => {
-    expect([...ROLE_PERMISSIONS.counter].sort()).toEqual(["bills.create", "bills.view_own", "customers.view", "menu.view"]);
-    for (const p of ["dashboard.view", "bills.void", "bills.view_all", "reports.view", "users.manage", "staff.manage", "settings.manage"] as const) {
+    expect([...ROLE_PERMISSIONS.counter].sort()).toEqual([
+      "bills.create",
+      "bills.view_own",
+      "customers.view",
+      "menu.view",
+    ]);
+    for (const p of [
+      "dashboard.view",
+      "bills.void",
+      "bills.view_all",
+      "reports.view",
+      "users.manage",
+      "staff.manage",
+      "settings.manage",
+    ] as const) {
       expect(hasPermission("counter", p)).toBe(false);
     }
   });
@@ -72,7 +85,12 @@ describe("bill history cashier filter", () => {
 
 describe("staff member", () => {
   it("defaults to an active cashier", () => {
-    expect(staffSchema.parse({ name: "  Asha " })).toEqual({ name: "Asha", title: null, isCashier: true, status: "active" });
+    expect(staffSchema.parse({ name: "  Asha " })).toEqual({
+      name: "Asha",
+      title: null,
+      isCashier: true,
+      status: "active",
+    });
   });
 
   it("needs a name", () => {

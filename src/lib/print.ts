@@ -69,12 +69,16 @@ export async function printReceipt(billId: number, options: PrintOptions = {}): 
   if (getPrintMethod() === "dialog") return printInBrowser(billId, options);
   try {
     const query = printQuery(options).toString();
-    const response = await fetch(`/api/bills/${billId}/escpos${query ? `?${query}` : ""}`, { credentials: "same-origin" });
+    const response = await fetch(`/api/bills/${billId}/escpos${query ? `?${query}` : ""}`, {
+      credentials: "same-origin",
+    });
     if (!response.ok) throw new Error("Could not prepare the receipt for printing.");
     await deliver(new Uint8Array(await response.arrayBuffer()));
   } catch (error) {
     if (error instanceof AgentUnreachableError) {
-      toast.warning("No printer connected. Use the printer button at the top to connect it. Using the print dialog for now.");
+      toast.warning(
+        "No printer connected. Use the printer button at the top to connect it. Using the print dialog for now.",
+      );
       return printInBrowser(billId, options);
     }
     toast.error(error instanceof UsbPrintError || error instanceof Error ? error.message : "Printing failed.");
@@ -129,7 +133,9 @@ export async function printCustomText(sections: CustomSection[], paperSize: Pape
     return "printer";
   } catch (error) {
     if (error instanceof AgentUnreachableError) {
-      toast.warning("No printer connected. Use the printer button at the top to connect it. Using the print dialog for now.");
+      toast.warning(
+        "No printer connected. Use the printer button at the top to connect it. Using the print dialog for now.",
+      );
       await printTextInBrowser(blocks, paperSize);
       return "dialog";
     }

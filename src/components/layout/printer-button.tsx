@@ -70,11 +70,7 @@ export function PrinterButton() {
   };
 
   const direct = method === "direct";
-  const label = !direct
-    ? "Printer: print dialog"
-    : name
-      ? `Printer connected: ${name}`
-      : "Printer not connected";
+  const label = !direct ? "Printer: print dialog" : name ? `Printer connected: ${name}` : "Printer not connected";
 
   return (
     <DropdownMenu>
@@ -86,7 +82,10 @@ export function PrinterButton() {
               {direct ? (
                 <span
                   aria-hidden
-                  className={cn("absolute top-1.5 right-1.5 size-2 rounded-full ring-2 ring-background", name ? "bg-success" : "bg-muted-foreground/50")}
+                  className={cn(
+                    "absolute top-1.5 right-1.5 size-2 rounded-full ring-2 ring-background",
+                    name ? "bg-success" : "bg-muted-foreground/50",
+                  )}
                 />
               ) : null}
             </Button>
@@ -96,12 +95,19 @@ export function PrinterButton() {
       </Tooltip>
 
       <DropdownMenuContent align="end" className={cn("w-72", GLASS_MENU)}>
-        <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Print method (this computer)</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={method} onValueChange={(v) => setPrintMethod(v === "dialog" ? "dialog" : "direct")}>
+        <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+          Print method (this computer)
+        </DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={method}
+          onValueChange={(v) => setPrintMethod(v === "dialog" ? "dialog" : "direct")}
+        >
           <DropdownMenuRadioItem value="direct" className="items-start">
             <span className="flex flex-col gap-0.5">
               <span>Thermal printer (direct)</span>
-              <span className="text-xs text-muted-foreground">No driver needed. Cuts after the receipt and after the kitchen slip.</span>
+              <span className="text-xs text-muted-foreground">
+                No driver needed. Cuts after the receipt and after the kitchen slip.
+              </span>
             </span>
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="dialog" className="items-start">

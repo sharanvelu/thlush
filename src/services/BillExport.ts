@@ -15,7 +15,9 @@ export async function toXlsx(rows: string[][]): Promise<Buffer> {
   sheet.getRow(1).font = { bold: true };
 
   for (const row of rows) {
-    sheet.addRow(row.map((cell, index) => ((EXPORT_NUMERIC_COLUMNS as readonly number[]).includes(index) ? Number(cell) : cell)));
+    sheet.addRow(
+      row.map((cell, index) => ((EXPORT_NUMERIC_COLUMNS as readonly number[]).includes(index) ? Number(cell) : cell)),
+    );
   }
   for (const index of EXPORT_NUMERIC_COLUMNS) {
     if (index === 4) continue;

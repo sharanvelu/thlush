@@ -14,27 +14,27 @@ Compare against the tables below. Skills install to `~/.agents/skills` (shared) 
 
 Required (they match the stack, so install all of them):
 
-| Skill | Install | Why it is needed here |
-| --- | --- | --- |
-| `neon` | `npx skills add neondatabase/agent-skills@neon -g -y` | Neon project, branches, CLI (`neon.ts`, `.neon`) and the branch-first workflow |
-| `neon-postgres` | `npx skills add neondatabase/agent-skills@neon-postgres -g -y` | Database work: schema, SQL, Drizzle on Neon |
-| `neon-object-storage` | `npx skills add neondatabase/agent-skills@neon-object-storage -g -y` | Menu photos live in Neon Object Storage (`src/lib/object-storage.ts`, `neon.ts` buckets) |
-| `postgres-best-practices` | `npx skills add neondatabase/postgres-skills@postgres-best-practices -g -y` | Query, index and schema review |
-| `ask-sonner` | `npx skills add emilkowalski/skills@ask-sonner -g -y` | All toasts use `sonner` |
-| `interface-design` | `npx skills add dammyjay93/interface-design@interface-design -g -y` | POS, dashboard and admin screens |
-| `web-design-guidelines` | `npx skills add vercel-labs/agent-skills@web-design-guidelines -g -y` | Accessibility and UX audit used for the milestone 8 pass |
-| `emil-design-eng` | `npx skills add emilkowalski/skills@emil-design-eng -g -y` | UI polish and component detail |
-| `mobile-native` | `npx skills add emilkowalski/skills@mobile-native -g -y` | The POS runs on phones and tablets |
+| Skill                     | Install                                                                     | Why it is needed here                                                                    |
+| ------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `neon`                    | `npx skills add neondatabase/agent-skills@neon -g -y`                       | Neon project, branches, CLI (`neon.ts`, `.neon`) and the branch-first workflow           |
+| `neon-postgres`           | `npx skills add neondatabase/agent-skills@neon-postgres -g -y`              | Database work: schema, SQL, Drizzle on Neon                                              |
+| `neon-object-storage`     | `npx skills add neondatabase/agent-skills@neon-object-storage -g -y`        | Menu photos live in Neon Object Storage (`src/lib/object-storage.ts`, `neon.ts` buckets) |
+| `postgres-best-practices` | `npx skills add neondatabase/postgres-skills@postgres-best-practices -g -y` | Query, index and schema review                                                           |
+| `ask-sonner`              | `npx skills add emilkowalski/skills@ask-sonner -g -y`                       | All toasts use `sonner`                                                                  |
+| `interface-design`        | `npx skills add dammyjay93/interface-design@interface-design -g -y`         | POS, dashboard and admin screens                                                         |
+| `web-design-guidelines`   | `npx skills add vercel-labs/agent-skills@web-design-guidelines -g -y`       | Accessibility and UX audit used for the milestone 8 pass                                 |
+| `emil-design-eng`         | `npx skills add emilkowalski/skills@emil-design-eng -g -y`                  | UI polish and component detail                                                           |
+| `mobile-native`           | `npx skills add emilkowalski/skills@mobile-native -g -y`                    | The POS runs on phones and tablets                                                       |
 
 Optional (install when the task calls for it):
 
-| Skill | Install | Use it for |
-| --- | --- | --- |
-| `design-taste-frontend` | `npx skills add Leonxlnx/taste-skill -g -y` | The public customer menu only (not the POS or dashboards) |
-| `animate`, `animation-performance`, `review-animations` | `npx skills add emilkowalski/skills@animate -g -y` (same pattern for the others) | Adding or reviewing motion |
-| `break-ui` | `npx skills add emilkowalski/skills@break-ui -g -y` | Stress-testing screens with long names, empty and huge data |
-| `neon-auth`, `neon-functions`, `neon-ai-gateway`, `neon-realtime` | `npx skills add neondatabase/agent-skills@<name> -g -y` | Only if you move off Auth.js, add functions, AI or live queries |
-| `find-skills` | `npx skills add vercel-labs/skills@find-skills -g -y` | Discovering further skills |
+| Skill                                                             | Install                                                                          | Use it for                                                      |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `design-taste-frontend`                                           | `npx skills add Leonxlnx/taste-skill -g -y`                                      | The public customer menu only (not the POS or dashboards)       |
+| `animate`, `animation-performance`, `review-animations`           | `npx skills add emilkowalski/skills@animate -g -y` (same pattern for the others) | Adding or reviewing motion                                      |
+| `break-ui`                                                        | `npx skills add emilkowalski/skills@break-ui -g -y`                              | Stress-testing screens with long names, empty and huge data     |
+| `neon-auth`, `neon-functions`, `neon-ai-gateway`, `neon-realtime` | `npx skills add neondatabase/agent-skills@<name> -g -y`                          | Only if you move off Auth.js, add functions, AI or live queries |
+| `find-skills`                                                     | `npx skills add vercel-labs/skills@find-skills -g -y`                            | Discovering further skills                                      |
 
 Also useful, from Claude Code plugins: `playwright` (drive the running app in a browser to check a change in light and dark themes and at phone width) and `frontend-design`. Plugins are enabled with `/plugin`.
 

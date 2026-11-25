@@ -4,7 +4,14 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -63,7 +70,9 @@ export function StaffFormDialog({ open, onOpenChange, member, onSaved }: StaffFo
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{member ? "Edit staff member" : "Add staff member"}</DialogTitle>
-          <DialogDescription>They don&apos;t get a login. The cashier is picked from this list on each bill.</DialogDescription>
+          <DialogDescription>
+            They don&apos;t get a login. The cashier is picked from this list on each bill.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} noValidate>
@@ -86,7 +95,13 @@ export function StaffFormDialog({ open, onOpenChange, member, onSaved }: StaffFo
 
             <Field>
               <FieldLabel htmlFor="staff-title">Title (optional)</FieldLabel>
-              <Input id="staff-title" maxLength={40} placeholder="Cashier, Chef, Cook..." value={title} onChange={(e) => setTitle(e.target.value)} />
+              <Input
+                id="staff-title"
+                maxLength={40}
+                placeholder="Cashier, Chef, Cook..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
             </Field>
 
             <Field orientation="horizontal">
@@ -101,7 +116,9 @@ export function StaffFormDialog({ open, onOpenChange, member, onSaved }: StaffFo
               <Switch id="staff-active" checked={active} onCheckedChange={setActive} />
               <div className="flex flex-col gap-0.5">
                 <FieldLabel htmlFor="staff-active">Active</FieldLabel>
-                <FieldDescription>Turn off for someone who has left. Their past bills keep their name.</FieldDescription>
+                <FieldDescription>
+                  Turn off for someone who has left. Their past bills keep their name.
+                </FieldDescription>
               </div>
             </Field>
           </FieldGroup>

@@ -26,7 +26,9 @@ describe("settings validation", () => {
   });
 
   it("validates tax percentages and the accent colour", () => {
-    expect(settingsSchemas.tax.safeParse({ ignoreTax: false, defaultSgst: "9", defaultCgst: "60" }).success).toBe(false);
+    expect(settingsSchemas.tax.safeParse({ ignoreTax: false, defaultSgst: "9", defaultCgst: "60" }).success).toBe(
+      false,
+    );
     expect(settingsSchemas.appearance.safeParse({ accent: "#12ab9f" }).success).toBe(true);
     expect(settingsSchemas.appearance.safeParse({ accent: "red" }).success).toBe(false);
     expect(settingsSchemas.appearance.safeParse({ accent: null }).success).toBe(true);
@@ -36,8 +38,12 @@ describe("settings validation", () => {
     const biz = { ...defaultSettings.business };
     expect(settingsSchemas.business.safeParse({ ...biz, logoUrl: "data:image/webp;base64,AAAA" }).success).toBe(true);
     expect(settingsSchemas.business.safeParse({ ...biz, logoUrl: "javascript:alert(1)" }).success).toBe(false);
-    expect(settingsSchemas.business.safeParse({ ...biz, logoUrl: "data:image/svg+xml;base64,AAAA" }).success).toBe(false);
-    expect(settingsSchemas.business.safeParse({ ...biz, gstin: "29abcde1234f1z5" }).data?.gstin).toBe("29ABCDE1234F1Z5");
+    expect(settingsSchemas.business.safeParse({ ...biz, logoUrl: "data:image/svg+xml;base64,AAAA" }).success).toBe(
+      false,
+    );
+    expect(settingsSchemas.business.safeParse({ ...biz, gstin: "29abcde1234f1z5" }).data?.gstin).toBe(
+      "29ABCDE1234F1Z5",
+    );
   });
 
   it("knows the groups", () => {

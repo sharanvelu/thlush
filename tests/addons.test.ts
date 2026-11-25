@@ -11,7 +11,12 @@ describe("addonLabel", () => {
 
 describe("addonsKey", () => {
   it("ignores order and treats a missing count as one", () => {
-    expect(addonsKey([{ name: "B" }, { name: "A", quantity: 2 }])).toBe(addonsKey([{ name: "A", quantity: 2 }, { name: "B", quantity: 1 }]));
+    expect(addonsKey([{ name: "B" }, { name: "A", quantity: 2 }])).toBe(
+      addonsKey([
+        { name: "A", quantity: 2 },
+        { name: "B", quantity: 1 },
+      ]),
+    );
     expect(addonsKey([{ name: "A", quantity: 2 }])).not.toBe(addonsKey([{ name: "A", quantity: 3 }]));
   });
 });
@@ -24,7 +29,13 @@ describe("normalizeAddons", () => {
     ]);
   });
   it("keeps valid counts, and fixes bad ones", () => {
-    expect(normalizeAddons([{ name: "Cheese", quantity: 3 }, { name: "Mayo", quantity: 0 }, { name: "Egg", quantity: 99 }])).toEqual([
+    expect(
+      normalizeAddons([
+        { name: "Cheese", quantity: 3 },
+        { name: "Mayo", quantity: 0 },
+        { name: "Egg", quantity: 99 },
+      ]),
+    ).toEqual([
       { name: "Cheese", quantity: 3 },
       { name: "Mayo", quantity: 1 },
       { name: "Egg", quantity: 20 },

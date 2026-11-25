@@ -23,10 +23,7 @@ export function Greeting({ name }: { name: string }) {
   );
   const today = useSyncExternalStore(
     subscribe,
-    () =>
-      new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" }).format(
-        new Date(),
-      ),
+    () => new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" }).format(new Date()),
     () => "",
   );
 

@@ -27,7 +27,10 @@ export interface HostConfig {
 export function normalizeHost(value: string | null | undefined): string | null {
   const trimmed = (value ?? "").trim().toLowerCase();
   if (!trimmed) return null;
-  const host = trimmed.replace(/^[a-z]+:\/\//, "").split(/[/?#]/)[0]?.replace(/:\d+$/, "");
+  const host = trimmed
+    .replace(/^[a-z]+:\/\//, "")
+    .split(/[/?#]/)[0]
+    ?.replace(/:\d+$/, "");
   return host || null;
 }
 
@@ -51,7 +54,8 @@ export function routeForHost(hostHeader: string | null | undefined, pathname: st
   if (host && host === customer) {
     if (SHARED_PATHS.some((p) => isUnder(pathname, p))) return { kind: "customer-direct" };
     // Customer API lives at /api/c/**; the page routes at /c/**.
-    if (pathname === "/api" || pathname.startsWith("/api/")) return { kind: "rewrite", path: `/api/c${pathname.slice(4)}` };
+    if (pathname === "/api" || pathname.startsWith("/api/"))
+      return { kind: "rewrite", path: `/api/c${pathname.slice(4)}` };
     return { kind: "rewrite", path: pathname === "/" ? "/c" : `/c${pathname}` };
   }
 

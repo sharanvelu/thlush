@@ -13,12 +13,16 @@ function parseUserId(raw: string | string[] | undefined): string {
   return parsed.data;
 }
 
-export const GET = withAuth<Params>(async (_req, { params }) => ok(await UserAdminService.getUserDetail(parseUserId(params.id))), {
-  permission: "users.manage",
-});
+export const GET = withAuth<Params>(
+  async (_req, { params }) => ok(await UserAdminService.getUserDetail(parseUserId(params.id))),
+  {
+    permission: "users.manage",
+  },
+);
 
 export const PATCH = withAuth<Params>(
-  async (req, { user, params }) => ok(await UserAdminService.updateUser(parseUserId(params.id), await parseBody(req, updateUserSchema), user)),
+  async (req, { user, params }) =>
+    ok(await UserAdminService.updateUser(parseUserId(params.id), await parseBody(req, updateUserSchema), user)),
   { permission: "users.manage" },
 );
 

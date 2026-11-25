@@ -7,7 +7,14 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,7 +48,13 @@ export function CustomerFormDialog({ open, onOpenChange, customer, onSaved }: Cu
     if (!open) return;
     reset(
       customer
-        ? { name: customer.name, phone: customer.phone ?? "", email: customer.email ?? "", notes: customer.notes ?? "", tagsText: customer.tags.join(", ") }
+        ? {
+            name: customer.name,
+            phone: customer.phone ?? "",
+            email: customer.email ?? "",
+            notes: customer.notes ?? "",
+            tagsText: customer.tags.join(", "),
+          }
         : EMPTY,
     );
   }, [open, customer, reset]);
@@ -55,7 +68,8 @@ export function CustomerFormDialog({ open, onOpenChange, customer, onSaved }: Cu
       onSaved();
       onOpenChange(false);
     } catch (error) {
-      if (error instanceof ApiClientError && error.fieldErrors?.phone?.[0]) setError("phone", { message: error.fieldErrors.phone[0] });
+      if (error instanceof ApiClientError && error.fieldErrors?.phone?.[0])
+        setError("phone", { message: error.fieldErrors.phone[0] });
       else if (error instanceof ApiClientError && error.fieldErrors) {
         const [field, messages] = Object.entries(error.fieldErrors)[0] ?? [];
         const mapped = field === "tags" ? "tagsText" : field;
@@ -70,30 +84,56 @@ export function CustomerFormDialog({ open, onOpenChange, customer, onSaved }: Cu
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{customer ? "Edit customer" : "Add customer"}</DialogTitle>
-          <DialogDescription>Customers you add here show up when you start typing a name on the billing screen.</DialogDescription>
+          <DialogDescription>
+            Customers you add here show up when you start typing a name on the billing screen.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} noValidate>
           <FieldGroup>
             <Field data-invalid={Boolean(errors.name)}>
               <FieldLabel htmlFor="customer-name">Name</FieldLabel>
-              <Input id="customer-name" autoFocus maxLength={120} aria-invalid={Boolean(errors.name)} {...register("name")} />
+              <Input
+                id="customer-name"
+                autoFocus
+                maxLength={120}
+                aria-invalid={Boolean(errors.name)}
+                {...register("name")}
+              />
               <FieldError errors={[errors.name]} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field data-invalid={Boolean(errors.phone)}>
                 <FieldLabel htmlFor="customer-phone">Phone (optional)</FieldLabel>
-                <Input id="customer-phone" type="tel" inputMode="tel" maxLength={20} aria-invalid={Boolean(errors.phone)} {...register("phone")} />
+                <Input
+                  id="customer-phone"
+                  type="tel"
+                  inputMode="tel"
+                  maxLength={20}
+                  aria-invalid={Boolean(errors.phone)}
+                  {...register("phone")}
+                />
                 <FieldError errors={[errors.phone]} />
               </Field>
               <Field data-invalid={Boolean(errors.email)}>
                 <FieldLabel htmlFor="customer-email">Email (optional)</FieldLabel>
-                <Input id="customer-email" type="email" maxLength={120} aria-invalid={Boolean(errors.email)} {...register("email")} />
+                <Input
+                  id="customer-email"
+                  type="email"
+                  maxLength={120}
+                  aria-invalid={Boolean(errors.email)}
+                  {...register("email")}
+                />
                 <FieldError errors={[errors.email]} />
               </Field>
             </div>
             <Field data-invalid={Boolean(errors.tagsText)}>
               <FieldLabel htmlFor="customer-tags">Tags (optional)</FieldLabel>
-              <Input id="customer-tags" placeholder="regular, office" aria-invalid={Boolean(errors.tagsText)} {...register("tagsText")} />
+              <Input
+                id="customer-tags"
+                placeholder="regular, office"
+                aria-invalid={Boolean(errors.tagsText)}
+                {...register("tagsText")}
+              />
               <FieldDescription>Separate with commas. Up to 10.</FieldDescription>
               <FieldError errors={[errors.tagsText]} />
             </Field>

@@ -38,7 +38,10 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
   const baseId = useId();
   const [nameFocused, setNameFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<{ term: string; rows: CustomerSummary[] }>({ term: "", rows: [] });
-  const [phoneMatch, setPhoneMatch] = useState<{ digits: string; customer: CustomerSummary | null }>({ digits: "", customer: null });
+  const [phoneMatch, setPhoneMatch] = useState<{ digits: string; customer: CustomerSummary | null }>({
+    digits: "",
+    customer: null,
+  });
   const [active, setActive] = useState(0);
   const blurTimer = useRef<number | undefined>(undefined);
 
@@ -61,7 +64,9 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
     if (existing || phoneTerm.length < 7) return;
     const controller = new AbortController();
     lookup(phoneTerm, controller.signal)
-      .then((rows) => setPhoneMatch({ digits: phoneTerm, customer: rows.find((c) => digitsOf(c.phone) === phoneTerm) ?? null }))
+      .then((rows) =>
+        setPhoneMatch({ digits: phoneTerm, customer: rows.find((c) => digitsOf(c.phone) === phoneTerm) ?? null }),
+      )
       .catch(() => undefined);
     return () => controller.abort();
   }, [existing, phoneTerm]);
@@ -169,10 +174,15 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
                       choose(customer);
                     }}
                     onMouseEnter={() => setActive(index)}
-                    className={cn("flex cursor-default items-center gap-2 rounded-md px-2 py-1.5", index === active && "bg-muted")}
+                    className={cn(
+                      "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5",
+                      index === active && "bg-muted",
+                    )}
                   >
                     <span className="min-w-0 flex-1 truncate">{customer.name}</span>
-                    {customer.phone ? <span className="text-xs text-muted-foreground tabular-nums">{customer.phone}</span> : null}
+                    {customer.phone ? (
+                      <span className="text-xs text-muted-foreground tabular-nums">{customer.phone}</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -180,7 +190,13 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
           </div>
         </div>
         {value.kind !== "walkin" ? (
-          <Button variant="ghost" size="icon" className="size-9" onClick={() => onChange({ kind: "walkin" })} aria-label="Remove customer">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-9"
+            onClick={() => onChange({ kind: "walkin" })}
+            aria-label="Remove customer"
+          >
             <X aria-hidden />
           </Button>
         ) : null}
@@ -190,10 +206,17 @@ export function CustomerPicker({ value, onChange, walkInLabel }: CustomerPickerP
         <p className="flex items-center gap-1 text-xs text-success">
           <Check className="size-3" aria-hidden /> Saved customer
         </p>
-      ) : match && value.kind === "new" && value.name.trim() !== "" && value.name.trim().toLowerCase() !== match.name.toLowerCase() ? (
+      ) : match &&
+        value.kind === "new" &&
+        value.name.trim() !== "" &&
+        value.name.trim().toLowerCase() !== match.name.toLowerCase() ? (
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
           This number belongs to {match.name}.
-          <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" onClick={() => choose(match)}>
+          <button
+            type="button"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+            onClick={() => choose(match)}
+          >
             Use {match.name}
           </button>
         </p>

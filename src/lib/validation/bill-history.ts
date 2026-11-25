@@ -15,7 +15,14 @@ const text = (max: number) =>
     .optional()
     .catch(undefined);
 
-export const BILL_SORTS = ["date_desc", "date_asc", "total_desc", "total_asc", "customer_asc", "customer_desc"] as const;
+export const BILL_SORTS = [
+  "date_desc",
+  "date_asc",
+  "total_desc",
+  "total_asc",
+  "customer_asc",
+  "customer_desc",
+] as const;
 export type BillSort = (typeof BILL_SORTS)[number];
 
 export const BILL_STATUSES = ["completed", "void", "refunded", "held"] as const;
@@ -53,7 +60,11 @@ export const billExportQuerySchema = billFilterSchema.extend({
 
 export const billReverseSchema = z.object({
   type: z.enum(["void", "refund"]),
-  reason: z.string().trim().min(3, "Give a reason (at least 3 characters)").max(200, "Keep the reason under 200 characters"),
+  reason: z
+    .string()
+    .trim()
+    .min(3, "Give a reason (at least 3 characters)")
+    .max(200, "Keep the reason under 200 characters"),
 });
 export type BillReverseInput = z.output<typeof billReverseSchema>;
 

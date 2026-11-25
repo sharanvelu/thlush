@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { directionHint, reasonAllowsDirection, stockStatus, stockValue } from "@/lib/inventory";
-import { movementQuerySchema, purchaseSchema, stockAdjustSchema, stockListQuerySchema, supplierPatchSchema, supplierSchema } from "@/lib/validation/inventory";
+import {
+  movementQuerySchema,
+  purchaseSchema,
+  stockAdjustSchema,
+  stockListQuerySchema,
+  supplierPatchSchema,
+  supplierSchema,
+} from "@/lib/validation/inventory";
 
 describe("stock status", () => {
   it("is out at zero or below, low at the reorder level, in stock above it", () => {
@@ -49,7 +56,9 @@ describe("purchases and suppliers", () => {
     expect(purchaseSchema.safeParse({ items: [] }).success).toBe(false);
     expect(purchaseSchema.safeParse({ items: [{ ...line, quantity: "0" }] }).success).toBe(false);
     expect(purchaseSchema.safeParse({ items: [line, line] }).success).toBe(false);
-    expect(purchaseSchema.parse({ items: [line], supplierId: 3, date: "2026-10-30", invoiceNo: " A-1 " })).toMatchObject({ supplierId: 3, invoiceNo: "A-1" });
+    expect(
+      purchaseSchema.parse({ items: [line], supplierId: 3, date: "2026-10-30", invoiceNo: " A-1 " }),
+    ).toMatchObject({ supplierId: 3, invoiceNo: "A-1" });
     expect(purchaseSchema.parse({ items: [line] })).toMatchObject({ supplierId: null, date: null, invoiceNo: null });
   });
 
@@ -61,7 +70,11 @@ describe("purchases and suppliers", () => {
   });
 
   it("reads list queries defensively", () => {
-    expect(stockListQuerySchema.parse({ sort: "zzz", status: "meh", page: "0" })).toMatchObject({ sort: "name_asc", page: 1, pageSize: 25 });
+    expect(stockListQuerySchema.parse({ sort: "zzz", status: "meh", page: "0" })).toMatchObject({
+      sort: "name_asc",
+      page: 1,
+      pageSize: 25,
+    });
     expect(stockListQuerySchema.parse({ status: "low", category: "3" })).toMatchObject({ status: "low", category: 3 });
     expect(movementQuerySchema.parse({ reason: "wastage", item: "x" })).toMatchObject({ reason: "wastage" });
   });
