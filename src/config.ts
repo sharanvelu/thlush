@@ -63,5 +63,6 @@ export const defaultSettings: AppSettings = {
     inventory: true,
     discounts: true,
     orderTypes: true,
+    feedback: true,
   },
 };

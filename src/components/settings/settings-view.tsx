@@ -738,6 +738,13 @@ function FeaturesForm({ initial }: GroupProps<"features">) {
           checked={v.orderTypes}
           onChange={(on) => set({ orderTypes: on })}
         />
+        <ToggleRow
+          id="ft-feedback"
+          label="Customer feedback"
+          hint="A Get feedback button on the bill saved screen shows a QR code to a 24-hour feedback form, plus the Feedback page and report."
+          checked={v.feedback}
+          onChange={(on) => set({ feedback: on })}
+        />
       </FieldGroup>
     </Section>
   );

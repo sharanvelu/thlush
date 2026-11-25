@@ -85,6 +85,8 @@ export interface FeatureToggles {
   inventory: boolean;
   discounts: boolean;
   orderTypes: boolean;
+  /** Offer customers a feedback form after a bill (link + QR on the billing screen, Feedback page, report). */
+  feedback: boolean;
 }
 
 export interface AppSettings {

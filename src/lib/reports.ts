@@ -12,6 +12,7 @@ export const REPORT_KINDS = [
   "discount",
   "valuation",
   "movements",
+  "feedback",
 ] as const;
 export type ReportKind = (typeof REPORT_KINDS)[number];
 
@@ -81,6 +82,13 @@ export const REPORT_META: Record<
     description: "What came in and went out of stock, per item.",
     usesRange: true,
     needsInventory: true,
+  },
+  feedback: {
+    label: "Feedback",
+    title: "Customer feedback",
+    description: "Average star ratings from customers who answered the feedback form, for the visit and for each item.",
+    usesRange: true,
+    needsInventory: false,
   },
 };
 

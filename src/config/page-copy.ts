@@ -16,6 +16,10 @@ export const PAGE_COPY = {
     description:
       "Drag to set the order of the tabs on the billing screen. Disabled categories and their items are hidden there.",
   },
+  feedback: {
+    title: "Feedback",
+    description: "What customers said about their bills, with ratings per item and for the visit.",
+  },
   customers: { title: "Customers", description: "Who orders, how often and how much." },
   stock: { title: "Stock Overview", description: "What you have, what's running low, and what it's worth." },
   adjustments: {
