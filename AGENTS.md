@@ -29,7 +29,7 @@ npm run db:migrate && npm run db:seed
 npm run dev              # http://localhost:3000, sign in as admin@thlush.local / Password@123
 ```
 
-Run `npm run check` (lint, typecheck, tests) before saying work is done, and `npm run build` for UI or routing changes. CI runs the same plus a migration drift check.
+Run `npm run check` (lint, formatting, typecheck, tests) before saying work is done, and `npm run build` for UI or routing changes. CI runs the same plus a migration drift check.
 
 ## Rules that are easy to get wrong
 
@@ -40,6 +40,7 @@ Run `npm run check` (lint, typecheck, tests) before saying work is done, and `np
 - UI uses theme tokens only and must work in light and dark. Customer pages (`src/app/(customer)`, `src/components/customer`) follow the extra rules in CLAUDE.md.
 - Never edit `.env`, commit secrets, or touch a shared or production database. Use a Neon branch for experiments; the seed refuses to run in `production`.
 - Don't commit, push, or create branches unless the user asks. Commit messages and PR titles are Conventional Commits (`feat:`, `fix(scope):`, `docs:` ...).
+- Never weaken, skip or rename a required CI check (see "Pull request checks" in the README and `docs/GITHUB-SECURITY.md`), and pin any new GitHub Action to a full commit SHA.
 - Docs are part of the change: see the table below.
 
 ## Keep the docs in step with every change

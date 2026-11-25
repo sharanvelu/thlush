@@ -1,0 +1,89 @@
+# Vitest unit suite for every PR (no database or network needed).
+#
+# Required status check: "Tests Gate" (only the gate: the work jobs are
+# path-filtered and may legitimately be skipped).
+
+name: tests
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      site: ${{ steps.filter.outputs.site || 'true' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # On workflow_dispatch there is no PR diff: the step is skipped and the
+      # `|| 'true'` fallback above forces every domain on.
+      - name: Filter changed paths
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            - 'src/**'
+            - 'tests/**'
+            - 'drizzle/**'
+            - 'scripts/**'
+            - 'public/**'
+            - 'package.json'
+            - 'package-lock.json'
+            - 'tsconfig.json'
+            - 'next.config.ts'
+            - 'vitest.config.mts'
+            - 'drizzle.config.ts'
+            - 'eslint.config.mjs'
+            - 'components.json'
+            - 'neon.ts'
+            - 'vercel.json'
+            - '.github/workflows/tests.yml'
+            - '.github/actions/setup/**'
+
+  tests:
+    name: vitest
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - name: Run tests
+        run: npm test
+
+  gate:
+    name: Tests Gate
+    needs: [changes, tests]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any needed job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: All good
+        run: echo "All jobs succeeded or were skipped as not relevant."

@@ -119,7 +119,7 @@ Business-day logic uses the configured business timezone (`src/lib/dates.ts`, `f
 
 ## Testing
 
-`npm test` runs Vitest. Tests cover pure logic (calculations, bill and KOT planning, escpos, csv, validation, host routing, settings, reports, dashboards). There are no component or database tests, so keep new logic in pure functions where you can and test it in `tests/<module>.test.ts`. `npm run check` = lint + typecheck + tests, and is what CI runs before a build.
+`npm test` runs Vitest. Tests cover pure logic (calculations, bill and KOT planning, escpos, csv, validation, host routing, settings, reports, dashboards). There are no component or database tests, so keep new logic in pure functions where you can and test it in `tests/<module>.test.ts`. `npm run check` = lint + Prettier check + typecheck + tests. CI runs the same checks as separate required jobs (see "Pull request checks" in the README), plus a migration drift check and a production build.
 
 ## Where to put new things
 

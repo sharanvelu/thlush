@@ -13,6 +13,7 @@ Billing and point-of-sale for restaurants, cafés and small shops. Built with Ne
 | [STYLE.md](STYLE.md)                                                   | Code, commit and UI conventions, theming and accessibility.                       |
 | [CLAUDE.md](CLAUDE.md)                                                 | Hard project rules for Claude Code (imports AGENTS.md).                           |
 | [docs/SKILLS.md](docs/SKILLS.md)                                       | Agent skills to install before implementing.                                      |
+| [docs/GITHUB-SECURITY.md](docs/GITHUB-SECURITY.md)                     | Required checks, ruleset and repository security settings to apply on GitHub.     |
 | [docs/online-orders-integration.md](docs/online-orders-integration.md) | Draft design for Swiggy/Zomato orders. Nothing built.                             |
 
 ## Quick start
@@ -62,23 +63,37 @@ SSO users are created on first sign-in with the least-privileged role (cashier).
 
 ## Scripts
 
-| Command               | What it does                                                         |
-| --------------------- | -------------------------------------------------------------------- |
-| `npm run dev`         | Start the dev server.                                                |
-| `npm run build`       | Production build.                                                    |
-| `npm run lint`        | ESLint (no `any` allowed).                                           |
-| `npm run typecheck`   | TypeScript in strict mode.                                           |
-| `npm test`            | Vitest unit tests.                                                   |
-| `npm run print-agent` | Local agent that sends receipts to the thermal printer (see below).  |
-| `npm run check`       | Lint, type check and tests in one go. Run before pushing.            |
-| `npm run db:generate` | Generate a new SQL migration in `drizzle/` after editing the schema. |
-| `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`.                          |
-| `npm run db:seed`     | Load demo data. Refuses to run in `production` unless `--force`.     |
-| `npm run db:studio`   | Browse the database in Drizzle Studio.                               |
+| Command               | What it does                                                          |
+| --------------------- | --------------------------------------------------------------------- |
+| `npm run dev`         | Start the dev server.                                                 |
+| `npm run build`       | Production build.                                                     |
+| `npm run lint`        | ESLint (no `any` allowed).                                            |
+| `npm run typecheck`   | TypeScript in strict mode.                                            |
+| `npm test`            | Vitest unit tests.                                                    |
+| `npm run print-agent` | Local agent that sends receipts to the thermal printer (see below).   |
+| `npm run format`      | Format everything with Prettier (CI runs `format:check`).             |
+| `npm run check`       | Lint, formatting, type check and tests in one go. Run before pushing. |
+| `npm run db:generate` | Generate a new SQL migration in `drizzle/` after editing the schema.  |
+| `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`.                           |
+| `npm run db:seed`     | Load demo data. Refuses to run in `production` unless `--force`.      |
+| `npm run db:studio`   | Browse the database in Drizzle Studio.                                |
 
 ### Pull request checks
 
-`.github/workflows/pr-checks.yml` runs on every pull request (and on pushes to `main` and `thlush-v2`): the PR title must follow Conventional Commits, then lint, type check, unit tests, a migration drift check (the schema must not differ from the committed `drizzle/` files; run `npm run db:generate` and commit if it fails) and a production build. It needs no secrets or database. To block merging on failures, mark **PR title (Conventional Commits)** and **Lint, types, tests, build** as required checks in the branch protection rules.
+Every pull request to `main` must pass these required checks (workflows in `.github/workflows/`, shared toolchain setup in `.github/actions/setup`). All of them are check-only: CI never rewrites code. None needs secrets or a database.
+
+| Required check         | Workflow                  | What it enforces                                                                                                         |
+| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `PR Title Lint`        | `pr-title.yml`            | PR title follows Conventional Commits (with squash-merge it becomes the commit message).                                 |
+| `Code Style Gate`      | `code-style.yml`          | `eslint .` and `prettier --check .` (fix locally with `npm run format`).                                                 |
+| `Static Analysis Gate` | `static-code-analyze.yml` | `npm run typecheck`; and, when `.github/**` changes, `actionlint` plus `zizmor` (workflow security audit).               |
+| `Tests Gate`           | `tests.yml`               | `npm test` (Vitest).                                                                                                     |
+| `Build Check Gate`     | `build-check.yml`         | Committed `drizzle/` migrations match the schema (run `npm run db:generate` and commit if not), then a production build. |
+| `Dependency Review`    | `dependency-review.yml`   | Blocks new dependencies with known vulnerabilities of moderate severity or higher.                                       |
+
+Only the `... Gate` jobs are required, because the jobs behind them are path-filtered and can be skipped legitimately. Also running, but not blocking: **CodeQL** (`codeql.yml`: on pushes to `main`, weekly, and on demand; findings appear under Security), **Dependabot** (`dependabot.yml`: weekly, grouped minor and patch updates titled `chore(deps): ...`; `dependabot-auto-merge.yml` turns on auto-merge for those once the required checks pass, majors stay manual), and a nightly **cleanup** of old workflow runs. `.github/CODEOWNERS` requests review from the owner. Third-party actions are pinned to full commit SHAs; keep them that way (Dependabot updates them). The branch and repository settings that make these checks mandatory are listed in [docs/GITHUB-SECURITY.md](docs/GITHUB-SECURITY.md).
+
+Run the same checks locally with `npm run check` (lint, formatting, type check, tests).
 
 The seed is safe to re-run: users, categories, items and settings are only inserted when missing, and demo bills are only created when there are none.
 
