@@ -63,6 +63,8 @@ export const billSaveSchema = z.object({
   payments: z.array(billPaymentSchema).max(6).default([]),
   /** Cash handed over, when it is more than the cash applied (the difference is change). */
   cashTendered: moneyString("Cash received").nullish().transform((v) => v ?? null),
+  /** Who is taking this payment, picked on the billing screen when the till login is shared. */
+  cashierId: z.number().int().positive().nullish().transform((v) => v ?? null),
   /** With "complete": also send items the kitchen has not had yet (a kitchen slip for them). */
   sendRemainder: z.boolean().default(false),
 });

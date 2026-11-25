@@ -9,13 +9,14 @@
  * client components can use it.
  */
 
-export const ROLES = ["super_admin", "manager", "billing"] as const;
+export const ROLES = ["super_admin", "manager", "billing", "counter"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABELS: Record<Role, string> = {
   super_admin: "Super Admin",
   manager: "Manager",
   billing: "Cashier",
+  counter: "Counter (shared till)",
 };
 
 export const PERMISSIONS = [
@@ -34,6 +35,7 @@ export const PERMISSIONS = [
   "customers.manage",
   "reports.view",
   "users.manage",
+  "staff.manage",
   "audit.view",
   "settings.manage",
   "print.custom",
@@ -56,6 +58,9 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Permission>> = {
     "menu.view",
     "customers.view",
   ]),
+  // Counter: one shared login for the till. It can bill (choosing the cashier on each bill) and look at the
+  // bills made on it, and nothing else. No dashboard, voids, reports or admin.
+  counter: new Set<Permission>(["bills.create", "bills.view_own", "menu.view", "customers.view"]),
 };
 
 export function isRole(value: unknown): value is Role {
@@ -96,11 +101,13 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<readonly [prefix: string, permissi
   ["/forbidden", null],
   ["/admin", "users.manage"],
   ["/admin/users", "users.manage"],
+  ["/admin/staff", "staff.manage"],
   ["/admin/audit-log", "audit.view"],
   ["/admin/settings", "settings.manage"],
   ["/api/me", null],
   ["/api/admin", "users.manage"],
   ["/api/admin/users", "users.manage"],
+  ["/api/staff", "staff.manage"],
   ["/api/admin/audit-log", "audit.view"],
   ["/api/admin/settings", "settings.manage"],
 ];

@@ -36,7 +36,7 @@ src/
   env.ts              Zod-validated env vars. config.ts: static app config + default runtime settings
   app/
     (app)/            Staff pages: billing, bills, menu, categories, customers, inventory, reports,
-                      admin/{users,settings,audit-log}, profile, thermal-print/custom, forbidden
+                      admin/{users,staff,settings,audit-log}, profile, thermal-print/custom, forbidden
     (auth)/login      Sign-in page
     (print)/receipt/[id]   Printable receipt page
     (customer)/c      Public customer menu (own layout + theme toggle)
@@ -85,7 +85,7 @@ client components ──fetch──> route.ts   (via lib/api-client.ts)
 
 ## Auth and permissions
 
-- Roles: `super_admin`, `manager`, `billing` (shown as **Cashier**). SSO users start as `billing`.
+- Roles: `super_admin`, `manager`, `billing` (shown as **Cashier**) and `counter`. SSO users start as `billing`. `counter` is one shared login for a till: it can bill and see its own bills, the sidebar shows it only Billing and Bill History (`COUNTER_NAV` in `config/navigation.ts`), and `/` redirects it to `/billing`.
 - `src/config/permissions.ts` is the **only** place defining who can do what: `ROLE_PERMISSIONS` (role to permission set) and `ROUTE_PERMISSIONS` (URL prefix to permission). Keep it free of server-only imports.
 - Enforced in three layers: proxy (coarse, from the token, so role changes apply after next sign-in), `withAuth` / `requireAccess` (re-read the user from the DB every request, so revocation is immediate), and the sidebar (`config/navigation.ts`) hiding what a role cannot open.
 - Cashiers only ever see their own bills, enforced in the service, not just the UI.
@@ -93,7 +93,7 @@ client components ──fetch──> route.ts   (via lib/api-client.ts)
 ## Database
 
 - All tables are created through `table()` in `src/db/schema/_shared.ts`, which applies the `DB_TABLE_PREFIX` (default `app_`). Enums and indexes use `prefixed()` / `ix()` too. Never hard-code a table name in SQL.
-- Tables: `users` (uuid id), `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots`, `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Other ids are `bigint identity` (`bigId()`), timestamps are `timestamptz`.
+- Tables: `users` (uuid id), `categories`, `menu_items`, `customers`, `bills`, `bill_items`, `bill_kots`, `staff_members`, `payments`, `stock_movements`, `suppliers`, `purchases`, `purchase_items`, `audit_logs`, `settings`. Other ids are `bigint identity` (`bigId()`), timestamps are `timestamptz`.
 - Runtime settings are key/value rows in `settings`, merged over `defaultSettings` in `src/config.ts` (`SettingsService.getSettings`). Add a new setting by extending `AppSettings` (`src/types/settings.ts`), `defaultSettings` and the Zod schema in `src/lib/validation/settings.ts`.
 - **Schema change workflow**: edit `src/db/schema/*`, run `npm run db:generate`, commit the new `drizzle/*.sql` and meta. CI fails on drift. Migrations are applied by hand with `npm run db:migrate`, never by the build.
 - Bill lines snapshot name, price and tax, so menu edits never alter history. Soft-deleted ("archived") menu items stay referenced.
@@ -109,6 +109,7 @@ Business-day logic uses the configured business timezone (`src/lib/dates.ts`, `f
 ## Key flows
 
 - **Saving a bill** (`BillingService`, `bill-plan.ts`): the browser sends ids, quantities, discounts and payments; the server prices everything from the catalog. One transaction writes customer, bill, lines, payments, stock movements and the audit entry. Bill numbers `{prefix}{YYYYMMDD}-{seq}` are taken under a per-day lock. Each save carries a `clientRef`, so a retry returns the same bill. Held bills carry a temporary number.
+- **Shared till and cashier** (`StaffService`, `staff_members`, `BillingService`): the Counter login saves every bill, so `bills.created_user_id` decides who may see it, while `bills.cashier_id` and `cashier_name` record the staff member picked on that bill (name snapshotted, `ON DELETE RESTRICT`). Staff are not accounts: nobody signs in as one, and they are managed at `/admin/staff` (permission `staff.manage`, super admin and manager). Receipts, Bill History and the cashier/discount reports use the cashier when set and the account otherwise, so per-cashier totals always add up. Held bills belong to the creating account.
 - **KOT / running orders** (`kot-plan.ts`, `bill_kots`): "Send to kitchen" saves a held bill and prints only items not yet sent.
 - **Void / refund** (`BillHistoryService`): needs a reason, restocks exactly what the sale deducted (read from `stock_movements`), only once per bill.
 - **POS catalog cache** (`lib/catalog-cache.ts`): the billing screen's catalog is cached with tag `pos-catalog`. Anything that changes menu items, categories or prices must call `invalidatePosCatalog()`.

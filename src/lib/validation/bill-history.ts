@@ -31,7 +31,12 @@ export const billFilterSchema = z.object({
   method: z.enum(["cash", "card", "upi", "other"]).optional().catch(undefined),
   /** Left out, held bills are hidden; pick "held" to see them. */
   status: z.enum(BILL_STATUSES).optional().catch(undefined),
-  cashier: z.string().uuid().optional().catch(undefined),
+  /** An account (uuid) or a staff member picked on a shared till ("s12"). */
+  cashier: z
+    .string()
+    .regex(/^(s\d{1,9}|[0-9a-fA-F-]{36})$/)
+    .optional()
+    .catch(undefined),
   sort: z.enum(BILL_SORTS).catch("date_desc").default("date_desc"),
 });
 export type BillFilters = z.output<typeof billFilterSchema>;

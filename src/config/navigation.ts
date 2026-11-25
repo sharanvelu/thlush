@@ -8,6 +8,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  UserRound,
   SlidersHorizontal,
   Tags,
   Truck,
@@ -178,6 +179,15 @@ export const NAV_GROUPS: NavGroup[] = [
         keywords: ["staff", "accounts", "permissions"],
       },
       {
+        label: "Staff",
+        href: "/admin/staff",
+        icon: UserRound,
+        permission: "staff.manage",
+        description: "The people who can be picked as the cashier on a bill.",
+        milestone: 6,
+        keywords: ["cashier", "cook", "chef", "workers", "counter"],
+      },
+      {
         label: "Audit Log",
         href: "/admin/audit-log",
         icon: ScrollText,
@@ -199,12 +209,20 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/**
+ * The shared till login only ever sees the billing screen and its bill history in the menus, like a kiosk.
+ * It still holds read access to the menu and customers because the billing screen needs them behind the scenes.
+ */
+const COUNTER_NAV = new Set(["/billing", "/bills"]);
+
 /** Groups and items visible to a role, with empty groups removed. Inventory hides when that feature is off. */
 export function navForRole(role: Role | null | undefined, features?: { inventory: boolean }): NavGroup[] {
   return NAV_GROUPS.filter((group) => group.label !== "Inventory" || features?.inventory !== false)
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => hasPermission(role, item.permission)),
+      items: group.items.filter(
+        (item) => hasPermission(role, item.permission) && (role !== "counter" || COUNTER_NAV.has(item.href)),
+      ),
     }))
     .filter((group) => group.items.length > 0);
 }
