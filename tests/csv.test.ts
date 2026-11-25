@@ -3,7 +3,12 @@ import { parseCsv, toCsv, unescapeCell } from "@/lib/csv";
 
 describe("toCsv", () => {
   it("joins cells with commas and rows with CRLF", () => {
-    expect(toCsv([["a", "b"], [1, 2]])).toBe("a,b\r\n1,2\r\n");
+    expect(
+      toCsv([
+        ["a", "b"],
+        [1, 2],
+      ]),
+    ).toBe("a,b\r\n1,2\r\n");
   });
 
   it("quotes cells containing commas, quotes or newlines", () => {
@@ -25,8 +30,14 @@ describe("toCsv", () => {
 
 describe("parseCsv", () => {
   it("parses simple rows, with or without a trailing newline", () => {
-    expect(parseCsv("a,b\n1,2")).toEqual([["a", "b"], ["1", "2"]]);
-    expect(parseCsv("a,b\r\n1,2\r\n")).toEqual([["a", "b"], ["1", "2"]]);
+    expect(parseCsv("a,b\n1,2")).toEqual([
+      ["a", "b"],
+      ["1", "2"],
+    ]);
+    expect(parseCsv("a,b\r\n1,2\r\n")).toEqual([
+      ["a", "b"],
+      ["1", "2"],
+    ]);
   });
 
   it("handles quoted cells, escaped quotes and embedded newlines", () => {
@@ -34,11 +45,17 @@ describe("parseCsv", () => {
   });
 
   it("strips a byte order mark", () => {
-    expect(parseCsv("﻿name,price\nTea,10")).toEqual([["name", "price"], ["Tea", "10"]]);
+    expect(parseCsv("﻿name,price\nTea,10")).toEqual([
+      ["name", "price"],
+      ["Tea", "10"],
+    ]);
   });
 
   it("keeps empty cells and skips blank lines", () => {
-    expect(parseCsv("a,,c\n\n,,\nd,e,f")).toEqual([["a", "", "c"], ["d", "e", "f"]]);
+    expect(parseCsv("a,,c\n\n,,\nd,e,f")).toEqual([
+      ["a", "", "c"],
+      ["d", "e", "f"],
+    ]);
   });
 
   it("rejects an unclosed quote", () => {
@@ -46,7 +63,11 @@ describe("parseCsv", () => {
   });
 
   it("round-trips what toCsv writes, including formula guards", () => {
-    const rows = [["Name", "Note"], ["=cmd", 'say "yes", ok'], ["Plain", ""]];
+    const rows = [
+      ["Name", "Note"],
+      ["=cmd", 'say "yes", ok'],
+      ["Plain", ""],
+    ];
     const parsed = parseCsv(toCsv(rows)).map((r) => r.map(unescapeCell));
     expect(parsed).toEqual(rows);
   });

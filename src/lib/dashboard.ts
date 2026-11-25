@@ -19,7 +19,8 @@ export interface ResolvedRange {
 const dayMs = 86_400_000;
 const utc = (day: string) => Date.parse(`${day}T00:00:00Z`);
 const shift = (day: string, by: number) => new Date(utc(day) + by * dayMs).toISOString().slice(0, 10);
-const validDay = (v: string | undefined): v is string => Boolean(v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(utc(v)));
+const validDay = (v: string | undefined): v is string =>
+  Boolean(v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(utc(v)));
 
 export function daysBetween(from: string, to: string): number {
   return Math.round((utc(to) - utc(from)) / dayMs) + 1;
@@ -79,7 +80,10 @@ export function fillSeries(keys: string[], rows: Map<string, { revenue: string; 
 }
 
 /** At most `max` slices: the biggest ones, with the rest folded into "Other". */
-export function foldSlices<T extends { name: string; value: string; color: string | null }>(slices: T[], max: number): Array<{ name: string; value: string; color: string | null }> {
+export function foldSlices<T extends { name: string; value: string; color: string | null }>(
+  slices: T[],
+  max: number,
+): Array<{ name: string; value: string; color: string | null }> {
   if (slices.length <= max) return slices;
   const head = slices.slice(0, max - 1);
   const rest = slices.slice(max - 1).reduce((acc, s) => acc.plus(s.value), new D(0));

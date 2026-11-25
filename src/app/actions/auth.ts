@@ -72,7 +72,11 @@ async function providerLogout(): Promise<{ mode: "background" | "redirect"; url:
   const requestHeaders = await headers();
   const baseUrl = getEnv().NEXT_PUBLIC_BASE_URL;
   const secure = (requestHeaders.get("x-forwarded-proto") ?? new URL(baseUrl).protocol.replace(":", "")) === "https";
-  const token = await getToken({ req: { headers: requestHeaders }, secret: process.env.AUTH_SECRET, secureCookie: secure });
+  const token = await getToken({
+    req: { headers: requestHeaders },
+    secret: process.env.AUTH_SECRET,
+    secureCookie: secure,
+  });
   if (token?.provider !== "oidc") return null;
 
   const issuer = process.env.OIDC_ISSUER;

@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { nextDay, todayIn, zonedDayRange, zonedStartOfDay } from "@/lib/dates";
 import { buildExportRows, type ExportBill } from "@/lib/bill-export";
-import { activeFilterCount, billExportQuerySchema, billListQuerySchema, billReverseSchema } from "@/lib/validation/bill-history";
+import {
+  activeFilterCount,
+  billExportQuerySchema,
+  billListQuerySchema,
+  billReverseSchema,
+} from "@/lib/validation/bill-history";
 import { calculateBill, savedLineTax } from "@/services/calculations";
 
 describe("zoned day ranges", () => {
@@ -48,14 +53,39 @@ describe("bill filter schema", () => {
   });
 
   it("ignores junk instead of failing", () => {
-    const q = billListQuerySchema.parse({ from: "yesterday", min: "abc", method: "bitcoin", status: "nope", cashier: "x", sort: "?", page: "0", customer: "  " });
+    const q = billListQuerySchema.parse({
+      from: "yesterday",
+      min: "abc",
+      method: "bitcoin",
+      status: "nope",
+      cashier: "x",
+      sort: "?",
+      page: "0",
+      customer: "  ",
+    });
     expect(q).toMatchObject({ sort: "date_desc", page: 1 });
     expect([q.from, q.min, q.method, q.status, q.cashier, q.customer].every((v) => v === undefined)).toBe(true);
   });
 
   it("reads and counts real filters (a date range or amount range counts once)", () => {
-    const q = billListQuerySchema.parse({ from: "2026-10-01", to: "2026-10-31", customer: " Asha ", min: "10", max: "500", method: "upi", status: "void", sort: "total_desc" });
-    expect(q).toMatchObject({ customer: "Asha", min: "10", max: "500", method: "upi", status: "void", sort: "total_desc" });
+    const q = billListQuerySchema.parse({
+      from: "2026-10-01",
+      to: "2026-10-31",
+      customer: " Asha ",
+      min: "10",
+      max: "500",
+      method: "upi",
+      status: "void",
+      sort: "total_desc",
+    });
+    expect(q).toMatchObject({
+      customer: "Asha",
+      min: "10",
+      max: "500",
+      method: "upi",
+      status: "void",
+      sort: "total_desc",
+    });
     expect(activeFilterCount(q)).toBe(5);
   });
 
@@ -76,12 +106,14 @@ describe("void and refund input", () => {
 
 describe("saved line tax and export rows", () => {
   it("matches what calculateBill charged, including discounts", () => {
-    const totals = calculateBill(
-      [{ price: "33.33", quantity: 3, sgst: "2.5", cgst: "2.5", discount: "4" }],
-      { billDiscount: { type: "percent", value: "10" } },
-    );
+    const totals = calculateBill([{ price: "33.33", quantity: 3, sgst: "2.5", cgst: "2.5", discount: "4" }], {
+      billDiscount: { type: "percent", value: "10" },
+    });
     const line = totals.lines[0]!;
-    const saved = savedLineTax({ price: "33.33", quantity: "3", discount: line.discount, sgst: "2.5", cgst: "2.5" }, true);
+    const saved = savedLineTax(
+      { price: "33.33", quantity: "3", discount: line.discount, sgst: "2.5", cgst: "2.5" },
+      true,
+    );
     expect(saved.tax).toBe(line.tax);
     expect(saved.sgst).toBe(line.sgst);
   });
@@ -92,11 +124,42 @@ describe("saved line tax and export rows", () => {
 
   it("writes one row per line with the agreed columns", () => {
     const bill: ExportBill = {
-      billNo: "INV-20261030-0001", createdAt: new Date("2026-10-30T10:00:00Z"), currency: "INR", status: "completed",
-      customerName: null, totalTax: "10.00",
-      items: [{ name: "Masala Dosa", quantity: "2.000", price: "100.00", discount: "0.00", sgst: "2.5", cgst: "2.5", total: "210.00" }],
+      billNo: "INV-20261030-0001",
+      createdAt: new Date("2026-10-30T10:00:00Z"),
+      currency: "INR",
+      status: "completed",
+      customerName: null,
+      totalTax: "10.00",
+      items: [
+        {
+          name: "Masala Dosa",
+          quantity: "2.000",
+          price: "100.00",
+          discount: "0.00",
+          sgst: "2.5",
+          cgst: "2.5",
+          total: "210.00",
+        },
+      ],
     };
-    const rows = buildExportRows([bill], { timeZone: "Asia/Kolkata", locale: "en-IN", walkInLabel: "Walk-in Customer" });
-    expect(rows).toEqual([["INV-20261030-0001", "30 Oct 2026, 3:30 pm", "Walk-in Customer", "Masala Dosa", "2", "INR", "100.00", "10.00", "210.00", "completed"]]);
+    const rows = buildExportRows([bill], {
+      timeZone: "Asia/Kolkata",
+      locale: "en-IN",
+      walkInLabel: "Walk-in Customer",
+    });
+    expect(rows).toEqual([
+      [
+        "INV-20261030-0001",
+        "30 Oct 2026, 3:30 pm",
+        "Walk-in Customer",
+        "Masala Dosa",
+        "2",
+        "INR",
+        "100.00",
+        "10.00",
+        "210.00",
+        "completed",
+      ],
+    ]);
   });
 });

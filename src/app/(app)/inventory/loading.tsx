@@ -1,4 +1,11 @@
-import { CardsSkeleton, PageLoading, PagerSkeleton, SkeletonHeader, TableSkeleton, ToolbarSkeleton } from "@/components/layout/page-skeleton";
+import {
+  CardsSkeleton,
+  PageLoading,
+  PagerSkeleton,
+  SkeletonHeader,
+  TableSkeleton,
+  ToolbarSkeleton,
+} from "@/components/layout/page-skeleton";
 import { PAGE_COPY } from "@/config/page-copy";
 
 export default function Loading() {

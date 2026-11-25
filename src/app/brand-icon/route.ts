@@ -7,8 +7,10 @@ import { getSettingsGroup } from "@/services/SettingsService";
  * new logo is a new URL and browsers do not keep showing the old icon.
  */
 export async function GET(req: NextRequest) {
-  const fallback = req.nextUrl.searchParams.get("kind") === "apple" ? "/apple-icon-default.png" : "/favicon-default.png";
-  const builtInIcon = () => NextResponse.redirect(new URL(fallback, req.url), { status: 307, headers: { "Cache-Control": "no-store" } });
+  const fallback =
+    req.nextUrl.searchParams.get("kind") === "apple" ? "/apple-icon-default.png" : "/favicon-default.png";
+  const builtInIcon = () =>
+    NextResponse.redirect(new URL(fallback, req.url), { status: 307, headers: { "Cache-Control": "no-store" } });
 
   let logo: string | null = null;
   try {

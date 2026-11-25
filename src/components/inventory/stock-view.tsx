@@ -78,7 +78,12 @@ export function StockView({ rows, total, summary, query, categories, canAdjust, 
     { icon: Boxes, label: "Tracked items", value: String(summary.tracked), tone: "" },
     { icon: Wallet, label: "Stock value (at cost)", value: money(summary.value), tone: "" },
     { icon: CircleAlert, label: "Low stock", value: String(summary.low), tone: summary.low > 0 ? "text-warning" : "" },
-    { icon: PackageX, label: "Out of stock", value: String(summary.out), tone: summary.out > 0 ? "text-destructive" : "" },
+    {
+      icon: PackageX,
+      label: "Out of stock",
+      value: String(summary.out),
+      tone: summary.out > 0 ? "text-destructive" : "",
+    },
   ];
 
   return (
@@ -111,21 +116,42 @@ export function StockView({ rows, total, summary, query, categories, canAdjust, 
 
       <div className="mb-4 flex flex-wrap items-center gap-2" role="search">
         <div className="relative min-w-52 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or SKU" aria-label="Search stock" className="pl-8" />
+          <Search
+            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name or SKU"
+            aria-label="Search stock"
+            className="pl-8"
+          />
         </div>
-        <Select value={query.category ? String(query.category) : "all"} onValueChange={(v) => setParams({ category: v === "all" ? null : v })}>
+        <Select
+          value={query.category ? String(query.category) : "all"}
+          onValueChange={(v) => setParams({ category: v === "all" ? null : v })}
+        >
           <SelectTrigger className="w-44" aria-label="Filter by category">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
             {categories.map((c) => (
-              <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+              <SelectItem key={c.id} value={String(c.id)}>
+                {c.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <ToggleGroup type="single" variant="outline" value={query.status ?? "all"} onValueChange={(v) => v && setParams({ status: v === "all" ? null : v })} aria-label="Filter by status">
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          value={query.status ?? "all"}
+          onValueChange={(v) => v && setParams({ status: v === "all" ? null : v })}
+          aria-label="Filter by status"
+        >
           <ToggleGroupItem value="all">All</ToggleGroupItem>
           <ToggleGroupItem value="in">In stock</ToggleGroupItem>
           <ToggleGroupItem value="low">Low</ToggleGroupItem>
@@ -137,7 +163,9 @@ export function StockView({ rows, total, summary, query, categories, canAdjust, 
           </SelectTrigger>
           <SelectContent>
             {Object.entries(SORTS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>{label}</SelectItem>
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -148,12 +176,26 @@ export function StockView({ rows, total, summary, query, categories, canAdjust, 
           <EmptyState
             icon={Boxes}
             title={filtering ? "No items match" : "No items track stock yet"}
-            description={filtering ? "Try a different search or clear the filters." : "Open an item in the menu and turn on Track stock to count it here."}
+            description={
+              filtering
+                ? "Try a different search or clear the filters."
+                : "Open an item in the menu and turn on Track stock to count it here."
+            }
             action={
               filtering ? (
-                <Button variant="outline" onClick={() => { setSearch(""); setParams({ q: null, category: null, status: null }); }}>Clear filters</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearch("");
+                    setParams({ q: null, category: null, status: null });
+                  }}
+                >
+                  Clear filters
+                </Button>
               ) : (
-                <Button asChild><Link href="/menu">Go to the menu</Link></Button>
+                <Button asChild>
+                  <Link href="/menu">Go to the menu</Link>
+                </Button>
               )
             }
           />
@@ -182,10 +224,16 @@ export function StockView({ rows, total, summary, query, categories, canAdjust, 
                     <TableCell className={cn("text-right tabular-nums", r.status === "out" && "text-destructive")}>
                       {r.stock} <span className="text-xs text-muted-foreground">{r.unit}</span>
                     </TableCell>
-                    <TableCell className="hidden text-right text-muted-foreground tabular-nums sm:table-cell">{r.reorderLevel}</TableCell>
-                    <TableCell className="hidden text-right text-muted-foreground tabular-nums lg:table-cell">{money(r.costPrice)}</TableCell>
+                    <TableCell className="hidden text-right text-muted-foreground tabular-nums sm:table-cell">
+                      {r.reorderLevel}
+                    </TableCell>
+                    <TableCell className="hidden text-right text-muted-foreground tabular-nums lg:table-cell">
+                      {money(r.costPrice)}
+                    </TableCell>
                     <TableCell className="hidden text-right tabular-nums lg:table-cell">{money(r.value)}</TableCell>
-                    <TableCell><StockBadge status={r.status} /></TableCell>
+                    <TableCell>
+                      <StockBadge status={r.status} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -196,11 +244,31 @@ export function StockView({ rows, total, summary, query, categories, canAdjust, 
 
       {total > 0 ? (
         <nav aria-label="Pagination" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <p className="text-muted-foreground" aria-live="polite">Showing {first}–{last} of {total}</p>
+          <p className="text-muted-foreground" aria-live="polite">
+            Showing {first}–{last} of {total}
+          </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" disabled={query.page <= 1} onClick={() => setParams({ page: String(query.page - 1) }, false)} aria-label="Previous page"><ChevronLeft className="size-4" aria-hidden /></Button>
-            <span className="min-w-16 text-center tabular-nums">{query.page} / {totalPages}</span>
-            <Button variant="outline" size="icon" disabled={query.page >= totalPages} onClick={() => setParams({ page: String(query.page + 1) }, false)} aria-label="Next page"><ChevronRight className="size-4" aria-hidden /></Button>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={query.page <= 1}
+              onClick={() => setParams({ page: String(query.page - 1) }, false)}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4" aria-hidden />
+            </Button>
+            <span className="min-w-16 text-center tabular-nums">
+              {query.page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={query.page >= totalPages}
+              onClick={() => setParams({ page: String(query.page + 1) }, false)}
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4" aria-hidden />
+            </Button>
           </div>
         </nav>
       ) : null}

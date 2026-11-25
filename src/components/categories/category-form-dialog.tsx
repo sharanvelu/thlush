@@ -33,7 +33,13 @@ interface CategoryFormDialogProps {
   onSaved: () => void;
 }
 
-const EMPTY: CategoryInput = { name: "", description: "", status: "active", color: CATEGORY_COLORS[0], icon: "utensils" };
+const EMPTY: CategoryInput = {
+  name: "",
+  description: "",
+  status: "active",
+  color: CATEGORY_COLORS[0],
+  icon: "utensils",
+};
 
 export function CategoryFormDialog({ open, onOpenChange, category, onSaved }: CategoryFormDialogProps) {
   const {
@@ -94,7 +100,13 @@ export function CategoryFormDialog({ open, onOpenChange, category, onSaved }: Ca
           <FieldGroup>
             <Field data-invalid={Boolean(errors.name)}>
               <FieldLabel htmlFor="category-name">Name</FieldLabel>
-              <Input id="category-name" autoFocus maxLength={60} aria-invalid={Boolean(errors.name)} {...register("name")} />
+              <Input
+                id="category-name"
+                autoFocus
+                maxLength={60}
+                aria-invalid={Boolean(errors.name)}
+                {...register("name")}
+              />
               <FieldError errors={[errors.name]} />
             </Field>
 
@@ -116,7 +128,9 @@ export function CategoryFormDialog({ open, onOpenChange, category, onSaved }: Ca
                   />
                   <div className="flex flex-col gap-0.5">
                     <FieldLabel htmlFor="category-status">Active</FieldLabel>
-                    <FieldDescription>When off, this category and its items are hidden on the billing screen.</FieldDescription>
+                    <FieldDescription>
+                      When off, this category and its items are hidden on the billing screen.
+                    </FieldDescription>
                   </div>
                 </Field>
               )}
@@ -160,7 +174,11 @@ export function CategoryFormDialog({ open, onOpenChange, category, onSaved }: Ca
               render={({ field }) => (
                 <Field>
                   <FieldLabel id="category-icon-label">Icon</FieldLabel>
-                  <div role="radiogroup" aria-labelledby="category-icon-label" className="grid grid-cols-5 gap-2 sm:grid-cols-10">
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="category-icon-label"
+                    className="grid grid-cols-5 gap-2 sm:grid-cols-10"
+                  >
                     {CATEGORY_ICONS.map((name) => {
                       const Icon = CATEGORY_ICON_COMPONENTS[name];
                       const selected = field.value === name;

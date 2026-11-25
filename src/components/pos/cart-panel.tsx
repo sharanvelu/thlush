@@ -211,7 +211,8 @@ export function CartPanel(props: CartPanelProps) {
                       </Button>
                     </div>
                     <div className="flex items-center gap-1">
-                      {(line.item.variants.length > 0 || line.item.addons.length > 0) && new D(line.sentQty).isZero() ? (
+                      {(line.item.variants.length > 0 || line.item.addons.length > 0) &&
+                      new D(line.sentQty).isZero() ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -273,7 +274,9 @@ export function CartPanel(props: CartPanelProps) {
                   <Package className="size-4 text-muted-foreground" aria-hidden /> Packaging
                   <span className="text-xs text-muted-foreground">added automatically</span>
                 </span>
-                <span className="font-semibold tabular-nums">{money(totals.lines[lines.length + index]?.total ?? "0.00")}</span>
+                <span className="font-semibold tabular-nums">
+                  {money(totals.lines[lines.length + index]?.total ?? "0.00")}
+                </span>
               </li>
             ))}
           </ul>
@@ -281,7 +284,9 @@ export function CartPanel(props: CartPanelProps) {
 
         <div className="mt-4 flex flex-col divide-y border-t">
           <section aria-labelledby={`${baseId}-customer`} className="flex flex-col gap-1.5 py-4">
-            <h3 id={`${baseId}-customer`} className="text-sm font-medium">Customer</h3>
+            <h3 id={`${baseId}-customer`} className="text-sm font-medium">
+              Customer
+            </h3>
             <CustomerPicker
               value={details.customer}
               onChange={(customer) => onDetails({ customer })}
@@ -291,7 +296,9 @@ export function CartPanel(props: CartPanelProps) {
 
           {settings.orderTypesEnabled || settings.discountsEnabled ? (
             <section aria-labelledby={`${baseId}-details`} className="flex flex-col gap-4 py-4">
-              <h3 id={`${baseId}-details`} className="text-sm font-medium">Order details</h3>
+              <h3 id={`${baseId}-details`} className="text-sm font-medium">
+                Order details
+              </h3>
               {settings.orderTypesEnabled ? (
                 <div className="flex flex-col gap-1.5">
                   <p className="text-xs font-medium text-muted-foreground">Order type</p>
@@ -404,7 +411,13 @@ export function CartPanel(props: CartPanelProps) {
           ) : null}
 
           <section aria-label="Payment" className="py-4 pb-1">
-            <PaymentPanel state={payment} onChange={onPayment} total={total} result={paymentResult} settings={settings} />
+            <PaymentPanel
+              state={payment}
+              onChange={onPayment}
+              total={total}
+              result={paymentResult}
+              settings={settings}
+            />
           </section>
         </div>
       </div>
@@ -412,7 +425,9 @@ export function CartPanel(props: CartPanelProps) {
       <footer className="flex flex-col gap-3 border-t bg-card px-4 py-3">
         <dl className="flex flex-col gap-1 text-sm">
           <Row label="Subtotal" value={money(totals.subtotal)} />
-          {new D(totals.totalDiscount).greaterThan(0) ? <Row label="Discount" value={`-${money(totals.totalDiscount)}`} /> : null}
+          {new D(totals.totalDiscount).greaterThan(0) ? (
+            <Row label="Discount" value={`-${money(totals.totalDiscount)}`} />
+          ) : null}
           {!settings.ignoreTax ? (
             <>
               <Row label="SGST" value={money(totals.sgst)} />
@@ -453,7 +468,13 @@ export function CartPanel(props: CartPanelProps) {
           >
             <ChefHat aria-hidden /> Send to kitchen
           </Button>
-          <Button variant="ghost" disabled={empty || pending} onClick={onHold} aria-keyshortcuts="Alt+H" className="border">
+          <Button
+            variant="ghost"
+            disabled={empty || pending}
+            onClick={onHold}
+            aria-keyshortcuts="Alt+H"
+            className="border"
+          >
             <Archive aria-hidden /> {resumedFromHold ? "Update held" : "Hold bill"}
           </Button>
         </div>

@@ -23,7 +23,12 @@ export const billLineSchema = z.object({
   quantity: quantityString,
   /** Flat amount taken off this line before tax. */
   discount: moneyString("Discount").default("0"),
-  variant: z.string().trim().max(40).nullish().transform((v) => v || null),
+  variant: z
+    .string()
+    .trim()
+    .max(40)
+    .nullish()
+    .transform((v) => v || null),
   addons: z.array(addonChoiceSchema).max(20).default([]),
 });
 
@@ -50,21 +55,36 @@ export const billSaveSchema = z.object({
   /** One id per save attempt, so retries and double-clicks cannot create two bills. */
   clientRef: z.string().trim().min(8).max(64),
   /** Set when this save finishes a bill that was put on hold earlier. */
-  heldBillId: z.number().int().positive().nullish().transform((v) => v ?? null),
+  heldBillId: z
+    .number()
+    .int()
+    .positive()
+    .nullish()
+    .transform((v) => v ?? null),
   customer: billCustomerSchema.default(null),
   lines: z.array(billLineSchema).min(1, "Add at least one item").max(100, "A bill can have at most 100 lines"),
   discount: z
     .object({ type: z.enum(["percent", "flat"]), value: moneyString("Discount") })
     .nullish()
     .transform((v) => v ?? null),
-  orderType: z.enum(["dine_in", "takeaway", "delivery"]).nullish().transform((v) => v ?? null),
+  orderType: z
+    .enum(["dine_in", "takeaway", "delivery"])
+    .nullish()
+    .transform((v) => v ?? null),
   tableNo: optionalText(20, "Table number"),
   notes: optionalText(300, "Notes"),
   payments: z.array(billPaymentSchema).max(6).default([]),
   /** Cash handed over, when it is more than the cash applied (the difference is change). */
-  cashTendered: moneyString("Cash received").nullish().transform((v) => v ?? null),
+  cashTendered: moneyString("Cash received")
+    .nullish()
+    .transform((v) => v ?? null),
   /** Who is taking this payment, picked on the billing screen when the till login is shared. */
-  cashierId: z.number().int().positive().nullish().transform((v) => v ?? null),
+  cashierId: z
+    .number()
+    .int()
+    .positive()
+    .nullish()
+    .transform((v) => v ?? null),
   /** With "complete": also send items the kitchen has not had yet (a kitchen slip for them). */
   sendRemainder: z.boolean().default(false),
 });

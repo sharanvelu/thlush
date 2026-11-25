@@ -4,7 +4,14 @@ import { LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,7 +43,15 @@ const blankLine = (): Line => ({ key: nextKey++, menuItemId: "", quantity: "", c
 const decimal = (v: string, places: number) => (new RegExp(`^\\d+(\\.\\d{1,${places}})?$`).test(v) ? new D(v) : null);
 
 /** Records a delivery: stock goes up and each item's cost price follows what was paid. */
-export function ReceiveStockDialog({ open, onOpenChange, items, suppliers, settings, today, onSaved }: ReceiveStockDialogProps) {
+export function ReceiveStockDialog({
+  open,
+  onOpenChange,
+  items,
+  suppliers,
+  settings,
+  today,
+  onSaved,
+}: ReceiveStockDialogProps) {
   const [supplierId, setSupplierId] = useState(NONE);
   const [invoiceNo, setInvoiceNo] = useState("");
   const [date, setDate] = useState(today);
@@ -54,7 +69,8 @@ export function ReceiveStockDialog({ open, onOpenChange, items, suppliers, setti
     setError("");
   };
 
-  const update = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  const update = (key: number, patch: Partial<Line>) =>
+    setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
   const pickItem = (key: number, id: string) => {
     const item = items.find((i) => String(i.id) === id);
     update(key, { menuItemId: id, costPrice: item && new D(item.costPrice).greaterThan(0) ? item.costPrice : "" });
@@ -77,7 +93,8 @@ export function ReceiveStockDialog({ open, onOpenChange, items, suppliers, setti
       if (!q || q.lessThanOrEqualTo(0)) return setError(`Enter a quantity for ${name}`);
       if (!decimal(l.costPrice, 2)) return setError(`Enter the cost price for ${name}`);
     }
-    if (new Set(chosen.map((l) => l.menuItemId)).size !== chosen.length) return setError("Each item can only appear once. Add the quantities together.");
+    if (new Set(chosen.map((l) => l.menuItemId)).size !== chosen.length)
+      return setError("Each item can only appear once. Add the quantities together.");
 
     setError("");
     setSaving(true);
@@ -113,22 +130,39 @@ export function ReceiveStockDialog({ open, onOpenChange, items, suppliers, setti
             <Field>
               <FieldLabel htmlFor="purchase-supplier">Supplier</FieldLabel>
               <Select value={supplierId} onValueChange={setSupplierId}>
-                <SelectTrigger id="purchase-supplier" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="purchase-supplier" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>No supplier</SelectItem>
-                  {suppliers.filter((s) => s.status === "active").map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                  ))}
+                  {suppliers
+                    .filter((s) => s.status === "active")
+                    .map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </Field>
             <Field>
               <FieldLabel htmlFor="purchase-invoice">Invoice no.</FieldLabel>
-              <Input id="purchase-invoice" value={invoiceNo} maxLength={60} onChange={(e) => setInvoiceNo(e.target.value)} />
+              <Input
+                id="purchase-invoice"
+                value={invoiceNo}
+                maxLength={60}
+                onChange={(e) => setInvoiceNo(e.target.value)}
+              />
             </Field>
             <Field>
               <FieldLabel htmlFor="purchase-date">Received on</FieldLabel>
-              <Input id="purchase-date" type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id="purchase-date"
+                type="date"
+                value={date}
+                max={today}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </Field>
           </div>
 
@@ -139,22 +173,51 @@ export function ReceiveStockDialog({ open, onOpenChange, items, suppliers, setti
               return (
                 <div key={l.key} className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_7rem_7rem_auto]">
                   <Select value={l.menuItemId} onValueChange={(v) => pickItem(l.key, v)}>
-                    <SelectTrigger className="col-span-2 w-full sm:col-span-1" aria-label={`Item ${index + 1}`}><SelectValue placeholder="Choose an item" /></SelectTrigger>
+                    <SelectTrigger className="col-span-2 w-full sm:col-span-1" aria-label={`Item ${index + 1}`}>
+                      <SelectValue placeholder="Choose an item" />
+                    </SelectTrigger>
                     <SelectContent>
                       {items.map((i) => (
-                        <SelectItem key={i.id} value={String(i.id)}>{i.name}</SelectItem>
+                        <SelectItem key={i.id} value={String(i.id)}>
+                          {i.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Input inputMode="decimal" aria-label={`Quantity ${index + 1}${unit ? ` (${unit})` : ""}`} placeholder={unit ? `Qty (${unit})` : "Qty"} value={l.quantity} onChange={(e) => update(l.key, { quantity: e.target.value })} />
-                  <Input inputMode="decimal" aria-label={`Cost price ${index + 1}`} placeholder="Cost each" value={l.costPrice} onChange={(e) => update(l.key, { costPrice: e.target.value })} />
-                  <Button type="button" variant="ghost" size="icon" aria-label={`Remove item ${index + 1}`} disabled={lines.length === 1} onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}>
+                  <Input
+                    inputMode="decimal"
+                    aria-label={`Quantity ${index + 1}${unit ? ` (${unit})` : ""}`}
+                    placeholder={unit ? `Qty (${unit})` : "Qty"}
+                    value={l.quantity}
+                    onChange={(e) => update(l.key, { quantity: e.target.value })}
+                  />
+                  <Input
+                    inputMode="decimal"
+                    aria-label={`Cost price ${index + 1}`}
+                    placeholder="Cost each"
+                    value={l.costPrice}
+                    onChange={(e) => update(l.key, { costPrice: e.target.value })}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove item ${index + 1}`}
+                    disabled={lines.length === 1}
+                    onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
+                  >
                     <Trash2 className="size-4" aria-hidden />
                   </Button>
                 </div>
               );
             })}
-            <Button type="button" variant="outline" size="sm" onClick={() => setLines((ls) => [...ls, blankLine()])} disabled={lines.length >= 100}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setLines((ls) => [...ls, blankLine()])}
+              disabled={lines.length >= 100}
+            >
               <Plus aria-hidden /> Add item
             </Button>
           </fieldset>
@@ -169,9 +232,14 @@ export function ReceiveStockDialog({ open, onOpenChange, items, suppliers, setti
           </div>
 
           <DialogFooter className="items-center sm:justify-between">
-            <p className="text-sm">Total <span className="ml-1 text-lg font-semibold tabular-nums">{formatMoney(total.toFixed(2), settings)}</span></p>
+            <p className="text-sm">
+              Total{" "}
+              <span className="ml-1 text-lg font-semibold tabular-nums">{formatMoney(total.toFixed(2), settings)}</span>
+            </p>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+                Cancel
+              </Button>
               <Button type="submit" disabled={saving || items.length === 0}>
                 {saving ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
                 Receive stock

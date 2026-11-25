@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Download, FileSpreadsheet, History, Receipt } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileSpreadsheet,
+  History,
+  Receipt,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
@@ -10,7 +20,12 @@ import { BillStatusBadge } from "@/components/bills/bill-status-badge";
 import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
@@ -64,11 +79,18 @@ function SortHead({
   const dir = sort.endsWith("_asc") ? "asc" : "desc";
   const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <Button variant="ghost" size="sm" className={cn("-ml-2.5 h-8 gap-1.5 px-2.5 font-medium", className)} onClick={() => onToggle(field)}>
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn("-ml-2.5 h-8 gap-1.5 px-2.5 font-medium", className)}
+      onClick={() => onToggle(field)}
+    >
       {label}
       <Icon className={cn("size-3.5", !active && "opacity-40")} aria-hidden />
       <span className="sr-only">
-        {active ? `, sorted ${dir === "asc" ? "ascending" : "descending"}. Activate to reverse.` : ", not sorted. Activate to sort."}
+        {active
+          ? `, sorted ${dir === "asc" ? "ascending" : "descending"}. Activate to reverse.`
+          : ", not sorted. Activate to sort."}
       </span>
     </Button>
   );
@@ -117,7 +139,11 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
     setParams({ sort: query.sort === firstChoice ? other : firstChoice }, true);
   };
   const ariaSort = (field: string) =>
-    query.sort.startsWith(`${field}_`) ? (query.sort.endsWith("_asc") ? ("ascending" as const) : ("descending" as const)) : undefined;
+    query.sort.startsWith(`${field}_`)
+      ? query.sort.endsWith("_asc")
+        ? ("ascending" as const)
+        : ("descending" as const)
+      : undefined;
 
   return (
     <>
@@ -159,7 +185,8 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground" aria-live="polite">
-          {total} {total === 1 ? "bill" : "bills"} · Revenue (completed) <span className="font-medium text-foreground tabular-nums">{money(revenue)}</span>
+          {total} {total === 1 ? "bill" : "bills"} · Revenue (completed){" "}
+          <span className="font-medium text-foreground tabular-nums">{money(revenue)}</span>
         </p>
         <Select value={query.sort} onValueChange={(v) => setParams({ sort: v === "date_desc" ? null : v })}>
           <SelectTrigger size="sm" className="w-48" aria-label="Sort bills">
@@ -180,10 +207,17 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
           <EmptyState
             icon={filterCount > 0 ? History : Receipt}
             title={filterCount > 0 ? "No bills match these filters" : "No bills yet"}
-            description={filterCount > 0 ? "Try widening the dates or clearing a filter." : "Bills show up here as soon as they are saved."}
+            description={
+              filterCount > 0
+                ? "Try widening the dates or clearing a filter."
+                : "Bills show up here as soon as they are saved."
+            }
             action={
               filterCount > 0 ? (
-                <Button variant="outline" onClick={() => setParams(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))}>
+                <Button
+                  variant="outline"
+                  onClick={() => setParams(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))}
+                >
                   Reset filters
                 </Button>
               ) : (
@@ -209,7 +243,13 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
                   <TableHead className="hidden lg:table-cell">Payment</TableHead>
                   <TableHead aria-sort={ariaSort("total")} className="text-right">
                     <div className="flex justify-end">
-                      <SortHead sort={query.sort} field="total" label="Total" onToggle={toggleSort} className="-mr-2.5 ml-0" />
+                      <SortHead
+                        sort={query.sort}
+                        field="total"
+                        label="Total"
+                        onToggle={toggleSort}
+                        className="-mr-2.5 ml-0"
+                      />
                     </div>
                   </TableHead>
                   <TableHead>Status</TableHead>
@@ -235,18 +275,27 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {formatDateTime(row.createdAt, { locale: settings.locale, timeZone: settings.timezone })}
                     </TableCell>
-                    <TableCell className={cn(!row.customerName && "text-muted-foreground")}>{row.customerName ?? settings.walkInLabel}</TableCell>
+                    <TableCell className={cn(!row.customerName && "text-muted-foreground")}>
+                      {row.customerName ?? settings.walkInLabel}
+                    </TableCell>
                     <TableCell className="hidden text-right tabular-nums md:table-cell">{row.itemCount}</TableCell>
                     <TableCell className="hidden text-muted-foreground lg:table-cell">
                       {row.methods.length > 0 ? row.methods.map((m) => PAYMENT_METHOD_LABELS[m]).join(", ") : "—"}
                     </TableCell>
-                    <TableCell className={cn("text-right tabular-nums", row.status !== "completed" && "text-muted-foreground line-through")}>
+                    <TableCell
+                      className={cn(
+                        "text-right tabular-nums",
+                        row.status !== "completed" && "text-muted-foreground line-through",
+                      )}
+                    >
                       {money(row.total, row.currency)}
                     </TableCell>
                     <TableCell>
                       <BillStatusBadge status={row.status} />
                     </TableCell>
-                    <TableCell className="hidden text-muted-foreground xl:table-cell">{row.cashierName ?? "—"}</TableCell>
+                    <TableCell className="hidden text-muted-foreground xl:table-cell">
+                      {row.cashierName ?? "—"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -263,7 +312,10 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-2 text-muted-foreground">
               Rows
-              <Select value={String(query.pageSize)} onValueChange={(v) => setParams({ pageSize: v === "20" ? null : v })}>
+              <Select
+                value={String(query.pageSize)}
+                onValueChange={(v) => setParams({ pageSize: v === "20" ? null : v })}
+              >
                 <SelectTrigger size="sm" className="w-18" aria-label="Rows per page">
                   <SelectValue />
                 </SelectTrigger>
@@ -276,20 +328,38 @@ export function BillsView({ rows, total, revenue, query, cashiers, canVoid, curr
                 </SelectContent>
               </Select>
             </label>
-            <Button variant="outline" size="icon" disabled={query.page <= 1} onClick={() => setParams({ page: String(query.page - 1) }, false)} aria-label="Previous page">
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={query.page <= 1}
+              onClick={() => setParams({ page: String(query.page - 1) }, false)}
+              aria-label="Previous page"
+            >
               <ChevronLeft className="size-4" aria-hidden />
             </Button>
             <span className="min-w-16 text-center tabular-nums">
               {query.page} / {totalPages}
             </span>
-            <Button variant="outline" size="icon" disabled={query.page >= totalPages} onClick={() => setParams({ page: String(query.page + 1) }, false)} aria-label="Next page">
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={query.page >= totalPages}
+              onClick={() => setParams({ page: String(query.page + 1) }, false)}
+              aria-label="Next page"
+            >
               <ChevronRight className="size-4" aria-hidden />
             </Button>
           </div>
         </nav>
       ) : null}
 
-      <BillDetailSheet billId={openId} onClose={() => setOpenId(null)} canVoid={canVoid} settings={settings} onChanged={() => router.refresh()} />
+      <BillDetailSheet
+        billId={openId}
+        onClose={() => setOpenId(null)}
+        canVoid={canVoid}
+        settings={settings}
+        onChanged={() => router.refresh()}
+      />
     </>
   );
 }

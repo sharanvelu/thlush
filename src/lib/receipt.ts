@@ -151,7 +151,13 @@ export function buildReceiptModel(bill: BillDetail, settings: AppSettings): Rece
 
   const change = new D(bill.changeDue);
   const statusNote =
-    bill.status === "void" ? "VOIDED" : bill.status === "refunded" ? "REFUNDED" : bill.status === "held" ? "ON HOLD" : null;
+    bill.status === "void"
+      ? "VOIDED"
+      : bill.status === "refunded"
+        ? "REFUNDED"
+        : bill.status === "held"
+          ? "ON HOLD"
+          : null;
 
   return {
     paperSize: settings.receipt.paperSize,
@@ -159,7 +165,10 @@ export function buildReceiptModel(bill: BillDetail, settings: AppSettings): Rece
     locale,
     businessName: settings.business.name,
     logoUrl: settings.business.logoUrl,
-    addressLines: settings.business.address.split(/\r?\n/).map((l) => l.trim()).filter(Boolean),
+    addressLines: settings.business.address
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean),
     phone: settings.business.phone,
     gstin: settings.business.gstin,
     headerText: settings.receipt.header,
@@ -270,10 +279,14 @@ export function buildKitchenSlipModel(bill: BillDetail, settings: AppSettings, k
     dateText: formatDateTime(kot?.createdAt ?? bill.createdAt, { locale, timeZone: timezone }),
     orderLine: orderBits.length > 0 ? orderBits.join(" · ") : null,
     notes: bill.notes,
-    items: slipItems ?? bill.items.filter((item) => !item.isPackaging).map((item) => ({
-      name: lineTitle(item.name, item.options),
-      quantity: trimQty(item.quantity),
-      details: item.options?.addons?.map(addonLabel) ?? [],
-    })),
+    items:
+      slipItems ??
+      bill.items
+        .filter((item) => !item.isPackaging)
+        .map((item) => ({
+          name: lineTitle(item.name, item.options),
+          quantity: trimQty(item.quantity),
+          details: item.options?.addons?.map(addonLabel) ?? [],
+        })),
   };
 }

@@ -32,7 +32,9 @@ export async function listStaff(): Promise<StaffListItem[]> {
       title: staffMembers.title,
       isCashier: staffMembers.isCashier,
       status: staffMembers.status,
-      billCount: sql<number>`(select count(*) from ${bills} where ${bills.cashierId} = ${staffMembers.id})`.mapWith(Number),
+      billCount: sql<number>`(select count(*) from ${bills} where ${bills.cashierId} = ${staffMembers.id})`.mapWith(
+        Number,
+      ),
     })
     .from(staffMembers)
     .orderBy(sql`lower(${staffMembers.name})`);
@@ -57,14 +59,22 @@ export async function listStaffOptions(): Promise<Array<{ id: number; name: stri
 }
 
 function nameTaken() {
-  return new HttpError(409, "Someone with this name is already on the list.", { name: ["This name is already in use."] });
+  return new HttpError(409, "Someone with this name is already on the list.", {
+    name: ["This name is already in use."],
+  });
 }
 
 export async function createStaff(input: StaffData, userId: string): Promise<StaffListItem> {
   try {
     const [created] = await db.insert(staffMembers).values(input).returning({ id: staffMembers.id });
     if (!created) throw new Error("Staff insert returned no row");
-    await AuditService.log({ userId, action: "staff.create", entity: "staff", entityId: created.id, metadata: { name: input.name } });
+    await AuditService.log({
+      userId,
+      action: "staff.create",
+      entity: "staff",
+      entityId: created.id,
+      metadata: { name: input.name },
+    });
     return await getStaff(created.id);
   } catch (error) {
     if (isUniqueViolation(error)) throw nameTaken();
@@ -86,9 +96,19 @@ export async function updateStaff(id: number, patch: StaffPatch, userId: string)
   if (patch.status !== undefined) values.status = patch.status;
   try {
     if (Object.keys(values).length > 0) {
-      const [updated] = await db.update(staffMembers).set(values).where(eq(staffMembers.id, id)).returning({ id: staffMembers.id });
+      const [updated] = await db
+        .update(staffMembers)
+        .set(values)
+        .where(eq(staffMembers.id, id))
+        .returning({ id: staffMembers.id });
       if (!updated) throw HttpError.notFound("Staff member not found.");
-      await AuditService.log({ userId, action: "staff.update", entity: "staff", entityId: id, metadata: { fields: Object.keys(values) } });
+      await AuditService.log({
+        userId,
+        action: "staff.update",
+        entity: "staff",
+        entityId: id,
+        metadata: { fields: Object.keys(values) },
+      });
     }
     return await getStaff(id);
   } catch (error) {
@@ -102,11 +122,19 @@ export async function deleteStaff(id: number, userId: string): Promise<void> {
   await db.transaction(async (tx) => {
     const [member] = await tx.select().from(staffMembers).where(eq(staffMembers.id, id)).for("update");
     if (!member) throw HttpError.notFound("Staff member not found.");
-    const [used] = await tx.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(bills).where(eq(bills.cashierId, id));
+    const [used] = await tx
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(bills)
+      .where(eq(bills.cashierId, id));
     if ((used?.n ?? 0) > 0) {
-      throw HttpError.conflict("This person is on past bills. Disable them instead of deleting, so those bills keep their name.");
+      throw HttpError.conflict(
+        "This person is on past bills. Disable them instead of deleting, so those bills keep their name.",
+      );
     }
     await tx.delete(staffMembers).where(eq(staffMembers.id, id));
-    await AuditService.record({ userId, action: "staff.delete", entity: "staff", entityId: id, metadata: { name: member.name } }, tx);
+    await AuditService.record(
+      { userId, action: "staff.delete", entity: "staff", entityId: id, metadata: { name: member.name } },
+      tx,
+    );
   });
 }

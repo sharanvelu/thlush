@@ -53,7 +53,15 @@ interface ProductPanelProps {
 
 const STORAGE_KEY = "thlush.pos.collapsed-groups";
 
-export function ProductPanel({ items, categories, lines, settings, searchRef, onPick, onDecrement }: ProductPanelProps) {
+export function ProductPanel({
+  items,
+  categories,
+  lines,
+  settings,
+  searchRef,
+  onPick,
+  onDecrement,
+}: ProductPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -114,7 +122,9 @@ export function ProductPanel({ items, categories, lines, settings, searchRef, on
       pick(target);
       setQuery("");
     } else {
-      toast.error(visible.length === 0 ? `Nothing matches "${query.trim()}".` : "Several items match. Tap the one you want.");
+      toast.error(
+        visible.length === 0 ? `Nothing matches "${query.trim()}".` : "Several items match. Tap the one you want.",
+      );
     }
   };
 
@@ -123,7 +133,14 @@ export function ProductPanel({ items, categories, lines, settings, searchRef, on
   const renderItem = (item: PosItem) => {
     const inCart = quantityInCart(lines, item.id);
     const state = availability(item, inCart, settings.blockOutOfStock);
-    const props = { item, inCart, state, price: money(item.price), onAdd: () => pick(item), onRemove: () => onDecrement(item) };
+    const props = {
+      item,
+      inCart,
+      state,
+      price: money(item.price),
+      onAdd: () => pick(item),
+      onRemove: () => onDecrement(item),
+    };
     return <li key={item.id}>{view === "grid" ? <ItemCard {...props} /> : <ItemRow {...props} />}</li>;
   };
 
@@ -137,7 +154,10 @@ export function ProductPanel({ items, categories, lines, settings, searchRef, on
     <section aria-label="Menu items" className="@container/panel flex min-h-0 flex-col gap-4">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <Input
             ref={searchRef}
             type="search"
@@ -170,7 +190,12 @@ export function ProductPanel({ items, categories, lines, settings, searchRef, on
             variant="outline"
             size="icon"
             className="size-10 shrink-0"
-            onClick={() => accordion.setAll(groups.map((g) => g.category.id), !allCollapsed)}
+            onClick={() =>
+              accordion.setAll(
+                groups.map((g) => g.category.id),
+                !allCollapsed,
+              )
+            }
             aria-label={allCollapsed ? "Expand all categories" : "Collapse all categories"}
             title={allCollapsed ? "Expand all" : "Collapse all"}
           >
@@ -194,7 +219,11 @@ export function ProductPanel({ items, categories, lines, settings, searchRef, on
         </ToggleGroup>
       </div>
 
-      <div className={cn("-mx-1 flex gap-2 overflow-x-auto px-1 py-1", term && "opacity-50")} role="group" aria-label="Categories">
+      <div
+        className={cn("-mx-1 flex gap-2 overflow-x-auto px-1 py-1", term && "opacity-50")}
+        role="group"
+        aria-label="Categories"
+      >
         <CategoryChip selected={categoryId === null} onClick={() => setCategoryId(null)}>
           All
         </CategoryChip>
@@ -220,9 +249,18 @@ export function ProductPanel({ items, categories, lines, settings, searchRef, on
               const headingId = `pos-group-${category.id}`;
               const panelId = `pos-group-panel-${category.id}`;
               return (
-                <section key={category.id} aria-labelledby={headingId} className="rounded-xl border bg-card/40 px-3 py-1">
+                <section
+                  key={category.id}
+                  aria-labelledby={headingId}
+                  className="rounded-xl border bg-card/40 px-3 py-1"
+                >
                   <GroupLabel
-                    item={{ categoryName: category.name, categoryColor: category.color, categoryIcon: category.icon, categoryStatus: "active" }}
+                    item={{
+                      categoryName: category.name,
+                      categoryColor: category.color,
+                      categoryIcon: category.icon,
+                      categoryStatus: "active",
+                    }}
                     onPage={groupItems.length}
                     total={groupItems.length}
                     headingId={headingId}
@@ -256,7 +294,13 @@ interface ItemViewProps {
  * Minus, count and plus. The minus and count only appear once the item is on the bill.
  * Sits above the card's own "add" surface so each button can be pressed on its own.
  */
-function Stepper({ item, inCart, state, onAdd, onRemove }: Pick<ItemViewProps, "item" | "inCart" | "state" | "onAdd" | "onRemove">) {
+function Stepper({
+  item,
+  inCart,
+  state,
+  onAdd,
+  onRemove,
+}: Pick<ItemViewProps, "item" | "inCart" | "state" | "onAdd" | "onRemove">) {
   const onBill = inCart.greaterThan(0);
   return (
     <span className="relative z-10 flex shrink-0 items-center gap-1">
@@ -272,7 +316,10 @@ function Stepper({ item, inCart, state, onAdd, onRemove }: Pick<ItemViewProps, "
           >
             <Minus className="size-4" aria-hidden />
           </Button>
-          <span className="min-w-5 text-center text-sm font-semibold tabular-nums" aria-label={`${inCart.toString()} of ${item.name} on the bill`}>
+          <span
+            className="min-w-5 text-center text-sm font-semibold tabular-nums"
+            aria-label={`${inCart.toString()} of ${item.name} on the bill`}
+          >
             {inCart.toString()}
           </span>
         </>
@@ -375,7 +422,15 @@ function Notes({ item, state }: { item: PosItem; state: Availability }) {
   );
 }
 
-function CategoryChip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {
+function CategoryChip({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"

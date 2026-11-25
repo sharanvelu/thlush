@@ -77,7 +77,15 @@ describe("menuItemSchema", () => {
 describe("menuListQuerySchema", () => {
   it("falls back to defaults for missing or invalid values", () => {
     const query = menuListQuerySchema.parse({ page: "zero", sort: "bogus", status: "nope", category: "x", view: "?" });
-    expect(query).toMatchObject({ page: 1, sort: "name", dir: "asc", status: "all", view: "table", group: "category", pageSize: 100 });
+    expect(query).toMatchObject({
+      page: 1,
+      sort: "name",
+      dir: "asc",
+      status: "all",
+      view: "table",
+      group: "category",
+      pageSize: 100,
+    });
     expect(query.category).toBeUndefined();
   });
 
@@ -146,13 +154,30 @@ describe("update schemas never invent fields", () => {
 
   it("creating still fills in the defaults", () => {
     const item = menuItemSchema.parse({ name: "Tea", categoryId: 1, price: "10", sgst: "2.5", cgst: "2.5" });
-    expect(item).toMatchObject({ status: "active", variants: [], addons: [], trackStock: false, unit: "pcs", reorderLevel: "0", costPrice: "0" });
+    expect(item).toMatchObject({
+      status: "active",
+      variants: [],
+      addons: [],
+      trackStock: false,
+      unit: "pcs",
+      reorderLevel: "0",
+      costPrice: "0",
+    });
     expect(categorySchema.parse({ name: "X" }).status).toBe("active");
   });
 
   it("validates the stock fields", () => {
     const base = { name: "Tea", categoryId: 1, price: "10", sgst: "2.5", cgst: "2.5" };
-    expect(menuItemSchema.safeParse({ ...base, trackStock: true, unit: "kg", reorderLevel: "2.5", costPrice: "40", openingStock: "12.250" }).success).toBe(true);
+    expect(
+      menuItemSchema.safeParse({
+        ...base,
+        trackStock: true,
+        unit: "kg",
+        reorderLevel: "2.5",
+        costPrice: "40",
+        openingStock: "12.250",
+      }).success,
+    ).toBe(true);
     expect(menuItemSchema.safeParse({ ...base, unit: "box" }).success).toBe(false);
     expect(menuItemSchema.safeParse({ ...base, reorderLevel: "-1" }).success).toBe(false);
     expect(menuItemSchema.safeParse({ ...base, openingStock: "1.2345" }).success).toBe(false);

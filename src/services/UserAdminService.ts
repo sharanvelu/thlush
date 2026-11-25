@@ -33,7 +33,15 @@ const columns = {
   hasPassword: sql<boolean>`${users.password} is not null`,
 };
 
-function toAdminUser(r: { id: string; name: string; email: string; role: Role; createdAt: Date; lastLoginAt: Date | null; hasPassword: boolean }): AdminUser {
+function toAdminUser(r: {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  createdAt: Date;
+  lastLoginAt: Date | null;
+  hasPassword: boolean;
+}): AdminUser {
   return { ...r, createdAt: r.createdAt.toISOString(), lastLoginAt: r.lastLoginAt?.toISOString() ?? null };
 }
 
@@ -44,8 +52,17 @@ export async function listUsers(query: UserListQuery): Promise<{ rows: AdminUser
     query.role ? eq(users.role, query.role) : undefined,
   );
   const [rows, totals] = await Promise.all([
-    db.select(columns).from(users).where(where).orderBy(sql`lower(${users.name})`, users.id).limit(query.pageSize).offset((query.page - 1) * query.pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(users).where(where),
+    db
+      .select(columns)
+      .from(users)
+      .where(where)
+      .orderBy(sql`lower(${users.name})`, users.id)
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(users)
+      .where(where),
   ]);
   return { rows: rows.map(toAdminUser), total: totals[0]?.n ?? 0 };
 }
@@ -66,7 +83,8 @@ export async function getUserDetail(id: string): Promise<UserDetail> {
   return { ...toAdminUser(row), bills: totals?.n ?? 0, revenue: new D(totals?.revenue ?? 0).toFixed(2) };
 }
 
-const emailTaken = () => new HttpError(409, "Another user already has this email.", { email: ["This email is already in use."] });
+const emailTaken = () =>
+  new HttpError(409, "Another user already has this email.", { email: ["This email is already in use."] });
 
 /** Locks every super admin row so two people can't remove each other at the same moment. */
 async function superAdminIds(tx: Transaction): Promise<string[]> {
@@ -78,9 +96,21 @@ export async function createUser(input: CreateUserInput, actor: SessionUser): Pr
   const password = await hashPassword(input.password);
   try {
     const id = await db.transaction(async (tx) => {
-      const [created] = await tx.insert(users).values({ name: input.name, email: input.email, role: input.role, password }).returning({ id: users.id });
+      const [created] = await tx
+        .insert(users)
+        .values({ name: input.name, email: input.email, role: input.role, password })
+        .returning({ id: users.id });
       if (!created) throw new Error("User insert returned no row");
-      await AuditService.record({ userId: actor.id, action: "user.create", entity: "user", entityId: created.id, metadata: { email: input.email, role: input.role } }, tx);
+      await AuditService.record(
+        {
+          userId: actor.id,
+          action: "user.create",
+          entity: "user",
+          entityId: created.id,
+          metadata: { email: input.email, role: input.role },
+        },
+        tx,
+      );
       return created.id;
     });
     return toAdminUser((await db.select(columns).from(users).where(eq(users.id, id)))[0]!);
@@ -139,10 +169,24 @@ export async function deleteUser(id: string, actor: SessionUser): Promise<void> 
   if (id === actor.id) throw HttpError.conflict("You can't delete your own account.");
   await db.transaction(async (tx) => {
     const supers = await superAdminIds(tx);
-    const [target] = await tx.select().from(users).where(and(eq(users.id, id), ne(users.id, actor.id))).for("update");
+    const [target] = await tx
+      .select()
+      .from(users)
+      .where(and(eq(users.id, id), ne(users.id, actor.id)))
+      .for("update");
     if (!target) throw HttpError.notFound("User not found.");
-    if (target.role === "super_admin" && supers.length <= 1) throw HttpError.conflict("There must always be at least one super admin.");
+    if (target.role === "super_admin" && supers.length <= 1)
+      throw HttpError.conflict("There must always be at least one super admin.");
     await tx.delete(users).where(eq(users.id, id));
-    await AuditService.record({ userId: actor.id, action: "user.delete", entity: "user", entityId: id, metadata: { name: target.name, email: target.email, role: target.role } }, tx);
+    await AuditService.record(
+      {
+        userId: actor.id,
+        action: "user.delete",
+        entity: "user",
+        entityId: id,
+        metadata: { name: target.name, email: target.email, role: target.role },
+      },
+      tx,
+    );
   });
 }

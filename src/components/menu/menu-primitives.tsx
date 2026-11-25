@@ -31,7 +31,10 @@ interface ItemThumbProps {
 export function ItemThumb({ src, name, className }: ItemThumbProps) {
   return (
     <span
-      className={cn("flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground", className)}
+      className={cn(
+        "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground",
+        className,
+      )}
     >
       {src ? (
         <img src={src} alt="" loading="lazy" decoding="async" className="size-full object-cover" data-name={name} />

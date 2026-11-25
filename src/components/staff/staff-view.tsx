@@ -82,7 +82,12 @@ export function StaffView({ staff }: { staff: StaffListItem[] }) {
             const disabled = member.status === "disabled";
             return (
               <li key={member.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
-                <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground", disabled && "opacity-50")}>
+                <span
+                  className={cn(
+                    "flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
+                    disabled && "opacity-50",
+                  )}
+                >
                   <UserRound className="size-5" aria-hidden />
                 </span>
                 <div className={cn("min-w-0 flex-1", disabled && "opacity-60")}>
@@ -109,7 +114,12 @@ export function StaffView({ staff }: { staff: StaffListItem[] }) {
                 >
                   <Pencil aria-hidden />
                 </Button>
-                <Button variant="ghost" size="icon" aria-label={`Delete ${member.name}`} onClick={() => setDeleting(member)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Delete ${member.name}`}
+                  onClick={() => setDeleting(member)}
+                >
                   <Trash2 aria-hidden />
                 </Button>
               </li>
