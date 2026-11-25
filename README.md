@@ -6,14 +6,14 @@ Billing and point-of-sale for restaurants, cafés and small shops. Built with Ne
 
 ## Docs for developers and code agents
 
-| File | What it is for |
-| ---- | -------------- |
-| [AGENTS.md](AGENTS.md) | Start here. Reading order, setup, and the rules that are easy to get wrong. |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Stack, directory map, layering, auth, database, key flows, where to put new code. |
-| [STYLE.md](STYLE.md) | Code, commit and UI conventions, theming and accessibility. |
-| [CLAUDE.md](CLAUDE.md) | Hard project rules for Claude Code (imports AGENTS.md). |
-| [docs/SKILLS.md](docs/SKILLS.md) | Agent skills to install before implementing. |
-| [docs/online-orders-integration.md](docs/online-orders-integration.md) | Draft design for Swiggy/Zomato orders. Nothing built. |
+| File                                                                   | What it is for                                                                    |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [AGENTS.md](AGENTS.md)                                                 | Start here. Reading order, setup, and the rules that are easy to get wrong.       |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                                     | Stack, directory map, layering, auth, database, key flows, where to put new code. |
+| [STYLE.md](STYLE.md)                                                   | Code, commit and UI conventions, theming and accessibility.                       |
+| [CLAUDE.md](CLAUDE.md)                                                 | Hard project rules for Claude Code (imports AGENTS.md).                           |
+| [docs/SKILLS.md](docs/SKILLS.md)                                       | Agent skills to install before implementing.                                      |
+| [docs/online-orders-integration.md](docs/online-orders-integration.md) | Draft design for Swiggy/Zomato orders. Nothing built.                             |
 
 ## Quick start
 
@@ -39,20 +39,20 @@ The login page offers these as one-click fill-ins, but only when `NEXT_PUBLIC_AP
 
 ## Environment variables
 
-| Variable                                            | Required | Purpose                                                              |
-| --------------------------------------------------- | -------- | -------------------------------------------------------------------- |
-| `DATABASE_URL`                                      | yes      | Postgres connection string.                                          |
-| `AUTH_SECRET`                                       | yes      | Signs session cookies (`openssl rand -base64 32`).                   |
-| `NEXT_PUBLIC_BASE_URL`                              | yes      | Public URL of the app.                                               |
-| `NEXT_PUBLIC_APP_ENV`                               | yes      | `local`, `staging` or `production`. The seed refuses to run in production. |
-| `APP_DOMAIN_POS`, `APP_DOMAIN_CUSTOMER`             | no       | Hostnames (no `https://`) for the staff app and the customer site, both added as domains on the one Vercel project. Leave empty for local development. When set, any other host (including `*.vercel.app`) gets an empty 404. |
-| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | no     | Set all three to enable "Sign in with SSO". Works with Authentik and Keycloak. |
-| `AUTH_TRUST_HOST`                                   | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production. |
-| `DB_TABLE_PREFIX`                                   | no       | Table-name prefix, default `app_`.                                   |
-| `SEED_PASSWORD`                                     | no       | Password for seeded demo users.                                      |
-| `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | no | Neon Object Storage credentials for menu photos. Filled in by `neon deploy` / `neon env pull`. |
-| `OBJECT_STORAGE_BUCKET`                             | no       | Bucket for menu photos, default `uploads` (declared in `neon.ts`).   |
-| `NEXT_PUBLIC_PRINT_AGENT_URL`                       | no       | Where the optional print agent listens, default `http://127.0.0.1:9101`. |
+| Variable                                                                          | Required | Purpose                                                                                                                                                                                                                       |
+| --------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                                    | yes      | Postgres connection string.                                                                                                                                                                                                   |
+| `AUTH_SECRET`                                                                     | yes      | Signs session cookies (`openssl rand -base64 32`).                                                                                                                                                                            |
+| `NEXT_PUBLIC_BASE_URL`                                                            | yes      | Public URL of the app.                                                                                                                                                                                                        |
+| `NEXT_PUBLIC_APP_ENV`                                                             | yes      | `local`, `staging` or `production`. The seed refuses to run in production.                                                                                                                                                    |
+| `APP_DOMAIN_POS`, `APP_DOMAIN_CUSTOMER`                                           | no       | Hostnames (no `https://`) for the staff app and the customer site, both added as domains on the one Vercel project. Leave empty for local development. When set, any other host (including `*.vercel.app`) gets an empty 404. |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`                             | no       | Set all three to enable "Sign in with SSO". Works with Authentik and Keycloak.                                                                                                                                                |
+| `AUTH_TRUST_HOST`                                                                 | no       | Set to `true` when self-hosting. Without it Auth.js rejects the host in production.                                                                                                                                           |
+| `DB_TABLE_PREFIX`                                                                 | no       | Table-name prefix, default `app_`.                                                                                                                                                                                            |
+| `SEED_PASSWORD`                                                                   | no       | Password for seeded demo users.                                                                                                                                                                                               |
+| `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | no       | Neon Object Storage credentials for menu photos. Filled in by `neon deploy` / `neon env pull`.                                                                                                                                |
+| `OBJECT_STORAGE_BUCKET`                                                           | no       | Bucket for menu photos, default `uploads` (declared in `neon.ts`).                                                                                                                                                            |
+| `NEXT_PUBLIC_PRINT_AGENT_URL`                                                     | no       | Where the optional print agent listens, default `http://127.0.0.1:9101`.                                                                                                                                                      |
 
 **Menu photos.** Photos are stored in a Neon Object Storage bucket (`src/lib/object-storage.ts`); the database keeps a reference like `s3:menu/<uuid>.webp`. When the `AWS_*` credentials are not set (a plain local database), new photos stay in the database as data URLs, and older `data:` or `https://` values keep working. The customer menu serves photos through `/api/c/menu/[id]/image`, only for items that are on the public menu.
 
@@ -88,15 +88,16 @@ The seed is safe to re-run: users, categories, items and settings are only inser
 2. **Import the repo.** In Vercel choose **Add New, Project**, pick `sharanvelu/thlush` and keep the detected Next.js settings. Set the production branch to `main`.
 3. **Environment variables** (Project Settings, Environment Variables):
 
-   | Variable | Production | Preview |
-   | -------- | ---------- | ------- |
-   | `DATABASE_URL` | production Neon URL | a separate Neon branch, never the production URL |
-   | `AUTH_SECRET` | a fresh `openssl rand -base64 32` | a different secret |
-   | `NEXT_PUBLIC_BASE_URL` | your public URL, e.g. `https://pos.example.com` | the preview URL, or the same placeholder |
-   | `NEXT_PUBLIC_APP_ENV` | `production` | `staging` |
-   | `OIDC_*` | optional, see above | optional |
+   | Variable               | Production                                      | Preview                                          |
+   | ---------------------- | ----------------------------------------------- | ------------------------------------------------ |
+   | `DATABASE_URL`         | production Neon URL                             | a separate Neon branch, never the production URL |
+   | `AUTH_SECRET`          | a fresh `openssl rand -base64 32`               | a different secret                               |
+   | `NEXT_PUBLIC_BASE_URL` | your public URL, e.g. `https://pos.example.com` | the preview URL, or the same placeholder         |
+   | `NEXT_PUBLIC_APP_ENV`  | `production`                                    | `staging`                                        |
+   | `OIDC_*`               | optional, see above                             | optional                                         |
 
    `NEXT_PUBLIC_*` values are baked in at build time, so set them before the first deploy and redeploy after changing them. You do not need `AUTH_TRUST_HOST` on Vercel.
+
 4. **Create the tables.** Migrations are not run by the build. From your machine, once per database and again after any new file appears in `drizzle/`:
 
    ```bash
@@ -104,6 +105,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
    ```
 
    Do this before the deploy that needs the new schema.
+
 5. **First admin.** The seed refuses to run against a production environment unless forced. To load the demo users (and demo data) into a new database:
 
    ```bash
@@ -111,6 +113,7 @@ The seed is safe to re-run: users, categories, items and settings are only inser
    ```
 
    Then sign in as `admin@thlush.local`, change the password, and delete the demo users in **Users & Roles**. Never leave the default `Password@123` on a public deployment. Set `SEED_PASSWORD` in that command to use a different one from the start.
+
 6. **Deploy.** Push to `main`. Every pull request also gets a preview deployment.
 7. **Check it.** Sign in, open **Reports** and download a PDF, and print a receipt. PDF export uses `pdfkit`, which reads font files at run time, so confirm it once on the first deployment.
 
@@ -130,15 +133,15 @@ It supports light and dark: it follows the visitor's device until they choose Li
 
 `/billing` is a two-pane POS: items on the left (search, category chips, grid or list), the bill on the right. On phones the bill opens from a bar at the bottom.
 
-| Shortcut                 | Action                                           |
-| ------------------------ | ------------------------------------------------ |
-| `/`                      | Focus the search box                             |
-| `Enter` in search        | Add the exact SKU match, or the only result      |
-| `Esc` in search          | Clear the search                                 |
-| `Ctrl/⌘ + Enter`         | Save & print                                     |
-| `Alt + K`                | Send new items to the kitchen                    |
-| `Alt + H`                | Hold bill                                        |
-| `Alt + Backspace`        | Clear the bill                                   |
+| Shortcut          | Action                                      |
+| ----------------- | ------------------------------------------- |
+| `/`               | Focus the search box                        |
+| `Enter` in search | Add the exact SKU match, or the only result |
+| `Esc` in search   | Clear the search                            |
+| `Ctrl/⌘ + Enter`  | Save & print                                |
+| `Alt + K`         | Send new items to the kitchen               |
+| `Alt + H`         | Hold bill                                   |
+| `Alt + Backspace` | Clear the bill                              |
 
 How a bill is saved:
 
@@ -202,9 +205,9 @@ After this, Windows' own "Printers & scanners" can no longer print to it; this a
 
 ### Troubleshooting
 
-- *"The printer is in use by another program or driver"*: on Windows, do the WinUSB step. On macOS, remove any print queue for the printer in System Settings, Printers & Scanners.
-- *No printer icon in the top bar*: the browser has no WebUSB (Safari, Firefox). Use Chrome or Edge.
-- *Prints but does not cut, or cuts through the paper*: the cut command is in `src/lib/escpos.ts` (`cut()`).
+- _"The printer is in use by another program or driver"_: on Windows, do the WinUSB step. On macOS, remove any print queue for the printer in System Settings, Printers & Scanners.
+- _No printer icon in the top bar_: the browser has no WebUSB (Safari, Firefox). Use Chrome or Edge.
+- _Prints but does not cut, or cuts through the paper_: the cut command is in `src/lib/escpos.ts` (`cut()`).
 
 ### Print agent (optional, developer use)
 
@@ -253,14 +256,14 @@ Switch it on in Settings. Stock is only counted for items with **Track stock** t
 
 `/reports` (super admin and manager) has nine reports. Each has a chart, a table with totals, and CSV and PDF export that uses the same query as the page, so the file always matches the screen.
 
-| Report | What it shows |
-| ------ | ------------- |
-| Sales | Bills, items, subtotal, discount, tax and total per day, week or month |
-| By category / item / cashier / payment | Quantity, revenue and share for each, best first |
-| Tax | SGST and CGST collected per tax rate, reconciling to the bill totals |
-| Discounts | Every discounted bill with its cashier and percentage of subtotal |
-| Stock value | Tracked items valued at cost (a snapshot of today, so no date range) |
-| Stock movement | Received, sold, wasted and corrected quantities per item |
+| Report                                 | What it shows                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------- |
+| Sales                                  | Bills, items, subtotal, discount, tax and total per day, week or month |
+| By category / item / cashier / payment | Quantity, revenue and share for each, best first                       |
+| Tax                                    | SGST and CGST collected per tax rate, reconciling to the bill totals   |
+| Discounts                              | Every discounted bill with its cashier and percentage of subtotal      |
+| Stock value                            | Tracked items valued at cost (a snapshot of today, so no date range)   |
+| Stock movement                         | Received, sold, wasted and corrected quantities per item               |
 
 The date range defaults to the last 30 days (Today, 7 days, 30 days or a custom range up to a year) and lives in the URL, so a view can be bookmarked. Figures count completed bills only; void, refunded and held bills are not sales. Tables stop at 500 rows and say so; narrow the range to see the rest. CSV files contain plain numbers and neutralise spreadsheet formulas. PDFs print amounts without a currency symbol (the built-in PDF fonts have no rupee glyph) and state the currency in the header. The two stock reports are hidden when Inventory is off.
 
@@ -298,17 +301,17 @@ docs/             Agent skills and design notes
 
 ### Roles
 
-| Capability                        | Super admin | Manager | Cashier  |
-| --------------------------------- | :---------: | :-----: | :------: |
-| Dashboard, New Bill               | yes         | yes     | yes      |
-| Customers                         | manage      | manage  | look up  |
-| Bill History                      | all bills   | all     | own only |
-| Menu                              | manage      | manage  | read     |
-| Categories, Inventory, Reports    | yes         | yes     | no       |
-| Void / refund bills               | yes         | yes     | no       |
-| Audit log                         | yes         | yes     | no       |
-| Users & roles, Settings           | yes         | no      | no       |
-| Custom Print (thermal)            | yes         | no      | no       |
+| Capability                     | Super admin | Manager | Cashier  |
+| ------------------------------ | :---------: | :-----: | :------: |
+| Dashboard, New Bill            |     yes     |   yes   |   yes    |
+| Customers                      |   manage    | manage  | look up  |
+| Bill History                   |  all bills  |   all   | own only |
+| Menu                           |   manage    | manage  |   read   |
+| Categories, Inventory, Reports |     yes     |   yes   |    no    |
+| Void / refund bills            |     yes     |   yes   |    no    |
+| Audit log                      |     yes     |   yes   |    no    |
+| Users & roles, Settings        |     yes     |   no    |    no    |
+| Custom Print (thermal)         |     yes     |   no    |    no    |
 
 Access is enforced in three places. The proxy (`src/proxy.ts`) does a coarse check from the session token. Server pages and `withAuth` re-read the user from the database on every request, so a revoked role or deleted account takes effect immediately. The sidebar hides what a role cannot open. Newly granted access reaches the proxy after the user signs in again.
 
@@ -318,16 +321,16 @@ Tables use the `app_` prefix: `users`, `categories`, `menu_items`, `customers`, 
 
 ## Features
 
-| Area                                   | Milestone |
-| -------------------------------------- | :-------: |
-| Auth (password + optional SSO), roles, sidebar shell, theme, command palette | 1 (done) |
-| Categories (drag to reorder, block-delete) and Menu CRUD: table/grid, filters, bulk actions, photos, variants, CSV import/export | 2 (done) |
-| POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing | 3 (done) |
-| Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock | 4 (done) |
-| Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock | 5 (done) |
-| Customers, Users & Roles, Audit log, Settings, Profile | 6 (done) |
-| Inventory: stock, movements, alerts, suppliers | 7 (done) |
-| Reports, accessibility pass, docs      | 8 (done) |
+| Area                                                                                                                             | Milestone |
+| -------------------------------------------------------------------------------------------------------------------------------- | :-------: |
+| Auth (password + optional SSO), roles, sidebar shell, theme, command palette                                                     | 1 (done)  |
+| Categories (drag to reorder, block-delete) and Menu CRUD: table/grid, filters, bulk actions, photos, variants, CSV import/export | 2 (done)  |
+| POS billing, bill saving, thermal receipts, PDF, WhatsApp/email sharing                                                          | 3 (done)  |
+| Bill History: filters, sort, CSV/XLSX export, reprint, void and refund with restock                                              | 4 (done)  |
+| Dashboard: KPIs with trends, revenue, hourly, category and payment charts, top items, low stock                                  | 5 (done)  |
+| Customers, Users & Roles, Audit log, Settings, Profile                                                                           | 6 (done)  |
+| Inventory: stock, movements, alerts, suppliers                                                                                   | 7 (done)  |
+| Reports, accessibility pass, docs                                                                                                | 8 (done)  |
 
 ## Roadmap
 

@@ -1,14 +1,5 @@
 import { index, numeric, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import {
-  bigId,
-  bigRef,
-  billStatus,
-  createdAt,
-  discountType,
-  ix,
-  orderType,
-  table,
-} from "./_shared";
+import { bigId, bigRef, billStatus, createdAt, discountType, ix, orderType, table } from "./_shared";
 import { customers } from "./customers";
 import { users } from "./users";
 

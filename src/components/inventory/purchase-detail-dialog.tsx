@@ -40,13 +40,19 @@ export function PurchaseDetailDialog({ purchaseId, onClose, settings }: Purchase
         <DialogHeader>
           <DialogTitle>{detail?.invoiceNo ? `Invoice ${detail.invoiceNo}` : "Purchase"}</DialogTitle>
           <DialogDescription>
-            {detail ? `${formatDate(detail.purchasedAt, { locale: settings.locale, timeZone: settings.timezone })} · ${detail.supplierName ?? "No supplier"}` : "Loading details"}
+            {detail
+              ? `${formatDate(detail.purchasedAt, { locale: settings.locale, timeZone: settings.timezone })} · ${detail.supplierName ?? "No supplier"}`
+              : "Loading details"}
           </DialogDescription>
         </DialogHeader>
         {current?.error ? (
-          <p role="alert" className="text-sm text-destructive">{current.error}</p>
+          <p role="alert" className="text-sm text-destructive">
+            {current.error}
+          </p>
         ) : !detail ? (
-          <div className="flex justify-center py-8" role="status" aria-label="Loading"><LoaderCircle className="animate-spin text-muted-foreground" aria-hidden /></div>
+          <div className="flex justify-center py-8" role="status" aria-label="Loading">
+            <LoaderCircle className="animate-spin text-muted-foreground" aria-hidden />
+          </div>
         ) : (
           <>
             <Table>

@@ -132,8 +132,7 @@ function resolveOptions(
 export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanItem>, settings: PlanSettings): BillPlan {
   const completing = input.action === "complete";
 
-  const anyDiscount =
-    input.discount !== null || input.lines.some((line) => new D(line.discount).greaterThan(0));
+  const anyDiscount = input.discount !== null || input.lines.some((line) => new D(line.discount).greaterThan(0));
   if (anyDiscount && !settings.discountsEnabled) throw HttpError.badRequest("Discounts are turned off.");
 
   // ---- Price every line from the catalog ---------------------------------
@@ -173,7 +172,13 @@ export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanIt
         cgst: r.item.cgst,
         discount: r.line.discount,
       })),
-      ...packaging.map((p) => ({ price: p.price, quantity: 1, sgst: p.sgst, cgst: p.cgst, excludeFromBillDiscount: true })),
+      ...packaging.map((p) => ({
+        price: p.price,
+        quantity: 1,
+        sgst: p.sgst,
+        cgst: p.cgst,
+        excludeFromBillDiscount: true,
+      })),
     ],
     { ignoreTax: settings.ignoreTax, billDiscount: input.discount },
   );
@@ -249,9 +254,7 @@ export function planBill(input: BillSaveInput, items: ReadonlyMap<number, PlanIt
     }
     const applied = payments.reduce((acc, p) => acc.plus(p.amount), new D(0));
     if (!applied.equals(total)) {
-      throw HttpError.badRequest(
-        `Payments add up to ${applied.toFixed(2)} but the bill total is ${total.toFixed(2)}.`,
-      );
+      throw HttpError.badRequest(`Payments add up to ${applied.toFixed(2)} but the bill total is ${total.toFixed(2)}.`);
     }
 
     const cashApplied = payments.filter((p) => p.method === "cash").reduce((acc, p) => acc.plus(p.amount), new D(0));

@@ -36,11 +36,31 @@ export function UserActions({ user, currentUserId }: { user: AdminUser; currentU
       <Button variant="outline" onClick={() => setEditing(true)}>
         <Pencil aria-hidden /> Edit
       </Button>
-      <Button variant="destructive" disabled={self} title={self ? "You can't delete your own account" : undefined} onClick={() => setDeleting(true)}>
+      <Button
+        variant="destructive"
+        disabled={self}
+        title={self ? "You can't delete your own account" : undefined}
+        onClick={() => setDeleting(true)}
+      >
         <Trash2 aria-hidden /> Delete
       </Button>
-      <UserFormDialog open={editing} onOpenChange={setEditing} user={user} currentUserId={currentUserId} onSaved={() => router.refresh()} />
-      <ConfirmDialog open={deleting} onOpenChange={setDeleting} title={`Delete ${user.name}?`} description="They can no longer sign in. Their bills and audit history are kept. This can't be undone." confirmLabel="Delete user" destructive pending={pending} onConfirm={remove} />
+      <UserFormDialog
+        open={editing}
+        onOpenChange={setEditing}
+        user={user}
+        currentUserId={currentUserId}
+        onSaved={() => router.refresh()}
+      />
+      <ConfirmDialog
+        open={deleting}
+        onOpenChange={setDeleting}
+        title={`Delete ${user.name}?`}
+        description="They can no longer sign in. Their bills and audit history are kept. This can't be undone."
+        confirmLabel="Delete user"
+        destructive
+        pending={pending}
+        onConfirm={remove}
+      />
     </>
   );
 }

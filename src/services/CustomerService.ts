@@ -44,7 +44,10 @@ export async function searchCustomers(
       )
       .limit(pageSize)
       .offset((page - 1) * pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(customers).where(where),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(customers)
+      .where(where),
   ]);
   return { rows, total: totals[0]?.n ?? 0 };
 }
@@ -70,7 +73,9 @@ export async function resolveNewCustomer(
   const [existing] = await executor
     .select({ id: customers.id })
     .from(customers)
-    .where(input.phone ? and(sameName, eq(customers.phone, input.phone)) : and(sameName, sql`${customers.phone} is null`))
+    .where(
+      input.phone ? and(sameName, eq(customers.phone, input.phone)) : and(sameName, sql`${customers.phone} is null`),
+    )
     .limit(1);
   if (existing) return existing.id;
 
@@ -103,12 +108,28 @@ const stats = {
 };
 
 function toRecord(r: {
-  id: number; name: string; phone: string | null; email: string | null; notes: string | null; tags: string[];
-  createdAt: Date; orders: number; spend: string; lastVisit: Date | null;
+  id: number;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+  tags: string[];
+  createdAt: Date;
+  orders: number;
+  spend: string;
+  lastVisit: Date | null;
 }): CustomerRecord {
   return {
-    id: r.id, name: r.name, phone: r.phone, email: r.email, notes: r.notes, tags: r.tags,
-    createdAt: r.createdAt.toISOString(), orders: r.orders, spend: new D(r.spend).toFixed(2), lastVisit: r.lastVisit?.toISOString() ?? null,
+    id: r.id,
+    name: r.name,
+    phone: r.phone,
+    email: r.email,
+    notes: r.notes,
+    tags: r.tags,
+    createdAt: r.createdAt.toISOString(),
+    orders: r.orders,
+    spend: new D(r.spend).toFixed(2),
+    lastVisit: r.lastVisit?.toISOString() ?? null,
   };
 }
 
@@ -127,23 +148,43 @@ const ORDER: Record<CustomerSort, SQL[]> = {
 function baseSelect() {
   return db
     .select({
-      id: customers.id, name: customers.name, phone: customers.phone, email: customers.email,
-      notes: customers.notes, tags: customers.tags, createdAt: customers.createdAt, ...stats,
+      id: customers.id,
+      name: customers.name,
+      phone: customers.phone,
+      email: customers.email,
+      notes: customers.notes,
+      tags: customers.tags,
+      createdAt: customers.createdAt,
+      ...stats,
     })
     .from(customers)
     .leftJoin(bills, and(eq(bills.customerId, customers.id), eq(bills.status, "completed")))
     .groupBy(customers.id);
 }
 
-export async function listCustomerRecords(query: CustomerListQuery): Promise<{ rows: CustomerRecord[]; total: number }> {
+export async function listCustomerRecords(
+  query: CustomerListQuery,
+): Promise<{ rows: CustomerRecord[]; total: number }> {
   const term = query.q;
   const pattern = term ? likePattern(term) : null;
   const where = pattern
-    ? or(ilike(customers.name, pattern), ilike(customers.phone, pattern), ilike(customers.email, pattern), sql`exists (select 1 from unnest(${customers.tags}) t where t ilike ${pattern})`)
+    ? or(
+        ilike(customers.name, pattern),
+        ilike(customers.phone, pattern),
+        ilike(customers.email, pattern),
+        sql`exists (select 1 from unnest(${customers.tags}) t where t ilike ${pattern})`,
+      )
     : undefined;
   const [rows, totals] = await Promise.all([
-    baseSelect().where(where).orderBy(...ORDER[query.sort], asc(customers.id)).limit(query.pageSize).offset((query.page - 1) * query.pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(customers).where(where),
+    baseSelect()
+      .where(where)
+      .orderBy(...ORDER[query.sort], asc(customers.id))
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(customers)
+      .where(where),
   ]);
   return { rows: rows.map(toRecord), total: totals[0]?.n ?? 0 };
 }
@@ -161,7 +202,10 @@ async function assertPhoneFree(phone: string | null, exceptId: number | null) {
     .from(customers)
     .where(and(eq(customers.phone, phone), exceptId === null ? undefined : ne(customers.id, exceptId)))
     .limit(1);
-  if (clash) throw new HttpError(409, "A customer with this phone number already exists.", { phone: ["This phone number is already in use."] });
+  if (clash)
+    throw new HttpError(409, "A customer with this phone number already exists.", {
+      phone: ["This phone number is already in use."],
+    });
 }
 
 export async function createCustomer(input: CustomerData, userId: string): Promise<CustomerRecord> {
@@ -172,13 +216,20 @@ export async function createCustomer(input: CustomerData, userId: string): Promi
       .values({ name: input.name, phone: input.phone, email: input.email, notes: input.notes, tags: input.tags })
       .returning({ id: customers.id });
     if (!created) throw new Error("Customer insert returned no row");
-    await AuditService.record({ userId, action: "customer.create", entity: "customer", entityId: created.id, metadata: { name: input.name } }, tx);
+    await AuditService.record(
+      { userId, action: "customer.create", entity: "customer", entityId: created.id, metadata: { name: input.name } },
+      tx,
+    );
     return created.id;
   });
   return getCustomerRecord(id);
 }
 
-export async function updateCustomer(id: number, patch: Partial<CustomerData>, userId: string): Promise<CustomerRecord> {
+export async function updateCustomer(
+  id: number,
+  patch: Partial<CustomerData>,
+  userId: string,
+): Promise<CustomerRecord> {
   const values: Partial<typeof customers.$inferInsert> = {};
   if (patch.name !== undefined) values.name = patch.name;
   if (patch.phone !== undefined) values.phone = patch.phone;
@@ -194,7 +245,16 @@ export async function updateCustomer(id: number, patch: Partial<CustomerData>, u
           ? await tx.update(customers).set(values).where(eq(customers.id, id)).returning({ id: customers.id })
           : await tx.select({ id: customers.id }).from(customers).where(eq(customers.id, id));
       if (!updated) throw HttpError.notFound("Customer not found.");
-      await AuditService.record({ userId, action: "customer.update", entity: "customer", entityId: id, metadata: { fields: Object.keys(values) } }, tx);
+      await AuditService.record(
+        {
+          userId,
+          action: "customer.update",
+          entity: "customer",
+          entityId: id,
+          metadata: { fields: Object.keys(values) },
+        },
+        tx,
+      );
     });
   } catch (error) {
     if (isUniqueViolation(error)) throw HttpError.conflict("That customer already exists.");
@@ -208,10 +268,19 @@ export async function deleteCustomer(id: number, userId: string): Promise<{ bill
   return db.transaction(async (tx) => {
     const [customer] = await tx.select().from(customers).where(eq(customers.id, id)).for("update");
     if (!customer) throw HttpError.notFound("Customer not found.");
-    const [kept] = await tx.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(bills).where(eq(bills.customerId, id));
+    const [kept] = await tx
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(bills)
+      .where(eq(bills.customerId, id));
     await tx.delete(customers).where(eq(customers.id, id));
     await AuditService.record(
-      { userId, action: "customer.delete", entity: "customer", entityId: id, metadata: { name: customer.name, billsKept: kept?.n ?? 0 } },
+      {
+        userId,
+        action: "customer.delete",
+        entity: "customer",
+        entityId: id,
+        metadata: { name: customer.name, billsKept: kept?.n ?? 0 },
+      },
       tx,
     );
     return { billsKept: kept?.n ?? 0 };

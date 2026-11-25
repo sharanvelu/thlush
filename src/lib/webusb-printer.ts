@@ -18,7 +18,9 @@ const isPrinter = (device: USBDevice) =>
   PRINTER_FILTERS.some((f) =>
     f.vendorId !== undefined
       ? device.vendorId === f.vendorId
-      : device.configurations.some((c) => c.interfaces.some((i) => i.alternates.some((a) => a.interfaceClass === f.classCode))),
+      : device.configurations.some((c) =>
+          c.interfaces.some((i) => i.alternates.some((a) => a.interfaceClass === f.classCode)),
+        ),
   );
 
 /** The printer the cashier connected earlier, if any. Needs no click, so it works on page load. */
@@ -46,7 +48,7 @@ function explain(error: unknown): UsbPrintError {
     const onWindows = typeof navigator !== "undefined" && /windows/i.test(navigator.userAgent);
     return new UsbPrintError(
       onWindows
-        ? "Windows is holding the printer with its own printer driver, so the browser cannot use it. Switch the printer to the WinUSB driver once (steps in the printer setup guide), or choose \"Print dialog\" in the printer menu at the top to print through the driver."
+        ? 'Windows is holding the printer with its own printer driver, so the browser cannot use it. Switch the printer to the WinUSB driver once (steps in the printer setup guide), or choose "Print dialog" in the printer menu at the top to print through the driver.'
         : "The printer is in use by another program or driver. Close other apps that use it, remove any print queue for it, and try again.",
     );
   }
@@ -58,9 +60,15 @@ async function write(device: USBDevice, bytes: Uint8Array): Promise<void> {
   await device.open();
   try {
     if (device.configuration === null) await device.selectConfiguration(1);
-    const iface = device.configuration?.interfaces.find(
-      (i) => i.alternates.some((a) => a.interfaceClass === 0x07) && i.alternates.some((a) => a.endpoints.some((e) => e.direction === "out")),
-    ) ?? device.configuration?.interfaces.find((i) => i.alternates.some((a) => a.endpoints.some((e) => e.direction === "out")));
+    const iface =
+      device.configuration?.interfaces.find(
+        (i) =>
+          i.alternates.some((a) => a.interfaceClass === 0x07) &&
+          i.alternates.some((a) => a.endpoints.some((e) => e.direction === "out")),
+      ) ??
+      device.configuration?.interfaces.find((i) =>
+        i.alternates.some((a) => a.endpoints.some((e) => e.direction === "out")),
+      );
     const out = iface?.alternates.flatMap((a) => a.endpoints).find((e) => e.direction === "out");
     if (!iface || !out) throw new UsbPrintError("This device has no printer output.");
 
@@ -83,9 +91,11 @@ let queue: Promise<unknown> = Promise.resolve();
 
 /** Sends bytes to the connected printer. Throws `UsbPrintError` with a message fit to show the cashier. */
 export function printBytesUsb(device: USBDevice, bytes: Uint8Array): Promise<void> {
-  const job = queue.then(() => write(device, bytes)).catch((error: unknown) => {
-    throw explain(error);
-  });
+  const job = queue
+    .then(() => write(device, bytes))
+    .catch((error: unknown) => {
+      throw explain(error);
+    });
   queue = job.catch(() => {});
   return job;
 }

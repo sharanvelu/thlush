@@ -87,12 +87,7 @@ function nonNegative(value: Numeric): Dec {
  * Unit price including tax, as shown on a receipt. Tax is rounded per component,
  * exactly like a bill line, so a single unit's price matches its line amount.
  */
-export function unitPriceInclTax(
-  price: Numeric,
-  sgst: Numeric,
-  cgst: Numeric,
-  ignoreTax = false,
-): string {
+export function unitPriceInclTax(price: Numeric, sgst: Numeric, cgst: Numeric, ignoreTax = false): string {
   const base = nonNegative(price);
   if (ignoreTax) return round2(base).toFixed(2);
   const sgstAmount = round2(base.times(nonNegative(sgst)).div(100));
@@ -101,10 +96,7 @@ export function unitPriceInclTax(
 }
 
 /** Resolves a bill-level discount to a capped, 2-dp amount. */
-export function resolveBillDiscount(
-  base: Numeric,
-  discount: BillDiscountInput | null | undefined,
-): Dec {
+export function resolveBillDiscount(base: Numeric, discount: BillDiscountInput | null | undefined): Dec {
   const baseAmount = nonNegative(base);
   if (!discount || baseAmount.isZero()) return ZERO;
   const value = nonNegative(discount.value);
@@ -152,10 +144,7 @@ export function calculateBill(lines: LineInput[], options: CalculationOptions = 
   const discountable = (s: (typeof stage1)[number]): Dec => (s.line.excludeFromBillDiscount ? ZERO : s.afterLine);
   const afterLineSum = stage1.reduce((acc, s) => acc.plus(discountable(s)), ZERO);
   const billDiscountAmount = resolveBillDiscount(afterLineSum, billDiscount);
-  const shares = allocateProportionally(
-    billDiscountAmount,
-    stage1.map(discountable),
-  );
+  const shares = allocateProportionally(billDiscountAmount, stage1.map(discountable));
 
   // Steps 5-7: tax per line on the discounted taxable amount.
   const results: LineResult[] = stage1.map((s, i) => {
@@ -178,8 +167,7 @@ export function calculateBill(lines: LineInput[], options: CalculationOptions = 
   });
 
   // Step 8: totals are sums of rounded line values.
-  const add = (pick: (r: LineResult) => string): Dec =>
-    results.reduce((acc, r) => acc.plus(pick(r)), ZERO);
+  const add = (pick: (r: LineResult) => string): Dec => results.reduce((acc, r) => acc.plus(pick(r)), ZERO);
 
   const subtotal = add((r) => r.gross);
   const lineDiscounts = add((r) => r.lineDiscount);

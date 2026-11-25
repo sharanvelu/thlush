@@ -72,7 +72,9 @@ export default async function CustomerPage({ params, searchParams }: PageProps<"
       {customer.tags.length > 0 ? (
         <p className="-mt-4 mb-6 flex flex-wrap gap-1.5">
           {customer.tags.map((t) => (
-            <Badge key={t} variant="secondary">{t}</Badge>
+            <Badge key={t} variant="secondary">
+              {t}
+            </Badge>
           ))}
         </p>
       ) : null}
@@ -120,7 +122,9 @@ export default async function CustomerPage({ params, searchParams }: PageProps<"
           <CardContent>
             {history.total === 0 ? (
               <p className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
-                {hasPermission(user.role, "bills.view_all") ? "No bills for this customer yet." : "You haven't billed this customer yet."}
+                {hasPermission(user.role, "bills.view_all")
+                  ? "No bills for this customer yet."
+                  : "You haven't billed this customer yet."}
               </p>
             ) : (
               <>
@@ -138,13 +142,27 @@ export default async function CustomerPage({ params, searchParams }: PageProps<"
                       {history.rows.map((bill) => (
                         <TableRow key={bill.id}>
                           <TableCell>
-                            <Link href={`/receipt/${bill.id}`} className="font-mono text-xs font-medium underline-offset-4 hover:underline">
+                            <Link
+                              href={`/receipt/${bill.id}`}
+                              className="font-mono text-xs font-medium underline-offset-4 hover:underline"
+                            >
                               {bill.billNo}
                             </Link>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(bill.createdAt, { locale, timeZone: timezone })}</TableCell>
-                          <TableCell className={cn("text-right tabular-nums", bill.status !== "completed" && "text-muted-foreground line-through")}>{money(bill.total, bill.currency)}</TableCell>
-                          <TableCell><BillStatusBadge status={bill.status} /></TableCell>
+                          <TableCell className="whitespace-nowrap text-muted-foreground">
+                            {formatDateTime(bill.createdAt, { locale, timeZone: timezone })}
+                          </TableCell>
+                          <TableCell
+                            className={cn(
+                              "text-right tabular-nums",
+                              bill.status !== "completed" && "text-muted-foreground line-through",
+                            )}
+                          >
+                            {money(bill.total, bill.currency)}
+                          </TableCell>
+                          <TableCell>
+                            <BillStatusBadge status={bill.status} />
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -152,13 +170,27 @@ export default async function CustomerPage({ params, searchParams }: PageProps<"
                 </div>
                 {totalPages > 1 ? (
                   <nav aria-label="Pagination" className="mt-4 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Page {page} of {totalPages}</span>
+                    <span className="text-muted-foreground">
+                      Page {page} of {totalPages}
+                    </span>
                     <span className="flex gap-2">
                       <Button asChild variant="outline" size="icon" aria-disabled={page <= 1}>
-                        <Link href={`/customers/${id}?page=${page - 1}`} aria-label="Previous page" className={cn(page <= 1 && "pointer-events-none opacity-50")}><ChevronLeft className="size-4" aria-hidden /></Link>
+                        <Link
+                          href={`/customers/${id}?page=${page - 1}`}
+                          aria-label="Previous page"
+                          className={cn(page <= 1 && "pointer-events-none opacity-50")}
+                        >
+                          <ChevronLeft className="size-4" aria-hidden />
+                        </Link>
                       </Button>
                       <Button asChild variant="outline" size="icon" aria-disabled={page >= totalPages}>
-                        <Link href={`/customers/${id}?page=${page + 1}`} aria-label="Next page" className={cn(page >= totalPages && "pointer-events-none opacity-50")}><ChevronRight className="size-4" aria-hidden /></Link>
+                        <Link
+                          href={`/customers/${id}?page=${page + 1}`}
+                          aria-label="Next page"
+                          className={cn(page >= totalPages && "pointer-events-none opacity-50")}
+                        >
+                          <ChevronRight className="size-4" aria-hidden />
+                        </Link>
                       </Button>
                     </span>
                   </nav>

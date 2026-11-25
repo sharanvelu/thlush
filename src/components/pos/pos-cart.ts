@@ -92,10 +92,7 @@ export function cartReducer(state: CartLine[], action: CartAction): CartLine[] {
           l.key === key ? { ...l, quantity: new D(l.quantity).plus(stepFor(l.item)).toString() } : l,
         );
       }
-      return [
-        ...state,
-        { key, item: action.item, variant, addons, quantity: "1", discount: "", sentQty: "0" },
-      ];
+      return [...state, { key, item: action.item, variant, addons, quantity: "1", discount: "", sentQty: "0" }];
     }
     case "step":
       return state.flatMap((l) => {
@@ -153,7 +150,13 @@ export type CartTotals = BillTotals & { packaging: PackagingLine[] };
 export function cartTotals(lines: CartLine[], options: CartTotalsOptions): CartTotals {
   const packaging = options.packaging
     ? packagingLines(
-        lines.map((l) => ({ charge: l.item.packagingCharge, quantity: l.quantity, unit: l.item.unit, sgst: l.item.sgst, cgst: l.item.cgst })),
+        lines.map((l) => ({
+          charge: l.item.packagingCharge,
+          quantity: l.quantity,
+          unit: l.item.unit,
+          sgst: l.item.sgst,
+          cgst: l.item.cgst,
+        })),
         options.packaging.orderType,
         options.packaging.settings,
       )
@@ -167,7 +170,13 @@ export function cartTotals(lines: CartLine[], options: CartTotalsOptions): CartT
         cgst: l.item.cgst,
         discount: l.discount || "0",
       })),
-      ...packaging.map((p) => ({ price: p.price, quantity: 1, sgst: p.sgst, cgst: p.cgst, excludeFromBillDiscount: true })),
+      ...packaging.map((p) => ({
+        price: p.price,
+        quantity: 1,
+        sgst: p.sgst,
+        cgst: p.cgst,
+        excludeFromBillDiscount: true,
+      })),
     ],
     { ignoreTax: options.ignoreTax, billDiscount: options.billDiscount },
   );
@@ -249,12 +258,14 @@ export function resolvePayment(state: PaymentState, totalAmount: string): Paymen
     });
   }
 
-  const rows = state.rows
-    .map((r) => ({ ...r, value: toDecimal(r.amount) }))
-    .filter((r) => r.value.greaterThan(0));
+  const rows = state.rows.map((r) => ({ ...r, value: toDecimal(r.amount) })).filter((r) => r.value.greaterThan(0));
   const handed = rows.reduce((acc, r) => acc.plus(r.value), new D(0));
   if (handed.lessThan(total)) {
-    return done({ valid: false, remaining: total.minus(handed).toFixed(2), message: `${total.minus(handed).toFixed(2)} still to collect.` });
+    return done({
+      valid: false,
+      remaining: total.minus(handed).toFixed(2),
+      message: `${total.minus(handed).toFixed(2)} still to collect.`,
+    });
   }
 
   const change = handed.minus(total);

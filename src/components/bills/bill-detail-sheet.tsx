@@ -39,13 +39,20 @@ export function BillDetailSheet({ billId, onClose, canVoid, settings, onChanged 
           <SheetDescription>Items, tax, payments and actions for this bill.</SheetDescription>
         </SheetHeader>
         {/* Mounted per bill so each opening starts fresh and loads its own data. */}
-        {billId !== null ? <Body key={billId} billId={billId} canVoid={canVoid} settings={settings} onChanged={onChanged} /> : null}
+        {billId !== null ? (
+          <Body key={billId} billId={billId} canVoid={canVoid} settings={settings} onChanged={onChanged} />
+        ) : null}
       </SheetContent>
     </Sheet>
   );
 }
 
-function Body({ billId, canVoid, settings, onChanged }: Omit<BillDetailSheetProps, "onClose" | "billId"> & { billId: number }) {
+function Body({
+  billId,
+  canVoid,
+  settings,
+  onChanged,
+}: Omit<BillDetailSheetProps, "onClose" | "billId"> & { billId: number }) {
   const [bill, setBill] = useState<BillDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reversing, setReversing] = useState(false);
@@ -81,7 +88,12 @@ function Body({ billId, canVoid, settings, onChanged }: Omit<BillDetailSheetProp
     ["Customer", bill.customer?.name ?? settings.walkInLabel],
     ["Phone", bill.customer?.phone ?? null],
     ["Cashier", bill.cashier?.name ?? null],
-    ["Order", [bill.orderType ? ORDER_TYPE_LABELS[bill.orderType] : null, bill.tableNo ? `Table ${bill.tableNo}` : null].filter(Boolean).join(" · ") || null],
+    [
+      "Order",
+      [bill.orderType ? ORDER_TYPE_LABELS[bill.orderType] : null, bill.tableNo ? `Table ${bill.tableNo}` : null]
+        .filter(Boolean)
+        .join(" · ") || null,
+    ],
     ["Notes", bill.notes],
   ];
 
@@ -137,14 +149,23 @@ function Body({ billId, canVoid, settings, onChanged }: Omit<BillDetailSheetProp
                       ) : null}
                     </td>
                     <td className="py-2 text-right tabular-nums">{new D(item.quantity).toString()}</td>
-                    <td className="py-2 text-right tabular-nums">{money(new D(item.price).minus(addonsUnit).toFixed(2))}</td>
+                    <td className="py-2 text-right tabular-nums">
+                      {money(new D(item.price).minus(addonsUnit).toFixed(2))}
+                    </td>
                     <td className="py-2 text-right tabular-nums">{money(row.amount)}</td>
                   </tr>
                   {addons.map((addon, i) => (
-                    <tr key={addon.name} className={`text-xs text-muted-foreground ${i === addons.length - 1 ? "" : "border-b-0"}`}>
-                      <td className={`pr-2 pl-4 ${i === addons.length - 1 ? "pb-2" : "pb-0.5"}`}>{row.extras[i]?.label}</td>
+                    <tr
+                      key={addon.name}
+                      className={`text-xs text-muted-foreground ${i === addons.length - 1 ? "" : "border-b-0"}`}
+                    >
+                      <td className={`pr-2 pl-4 ${i === addons.length - 1 ? "pb-2" : "pb-0.5"}`}>
+                        {row.extras[i]?.label}
+                      </td>
                       <td />
-                      <td className="text-right tabular-nums">{money(new D(addon.price).times(addon.quantity ?? 1).toFixed(2))}</td>
+                      <td className="text-right tabular-nums">
+                        {money(new D(addon.price).times(addon.quantity ?? 1).toFixed(2))}
+                      </td>
                       <td className="text-right tabular-nums">{money(row.extras[i]?.amount ?? "0")}</td>
                     </tr>
                   ))}

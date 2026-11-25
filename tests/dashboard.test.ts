@@ -5,24 +5,55 @@ const NOW = new Date("2026-10-30T10:00:00Z"); // 15:30 on the 30th in Kolkata
 
 describe("resolveRange", () => {
   it("defaults to today", () => {
-    expect(resolveRange(undefined, undefined, undefined, "Asia/Kolkata", NOW)).toMatchObject({ key: "today", from: "2026-10-30", to: "2026-10-30", days: 1, prevFrom: "2026-10-29", prevTo: "2026-10-29" });
+    expect(resolveRange(undefined, undefined, undefined, "Asia/Kolkata", NOW)).toMatchObject({
+      key: "today",
+      from: "2026-10-30",
+      to: "2026-10-30",
+      days: 1,
+      prevFrom: "2026-10-29",
+      prevTo: "2026-10-29",
+    });
     expect(resolveRange("nonsense", undefined, undefined, "UTC", NOW).key).toBe("today");
   });
 
   it("uses the business timezone for today", () => {
-    expect(resolveRange("today", undefined, undefined, "Asia/Kolkata", new Date("2026-10-30T20:00:00Z")).from).toBe("2026-10-31");
+    expect(resolveRange("today", undefined, undefined, "Asia/Kolkata", new Date("2026-10-30T20:00:00Z")).from).toBe(
+      "2026-10-31",
+    );
   });
 
   it("covers 7 and 30 days ending today, with an equal previous period", () => {
-    expect(resolveRange("7d", undefined, undefined, "UTC", NOW)).toMatchObject({ from: "2026-10-24", to: "2026-10-30", days: 7, prevFrom: "2026-10-17", prevTo: "2026-10-23" });
-    expect(resolveRange("30d", undefined, undefined, "UTC", NOW)).toMatchObject({ days: 30, from: "2026-10-01", prevFrom: "2026-09-01", prevTo: "2026-09-30" });
+    expect(resolveRange("7d", undefined, undefined, "UTC", NOW)).toMatchObject({
+      from: "2026-10-24",
+      to: "2026-10-30",
+      days: 7,
+      prevFrom: "2026-10-17",
+      prevTo: "2026-10-23",
+    });
+    expect(resolveRange("30d", undefined, undefined, "UTC", NOW)).toMatchObject({
+      days: 30,
+      from: "2026-10-01",
+      prevFrom: "2026-09-01",
+      prevTo: "2026-09-30",
+    });
   });
 
   it("accepts a custom range, swaps a reversed one and never looks into the future", () => {
-    expect(resolveRange("custom", "2026-10-01", "2026-10-10", "UTC", NOW)).toMatchObject({ key: "custom", days: 10, prevFrom: "2026-09-21", prevTo: "2026-09-30" });
-    expect(resolveRange("custom", "2026-10-10", "2026-10-01", "UTC", NOW)).toMatchObject({ from: "2026-10-01", to: "2026-10-10" });
+    expect(resolveRange("custom", "2026-10-01", "2026-10-10", "UTC", NOW)).toMatchObject({
+      key: "custom",
+      days: 10,
+      prevFrom: "2026-09-21",
+      prevTo: "2026-09-30",
+    });
+    expect(resolveRange("custom", "2026-10-10", "2026-10-01", "UTC", NOW)).toMatchObject({
+      from: "2026-10-01",
+      to: "2026-10-10",
+    });
     expect(resolveRange("custom", "2026-10-20", "2027-01-01", "UTC", NOW).to).toBe("2026-10-30");
-    expect(resolveRange("custom", "2030-01-01", "2030-02-01", "UTC", NOW)).toMatchObject({ from: "2026-10-30", to: "2026-10-30" });
+    expect(resolveRange("custom", "2030-01-01", "2030-02-01", "UTC", NOW)).toMatchObject({
+      from: "2026-10-30",
+      to: "2026-10-30",
+    });
   });
 
   it("caps a custom range at a year and falls back on bad dates", () => {

@@ -85,9 +85,7 @@ describe("calculateBill: tax", () => {
 
 describe("calculateBill: line discounts", () => {
   it("applies a flat line discount before tax", () => {
-    const result = calculateBill([
-      { price: "100", quantity: 2, sgst: "2.5", cgst: "2.5", discount: "20" },
-    ]);
+    const result = calculateBill([{ price: "100", quantity: 2, sgst: "2.5", cgst: "2.5", discount: "20" }]);
     // taxable 180 -> tax 4.50 + 4.50
     expect(result.lineDiscounts).toBe("20.00");
     expect(result.totalDiscount).toBe("20.00");
@@ -183,10 +181,7 @@ describe("calculateBill: bill discounts", () => {
       ],
       { billDiscount: { type: "percent", value: 12.5 } },
     );
-    const expected = new D(result.subtotal)
-      .minus(result.totalDiscount)
-      .plus(result.totalTax)
-      .toFixed(2);
+    const expected = new D(result.subtotal).minus(result.totalDiscount).plus(result.totalTax).toFixed(2);
     expect(result.grandTotal).toBe(expected);
     const lineSum = result.lines.reduce((acc, l) => acc.plus(l.total), new D(0)).toFixed(2);
     expect(result.grandTotal).toBe(lineSum);

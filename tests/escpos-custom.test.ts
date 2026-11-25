@@ -1,9 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { buildCustomPrintJob, isBlankSection, layoutCustomText, lineWidth, type CustomSection } from "@/lib/escpos-custom";
+import {
+  buildCustomPrintJob,
+  isBlankSection,
+  layoutCustomText,
+  lineWidth,
+  type CustomSection,
+} from "@/lib/escpos-custom";
 import { canAccessPath, hasPermission } from "@/config/permissions";
 
 const CUT = [0x1d, 0x56, 66, 0];
-const section = (text: string, over: Partial<CustomSection> = {}): CustomSection => ({ text, align: "left", bold: false, large: false, ...over });
+const section = (text: string, over: Partial<CustomSection> = {}): CustomSection => ({
+  text,
+  align: "left",
+  bold: false,
+  large: false,
+  ...over,
+});
 const decode = (bytes: Uint8Array) => Buffer.from(bytes).toString("latin1");
 
 function cutOffsets(bytes: Uint8Array): number[] {
@@ -26,7 +38,9 @@ describe("buildCustomPrintJob", () => {
   });
 
   it("skips empty and whitespace-only blocks, and prints nothing for no text", () => {
-    expect(cutOffsets(buildCustomPrintJob([section("Only one"), section("  \n \n"), section("")], "58mm"))).toHaveLength(1);
+    expect(
+      cutOffsets(buildCustomPrintJob([section("Only one"), section("  \n \n"), section("")], "58mm")),
+    ).toHaveLength(1);
     expect(buildCustomPrintJob([section("")], "80mm")).toHaveLength(0);
     expect(isBlankSection(section(" \n"))).toBe(true);
   });
@@ -56,7 +70,12 @@ describe("layoutCustomText", () => {
   });
 
   it("halves the line width for large text", () => {
-    expect([lineWidth("80mm", false), lineWidth("80mm", true), lineWidth("58mm", false), lineWidth("58mm", true)]).toEqual([48, 24, 32, 16]);
+    expect([
+      lineWidth("80mm", false),
+      lineWidth("80mm", true),
+      lineWidth("58mm", false),
+      lineWidth("58mm", true),
+    ]).toEqual([48, 24, 32, 16]);
   });
 });
 

@@ -29,7 +29,8 @@ export function receiptToEscPos(model: ReceiptModel): Uint8Array {
   if (model.headerText) p.line(model.headerText);
   p.align("left").rule();
 
-  if (model.statusNote) p.align("center").bold(true).size(2, 2).line(model.statusNote).size(1, 1).bold(false).align("left");
+  if (model.statusNote)
+    p.align("center").bold(true).size(2, 2).line(model.statusNote).size(1, 1).bold(false).align("left");
   p.row("Bill no", model.billNo);
   p.row("Date", model.dateText);
   p.row("Customer", model.customerName);
@@ -86,17 +87,27 @@ export function kitchenSlipToEscPos(model: KitchenSlipModel, columns: number): U
   if (model.kotLabel) {
     const date = toPrinterText(model.dateText);
     const gap = Math.max(1, columns - model.kotLabel.length - date.length);
-    p.size(1, 1).bold(false).text(`${date}${" ".repeat(gap)}`).bold(true).size(1, 2).line(model.kotLabel);
+    p.size(1, 1)
+      .bold(false)
+      .text(`${date}${" ".repeat(gap)}`)
+      .bold(true)
+      .size(1, 2)
+      .line(model.kotLabel);
   }
   // Order type and table in the plain text the receipt footer uses, then the short order number in bold on
   // the same line (the last line, if the order type wraps).
   p.size(1, 1).bold(false);
   const orderNo = model.orderNo ?? "";
-  const orderLines = model.orderLine ? wrapText(model.orderLine, Math.max(1, columns - (orderNo ? orderNo.length + 1 : 0))) : [];
+  const orderLines = model.orderLine
+    ? wrapText(model.orderLine, Math.max(1, columns - (orderNo ? orderNo.length + 1 : 0)))
+    : [];
   if (orderLines.length === 0 && orderNo) p.bold(true).line(orderNo).bold(false);
   orderLines.forEach((l, i) => {
     if (orderNo && i === orderLines.length - 1) {
-      p.text(`${l}${" ".repeat(Math.max(1, columns - l.length - orderNo.length))}`).bold(true).line(orderNo).bold(false);
+      p.text(`${l}${" ".repeat(Math.max(1, columns - l.length - orderNo.length))}`)
+        .bold(true)
+        .line(orderNo)
+        .bold(false);
     } else {
       p.line(l);
     }

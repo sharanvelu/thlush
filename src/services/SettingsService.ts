@@ -32,11 +32,7 @@ export async function getSettingsGroup<K extends SettingsKey>(
   key: K,
   executor: DbExecutor = db,
 ): Promise<AppSettings[K]> {
-  const [row] = await executor
-    .select()
-    .from(schema.settings)
-    .where(eq(schema.settings.key, key))
-    .limit(1);
+  const [row] = await executor.select().from(schema.settings).where(eq(schema.settings.key, key)).limit(1);
   return mergeGroup(key, row?.value);
 }
 
@@ -76,7 +72,11 @@ export async function ensureDefaultSettings(executor: DbExecutor = db): Promise<
  * Validates and saves one settings group, with its audit entry, in one transaction.
  * Unknown fields are dropped, and a group is saved whole so partial forms cannot leave it half-set.
  */
-export async function saveSettingsGroup<K extends SettingsKey>(key: K, values: unknown, userId: string): Promise<AppSettings[K]> {
+export async function saveSettingsGroup<K extends SettingsKey>(
+  key: K,
+  values: unknown,
+  userId: string,
+): Promise<AppSettings[K]> {
   const parsed = settingsSchemas[key].safeParse(values);
   if (!parsed.success) {
     const fieldErrors: Record<string, string[]> = {};
@@ -90,7 +90,10 @@ export async function saveSettingsGroup<K extends SettingsKey>(key: K, values: u
     const after = saved as unknown as Record<string, unknown>;
     const prior = before as unknown as Record<string, unknown>;
     const changed = Object.keys(after).filter((field) => JSON.stringify(after[field]) !== JSON.stringify(prior[field]));
-    await AuditService.record({ userId, action: "settings.update", entity: "settings", entityId: key, metadata: { group: key, changed } }, tx);
+    await AuditService.record(
+      { userId, action: "settings.update", entity: "settings", entityId: key, metadata: { group: key, changed } },
+      tx,
+    );
     return saved;
   });
 }

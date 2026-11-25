@@ -19,10 +19,28 @@ import { getSettings } from "@/services/SettingsService";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const QUICK_ACTIONS: Array<{ label: string; hint: string; href: string; icon: typeof ReceiptText; permission: Permission }> = [
+const QUICK_ACTIONS: Array<{
+  label: string;
+  hint: string;
+  href: string;
+  icon: typeof ReceiptText;
+  permission: Permission;
+}> = [
   { label: "New Bill", hint: "Open the POS", href: "/billing", icon: ReceiptText, permission: "bills.create" },
-  { label: "Add Menu Item", hint: "Create a product", href: "/menu?new=1", icon: PackagePlus, permission: "menu.manage" },
-  { label: "Add Category", hint: "Organise the menu", href: "/categories?new=1", icon: FolderPlus, permission: "categories.manage" },
+  {
+    label: "Add Menu Item",
+    hint: "Create a product",
+    href: "/menu?new=1",
+    icon: PackagePlus,
+    permission: "menu.manage",
+  },
+  {
+    label: "Add Category",
+    hint: "Organise the menu",
+    href: "/categories?new=1",
+    icon: FolderPlus,
+    permission: "categories.manage",
+  },
   { label: "View History", hint: "Past bills", href: "/bills", icon: History, permission: "bills.view_own" },
 ];
 
@@ -45,8 +63,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
   const none = (k: { current: string; previous: string }) => new D(k.current).isZero() && new D(k.previous).isZero();
   const k = data.kpis;
   const actions = QUICK_ACTIONS.filter((a) => hasPermission(user.role, a.permission));
-  const periodLabel =
-    range.days === 1 ? "this day" : `${range.from} to ${range.to}`;
+  const periodLabel = range.days === 1 ? "this day" : `${range.from} to ${range.to}`;
 
   const overall: Array<[string, string]> = [
     ["Total bills", data.overall.bills.toLocaleString(locale)],
@@ -67,14 +84,42 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
       </div>
 
       <section aria-labelledby="kpi-heading">
-        <h2 id="kpi-heading" className="sr-only">Key figures for {periodLabel}</h2>
+        <h2 id="kpi-heading" className="sr-only">
+          Key figures for {periodLabel}
+        </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Bills" value={Number(k.bills.current).toLocaleString(locale)} change={k.bills.change} quiet={none(k.bills)} comparedTo={compared} />
-          <KpiCard label="Revenue" value={money(k.revenue.current)} change={k.revenue.change} quiet={none(k.revenue)} comparedTo={compared} />
-          <KpiCard label="Average order value" value={money(k.averageOrder.current)} change={k.averageOrder.change} quiet={none(k.averageOrder)} comparedTo={compared} />
-          <KpiCard label="Items sold" value={Number(k.itemsSold.current).toLocaleString(locale)} change={k.itemsSold.change} quiet={none(k.itemsSold)} comparedTo={compared} />
+          <KpiCard
+            label="Bills"
+            value={Number(k.bills.current).toLocaleString(locale)}
+            change={k.bills.change}
+            quiet={none(k.bills)}
+            comparedTo={compared}
+          />
+          <KpiCard
+            label="Revenue"
+            value={money(k.revenue.current)}
+            change={k.revenue.change}
+            quiet={none(k.revenue)}
+            comparedTo={compared}
+          />
+          <KpiCard
+            label="Average order value"
+            value={money(k.averageOrder.current)}
+            change={k.averageOrder.change}
+            quiet={none(k.averageOrder)}
+            comparedTo={compared}
+          />
+          <KpiCard
+            label="Items sold"
+            value={Number(k.itemsSold.current).toLocaleString(locale)}
+            change={k.itemsSold.change}
+            quiet={none(k.itemsSold)}
+            comparedTo={compared}
+          />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Counts completed bills only. Voided, refunded and held bills are left out.</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Counts completed bills only. Voided, refunded and held bills are left out.
+        </p>
       </section>
 
       <section aria-label="Overall totals">
@@ -89,7 +134,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
       </section>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <ChartCard className="xl:col-span-2" title="Revenue" description={data.revenueSeries.granularity === "hour" ? "By hour of the day" : "By day"}>
+        <ChartCard
+          className="xl:col-span-2"
+          title="Revenue"
+          description={data.revenueSeries.granularity === "hour" ? "By hour of the day" : "By day"}
+        >
           <RevenueChart series={data.revenueSeries} {...fmt} />
         </ChartCard>
         <ChartCard title="Sales by category" description="Share of revenue">
@@ -113,14 +162,22 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
             </Button>
           }
         >
-          <RecentBills bills={data.recentBills} locale={locale} timeZone={timezone} walkIn={settings.billing.defaultCustomerName || "Walk-in Customer"} />
+          <RecentBills
+            bills={data.recentBills}
+            locale={locale}
+            timeZone={timezone}
+            walkIn={settings.billing.defaultCustomerName || "Walk-in Customer"}
+          />
         </ChartCard>
         <div className="flex flex-col gap-4">
           <ChartCard title="Top 5 items" description="By quantity sold">
             <TopItems items={data.topItems} {...fmt} />
           </ChartCard>
           {data.lowStock && settings.features.inventory ? (
-            <ChartCard title="Low stock" description={data.lowStock.total > 0 ? `${data.lowStock.total} to reorder` : undefined}>
+            <ChartCard
+              title="Low stock"
+              description={data.lowStock.total > 0 ? `${data.lowStock.total} to reorder` : undefined}
+            >
               <LowStock data={data.lowStock} />
             </ChartCard>
           ) : null}
@@ -129,10 +186,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
 
       {actions.length > 0 ? (
         <section aria-labelledby="actions-heading">
-          <h2 id="actions-heading" className="mb-3 text-sm font-medium text-muted-foreground">Quick actions</h2>
+          <h2 id="actions-heading" className="mb-3 text-sm font-medium text-muted-foreground">
+            Quick actions
+          </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {actions.map(({ label, hint, href, icon: Icon }) => (
-              <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 shadow-card transition-colors hover:border-primary/40 hover:bg-accent/50">
+              <Link
+                key={href}
+                href={href}
+                className="group flex items-center gap-3 rounded-xl border bg-card p-4 shadow-card transition-colors hover:border-primary/40 hover:bg-accent/50"
+              >
                 <span className="flex size-10 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <Icon className="size-5" aria-hidden />
                 </span>

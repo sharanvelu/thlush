@@ -41,7 +41,10 @@ export function layoutCustomText(text: string, width: number): string[] {
 /** One slip: the block's text, then a feed and a cut. */
 export function customSectionToEscPos(section: CustomSection, paperSize: PaperSize): Uint8Array {
   const p = new EscPosBuilder(paperColumns(paperSize));
-  p.init().align(section.align).bold(section.bold).size(section.large ? 2 : 1, section.large ? 2 : 1);
+  p.init()
+    .align(section.align)
+    .bold(section.bold)
+    .size(section.large ? 2 : 1, section.large ? 2 : 1);
   for (const line of layoutCustomText(section.text, lineWidth(paperSize, section.large))) p.line(line);
   return p.size(1, 1).bold(false).feed(2).cut().build();
 }

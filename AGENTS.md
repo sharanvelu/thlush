@@ -46,13 +46,13 @@ Run `npm run check` (lint, typecheck, tests) before saying work is done, and `np
 
 Every change you make must update the docs in the same change (same commit or PR). A change is not done until its docs are. Put each update in the file that owns it:
 
-| If you changed... | Update |
-| --- | --- |
-| Setup, scripts, env vars, deployment, or what a feature does for users | `README.md` (and `.env.example` + `src/env.ts` for env vars) |
-| Structure, layering, tables, permissions, key flows, where code goes | `ARCHITECTURE.md` (and the roles table in `README.md` for permissions) |
-| A code, commit or UI convention, theming, accessibility rule | `STYLE.md` |
-| A hard project rule or the agent workflow | `CLAUDE.md` / `AGENTS.md` |
-| The skills the project relies on | `docs/SKILLS.md` |
-| A planned feature's design | the matching file in `docs/` |
+| If you changed...                                                      | Update                                                                 |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Setup, scripts, env vars, deployment, or what a feature does for users | `README.md` (and `.env.example` + `src/env.ts` for env vars)           |
+| Structure, layering, tables, permissions, key flows, where code goes   | `ARCHITECTURE.md` (and the roles table in `README.md` for permissions) |
+| A code, commit or UI convention, theming, accessibility rule           | `STYLE.md`                                                             |
+| A hard project rule or the agent workflow                              | `CLAUDE.md` / `AGENTS.md`                                              |
+| The skills the project relies on                                       | `docs/SKILLS.md`                                                       |
+| A planned feature's design                                             | the matching file in `docs/`                                           |
 
 If nothing in the docs is affected, say so in the PR description.

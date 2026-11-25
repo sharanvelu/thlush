@@ -3,7 +3,13 @@ import { customerListQuerySchema, customerSchema, parseTags } from "@/lib/valida
 
 describe("customerSchema", () => {
   it("needs only a name and turns blanks into null", () => {
-    expect(customerSchema.parse({ name: "  Asha  ", phone: "", email: "", notes: "  " })).toEqual({ name: "Asha", phone: null, email: null, notes: null, tags: [] });
+    expect(customerSchema.parse({ name: "  Asha  ", phone: "", email: "", notes: "  " })).toEqual({
+      name: "Asha",
+      phone: null,
+      email: null,
+      notes: null,
+      tags: [],
+    });
   });
 
   it("validates phone and email when given", () => {
@@ -20,7 +26,9 @@ describe("customerSchema", () => {
 
   it("keeps one of each tag regardless of case, and caps the count", () => {
     expect(customerSchema.parse({ name: "A", tags: ["VIP", "vip", "office"] }).tags).toEqual(["VIP", "office"]);
-    expect(customerSchema.safeParse({ name: "A", tags: Array.from({ length: 11 }, (_, i) => `t${i}`) }).success).toBe(false);
+    expect(customerSchema.safeParse({ name: "A", tags: Array.from({ length: 11 }, (_, i) => `t${i}`) }).success).toBe(
+      false,
+    );
   });
 
   it("splits typed tags on commas and new lines", () => {
@@ -31,7 +39,15 @@ describe("customerSchema", () => {
 
 describe("customerListQuerySchema", () => {
   it("falls back to defaults and reads real values", () => {
-    expect(customerListQuerySchema.parse({ sort: "bogus", page: "x" })).toMatchObject({ sort: "name_asc", page: 1, pageSize: 20 });
-    expect(customerListQuerySchema.parse({ q: " asha ", sort: "spend_desc", page: "3" })).toMatchObject({ q: "asha", sort: "spend_desc", page: 3 });
+    expect(customerListQuerySchema.parse({ sort: "bogus", page: "x" })).toMatchObject({
+      sort: "name_asc",
+      page: 1,
+      pageSize: 20,
+    });
+    expect(customerListQuerySchema.parse({ q: " asha ", sort: "spend_desc", page: "3" })).toMatchObject({
+      q: "asha",
+      sort: "spend_desc",
+      page: 3,
+    });
   });
 });

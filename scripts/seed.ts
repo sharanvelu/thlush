@@ -90,18 +90,36 @@ const ITEMS: readonly ItemDef[] = [
   { category: "Beverages", name: "Filter Coffee", price: "40", sku: "BEV-001", veg: true, cost: "14" },
   { category: "Beverages", name: "Masala Chai", price: "25", sku: "BEV-002", veg: true, cost: "8" },
   {
-    category: "Beverages", name: "Cold Coffee", price: "90", sku: "BEV-003", veg: true, cost: "30",
-    variants: [{ name: "Regular", priceDelta: "0" }, { name: "Large", priceDelta: "30" }],
+    category: "Beverages",
+    name: "Cold Coffee",
+    price: "90",
+    sku: "BEV-003",
+    veg: true,
+    cost: "30",
+    variants: [
+      { name: "Regular", priceDelta: "0" },
+      { name: "Large", priceDelta: "30" },
+    ],
     addons: [{ name: "Extra shot", price: "25" }],
   },
   { category: "Beverages", name: "Fresh Lime Soda", price: "60", sku: "BEV-004", veg: true, cost: "16" },
   { category: "Beverages", name: "Mango Lassi", price: "80", sku: "BEV-005", veg: true, cost: "28" },
   {
-    category: "Beverages", name: "Packaged Water 1L", price: "20", sku: "BEV-006", veg: null, rate: "9",
+    category: "Beverages",
+    name: "Packaged Water 1L",
+    price: "20",
+    sku: "BEV-006",
+    veg: null,
+    rate: "9",
     stock: { opening: 240, reorder: 24, cost: "12" },
   },
   {
-    category: "Beverages", name: "Soft Drink 300ml", price: "40", sku: "BEV-007", veg: null, rate: "9",
+    category: "Beverages",
+    name: "Soft Drink 300ml",
+    price: "40",
+    sku: "BEV-007",
+    veg: null,
+    rate: "9",
     stock: { opening: 200, reorder: 24, cost: "28" },
   },
   // South Indian
@@ -120,11 +138,19 @@ const ITEMS: readonly ItemDef[] = [
   { category: "North Indian", name: "Mixed Veg Curry", price: "170", sku: "NIN-006", veg: true, cost: "58" },
   // Snacks
   {
-    category: "Snacks", name: "Samosa (2 pcs)", price: "40", sku: "SNK-001", veg: true,
+    category: "Snacks",
+    name: "Samosa (2 pcs)",
+    price: "40",
+    sku: "SNK-001",
+    veg: true,
     stock: { opening: 200, reorder: 20, cost: "18" },
   },
   {
-    category: "Snacks", name: "Veg Puff", price: "30", sku: "SNK-002", veg: true,
+    category: "Snacks",
+    name: "Veg Puff",
+    price: "30",
+    sku: "SNK-002",
+    veg: true,
     stock: { opening: 150, reorder: 20, cost: "13" },
   },
   { category: "Snacks", name: "French Fries", price: "90", sku: "SNK-003", veg: true, cost: "30" },
@@ -139,11 +165,19 @@ const ITEMS: readonly ItemDef[] = [
   { category: "Chinese", name: "Chilli Chicken", price: "220", sku: "CHN-005", veg: false, cost: "88" },
   // Desserts
   {
-    category: "Desserts", name: "Gulab Jamun (2 pcs)", price: "60", sku: "DST-001", veg: true,
+    category: "Desserts",
+    name: "Gulab Jamun (2 pcs)",
+    price: "60",
+    sku: "DST-001",
+    veg: true,
     stock: { opening: 120, reorder: 20, cost: "22" },
   },
   {
-    category: "Desserts", name: "Ice Cream Scoop", price: "50", sku: "DST-002", veg: true,
+    category: "Desserts",
+    name: "Ice Cream Scoop",
+    price: "50",
+    sku: "DST-002",
+    veg: true,
     stock: { opening: 200, reorder: 30, cost: "20" },
   },
   { category: "Desserts", name: "Brownie with Ice Cream", price: "140", sku: "DST-003", veg: true, cost: "52" },
@@ -181,8 +215,21 @@ const REFUND_REASONS = ["Food quality complaint", "Item unavailable after billin
 
 /** Hour of day (IST) -> relative chance of a bill. Peaks at lunch and dinner. */
 const HOUR_WEIGHTS: ReadonlyArray<readonly [number, number]> = [
-  [8, 2], [9, 3], [10, 3], [11, 4], [12, 9], [13, 10], [14, 6], [15, 3],
-  [16, 4], [17, 5], [18, 6], [19, 9], [20, 10], [21, 7], [22, 3],
+  [8, 2],
+  [9, 3],
+  [10, 3],
+  [11, 4],
+  [12, 9],
+  [13, 10],
+  [14, 6],
+  [15, 3],
+  [16, 4],
+  [17, 5],
+  [18, 6],
+  [19, 9],
+  [20, 10],
+  [21, 7],
+  [22, 3],
 ];
 
 const IST_OFFSET_MS = 330 * 60_000;
@@ -240,7 +287,12 @@ async function main() {
     const users = await tx
       .select()
       .from(schema.users)
-      .where(inArray(sql`lower(${schema.users.email})`, DEMO_USERS.map((u) => u.email)));
+      .where(
+        inArray(
+          sql`lower(${schema.users.email})`,
+          DEMO_USERS.map((u) => u.email),
+        ),
+      );
     const userByRole = (role: string) => {
       const user = users.find((u) => u.role === role);
       if (!user) throw new Error(`Seed user with role ${role} is missing`);
@@ -316,7 +368,12 @@ async function main() {
     const menuItems = await tx
       .select()
       .from(schema.menuItems)
-      .where(inArray(schema.menuItems.sku, ITEMS.map((i) => i.sku)));
+      .where(
+        inArray(
+          schema.menuItems.sku,
+          ITEMS.map((i) => i.sku),
+        ),
+      );
 
     // ---- Demo transactions (only on an empty bills table) ----------------
     const [billCount] = await tx.select({ n: count() }).from(schema.bills);
@@ -334,7 +391,12 @@ async function main() {
     const supplierRows = await tx
       .insert(schema.suppliers)
       .values([
-        { name: "Fresh Foods Wholesale", contactName: "Ramesh", phone: "9845020001", email: "orders@freshfoods.example" },
+        {
+          name: "Fresh Foods Wholesale",
+          contactName: "Ramesh",
+          phone: "9845020001",
+          email: "orders@freshfoods.example",
+        },
         { name: "Metro Beverages", contactName: "Sunita", phone: "9845020002", email: "sales@metrobev.example" },
       ])
       .returning();
@@ -365,13 +427,27 @@ async function main() {
       let createdAt = istToUtc(baseYear, baseMonth, baseDay - daysAgo, hour, randInt(0, 59));
       if (createdAt > now) createdAt = new Date(now.getTime() - randInt(5, 120) * 60_000);
 
-      const lineCount = weighted([[1, 2], [2, 4], [3, 4], [4, 2], [5, 1]] as const);
+      const lineCount = weighted([
+        [1, 2],
+        [2, 4],
+        [3, 4],
+        [4, 2],
+        [5, 1],
+      ] as const);
       const chosen = new Set<number>();
       while (chosen.size < Math.min(lineCount, sellable.length)) chosen.add(Math.floor(rand() * sellable.length));
       const picked = [...chosen].map((index) => {
         const item = sellable[index];
         if (!item) throw new Error("Index out of range while picking items");
-        return { item, quantity: weighted([[1, 6], [2, 3], [3, 1]] as const), discount: rand() < 0.05 ? "10" : "0" };
+        return {
+          item,
+          quantity: weighted([
+            [1, 6],
+            [2, 3],
+            [3, 1],
+          ] as const),
+          discount: rand() < 0.05 ? "10" : "0",
+        };
       });
 
       const useBillDiscount = rand() < 0.12;
@@ -396,11 +472,22 @@ async function main() {
       );
 
       const status = weighted([
-        ["completed", 90], ["void", 4], ["refunded", 3], ["held", 3],
+        ["completed", 90],
+        ["void", 4],
+        ["refunded", 3],
+        ["held", 3],
       ] as const);
-      const creator = weighted([[cashier, 70], [manager, 20], [admin, 10]] as const);
+      const creator = weighted([
+        [cashier, 70],
+        [manager, 20],
+        [admin, 10],
+      ] as const);
       const customer = rand() < 0.4 ? pick(customers) : null;
-      const orderType = weighted([["dine_in", 55], ["takeaway", 35], ["delivery", 10]] as const);
+      const orderType = weighted([
+        ["dine_in", 55],
+        ["takeaway", 35],
+        ["delivery", 10],
+      ] as const);
 
       // Payments: none for held bills. Cash records tendered cash and change.
       const total = totals.grandTotal;
@@ -408,14 +495,23 @@ async function main() {
       let amountPaid = "0.00";
       let change = "0.00";
       if (status !== "held") {
-        const method = weighted([["cash", 40], ["upi", 40], ["card", 15], ["other", 5]] as const);
+        const method = weighted([
+          ["cash", 40],
+          ["upi", 40],
+          ["card", 15],
+          ["other", 5],
+        ] as const);
         if (rand() < 0.08 && new D(total).greaterThan(100)) {
           const cashPart = parseMoney(new D(total).times(0.4).toDecimalPlaces(0));
           const rest = parseMoney(new D(total).minus(cashPart));
           payments.push({ method: "cash", amount: cashPart, createdAt }, { method: "upi", amount: rest, createdAt });
           amountPaid = total;
         } else if (method === "cash") {
-          const step = weighted([[10, 4], [50, 3], [100, 3]] as const);
+          const step = weighted([
+            [10, 4],
+            [50, 3],
+            [100, 3],
+          ] as const);
           const tendered = new D(total).div(step).ceil().times(step);
           payments.push({ method, amount: total, createdAt });
           amountPaid = parseMoney(tendered);
@@ -504,9 +600,9 @@ async function main() {
       return id;
     };
 
-    await tx.insert(schema.billItems).values(
-      drafts.flatMap((d, i) => d.lines.map((line) => ({ ...line, billId: billIdAt(i) }))),
-    );
+    await tx
+      .insert(schema.billItems)
+      .values(drafts.flatMap((d, i) => d.lines.map((line) => ({ ...line, billId: billIdAt(i) }))));
     const paymentRows = drafts.flatMap((d, i) => d.payments.map((p) => ({ ...p, billId: billIdAt(i) })));
     if (paymentRows.length > 0) await tx.insert(schema.payments).values(paymentRows);
 

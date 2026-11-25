@@ -27,7 +27,14 @@ function draw(doc: Doc, model: ReceiptModel): number {
   };
   const rule = () => {
     y += 2;
-    doc.save().lineWidth(0.5).dash(2, { space: 2 }).moveTo(MARGIN, y).lineTo(width - MARGIN, y).stroke().restore();
+    doc
+      .save()
+      .lineWidth(0.5)
+      .dash(2, { space: 2 })
+      .moveTo(MARGIN, y)
+      .lineTo(width - MARGIN, y)
+      .stroke()
+      .restore();
     y += 4;
   };
   const row = (left: string, right: string, bold = false, size = 8) => {
@@ -87,7 +94,10 @@ function draw(doc: Doc, model: ReceiptModel): number {
       y += extraHeight + 1;
     }
     if (item.note) {
-      doc.font("Helvetica-Oblique").fontSize(7).text(item.note, MARGIN + 4, y, { width: nameW });
+      doc
+        .font("Helvetica-Oblique")
+        .fontSize(7)
+        .text(item.note, MARGIN + 4, y, { width: nameW });
       y = doc.y + 1;
     }
   }

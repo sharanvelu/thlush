@@ -148,7 +148,11 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         action,
         heldBillId,
         customer:
-          c.kind === "walkin" ? null : c.kind === "existing" ? { id: c.id } : { name: c.name, phone: c.phone.trim() || null },
+          c.kind === "walkin"
+            ? null
+            : c.kind === "existing"
+              ? { id: c.id }
+              : { name: c.name, phone: c.phone.trim() || null },
         lines: lines.map((l) => ({
           menuItemId: l.item.id,
           quantity: l.quantity,
@@ -175,7 +179,9 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         const response = await api.post<SavedBill>("/api/bills", { ...body, clientRef: attempt.current.ref });
         const bill = response.data;
         if (action === "kot") {
-          toast.success(`Sent to the kitchen (KOT #${bill.newKotSeq ?? bill.kots.length}). The order stays open under Held bills.`);
+          toast.success(
+            `Sent to the kitchen (KOT #${bill.newKotSeq ?? bill.kots.length}). The order stays open under Held bills.`,
+          );
           if (bill.newKotSeq !== null) void printReceipt(bill.id, { kot: bill.newKotSeq, receipt: false });
           void refreshHeld();
           resetBill();
@@ -198,7 +204,20 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         setPending(false);
       }
     },
-    [pending, lines, problem, paymentResult, details, heldBillId, billDiscount, settings.orderTypesEnabled, resetBill, refreshHeld, router, appSettings.receipt.printKitchenByDefault],
+    [
+      pending,
+      lines,
+      problem,
+      paymentResult,
+      details,
+      heldBillId,
+      billDiscount,
+      settings.orderTypesEnabled,
+      resetBill,
+      refreshHeld,
+      router,
+      appSettings.receipt.printKitchenByDefault,
+    ],
   );
 
   const resume = useCallback(
@@ -237,13 +256,20 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         dispatch({ type: "replace", lines: restored });
         setDetails({
           customer: bill.customer
-            ? { kind: "existing", id: bill.customer.id, name: bill.customer.name, phone: bill.customer.phone, email: bill.customer.email }
+            ? {
+                kind: "existing",
+                id: bill.customer.id,
+                name: bill.customer.name,
+                phone: bill.customer.phone,
+                email: bill.customer.email,
+              }
             : { kind: "walkin" },
           orderType: bill.orderType,
           tableNo: bill.tableNo ?? "",
           notes: bill.notes ?? "",
           discountKind: bill.discountType ?? "percent",
-          discountValue: bill.discountType && new D(bill.discountValue).greaterThan(0) ? new D(bill.discountValue).toString() : "",
+          discountValue:
+            bill.discountType && new D(bill.discountValue).greaterThan(0) ? new D(bill.discountValue).toString() : "",
         });
         setPayment(INITIAL_PAYMENT);
         setHeldBillId(id);
@@ -372,7 +398,15 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
       <h1 className="sr-only">New bill</h1>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 @min-[1000px]/pos:h-[calc(100dvh-8.25rem)] @min-[1000px]/pos:grid-cols-[minmax(0,1fr)_24rem]">
-        <ProductPanel items={items} categories={categories} lines={lines} settings={settings} searchRef={searchRef} onPick={pick} onDecrement={decrement} />
+        <ProductPanel
+          items={items}
+          categories={categories}
+          lines={lines}
+          settings={settings}
+          searchRef={searchRef}
+          onPick={pick}
+          onDecrement={decrement}
+        />
         <aside className="hidden min-h-0 flex-col gap-3 @min-[1000px]/pos:flex">
           {heldPanel}
           <div className="min-h-0 flex-1">{cart}</div>
@@ -384,7 +418,11 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         <Button size="lg" className="h-12 w-full justify-between text-base shadow-lg" onClick={() => setCartOpen(true)}>
           <span className="flex items-center gap-2">
             <ShoppingBag aria-hidden /> View bill
-            {lines.length > 0 ? <span className="rounded-full bg-primary-foreground/20 px-2 text-sm tabular-nums">{itemCount.toString()}</span> : null}
+            {lines.length > 0 ? (
+              <span className="rounded-full bg-primary-foreground/20 px-2 text-sm tabular-nums">
+                {itemCount.toString()}
+              </span>
+            ) : null}
           </span>
           <span className="tabular-nums">{money(totals.grandTotal)}</span>
         </Button>
@@ -429,7 +467,11 @@ export function PosScreen({ items, categories, settings, appSettings, initialHel
         open={confirmClear}
         onOpenChange={setConfirmClear}
         title="Clear this bill?"
-        description={heldBillId ? "The items are removed from the screen. The held bill stays in Held bills." : "All items and details on the bill are removed."}
+        description={
+          heldBillId
+            ? "The items are removed from the screen. The held bill stays in Held bills."
+            : "All items and details on the bill are removed."
+        }
         confirmLabel="Clear bill"
         destructive
         onConfirm={() => {

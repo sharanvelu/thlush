@@ -61,7 +61,13 @@ export function PaymentPanel({ state, onChange, total, result, settings }: Payme
 
   const addRow = () => {
     const remaining = new D(result.remaining);
-    onChange({ ...state, rows: [...state.rows, newRow(state.rows.length === 0 ? "upi" : "cash", remaining.greaterThan(0) ? remaining.toFixed(2) : "")] });
+    onChange({
+      ...state,
+      rows: [
+        ...state.rows,
+        newRow(state.rows.length === 0 ? "upi" : "cash", remaining.greaterThan(0) ? remaining.toFixed(2) : ""),
+      ],
+    });
   };
 
   return (
@@ -166,7 +172,14 @@ export function PaymentPanel({ state, onChange, total, result, settings }: Payme
               </Button>
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" className="w-fit" onClick={addRow} disabled={state.rows.length >= 6}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={addRow}
+            disabled={state.rows.length >= 6}
+          >
             <Plus aria-hidden /> Add payment
           </Button>
         </div>
@@ -183,7 +196,11 @@ export function PaymentPanel({ state, onChange, total, result, settings }: Payme
             <p className="text-muted-foreground">Paid in full.</p>
           )
         ) : (
-          <p className={cn("flex items-center justify-between rounded-lg bg-destructive/10 px-3 py-2 font-medium text-destructive")}>
+          <p
+            className={cn(
+              "flex items-center justify-between rounded-lg bg-destructive/10 px-3 py-2 font-medium text-destructive",
+            )}
+          >
             <span>{state.split ? "Still to collect" : "Short by"}</span>
             <span className="tabular-nums">{money(result.remaining)}</span>
           </p>

@@ -81,7 +81,10 @@ export function BillFilterPanel({ filters, cashiers, timeZone, onApply, onReset 
             <Input inputMode="decimal" {...text("max")} placeholder="Any" />
           </Field>
           <Field label="Payment">
-            <Select value={draft.method ?? ANY} onValueChange={(v) => set("method", v === ANY ? undefined : (v as Draft["method"]))}>
+            <Select
+              value={draft.method ?? ANY}
+              onValueChange={(v) => set("method", v === ANY ? undefined : (v as Draft["method"]))}
+            >
               <SelectTrigger className="w-full" aria-label="Payment method">
                 <SelectValue />
               </SelectTrigger>
@@ -96,7 +99,10 @@ export function BillFilterPanel({ filters, cashiers, timeZone, onApply, onReset 
             </Select>
           </Field>
           <Field label="Status">
-            <Select value={draft.status ?? ANY} onValueChange={(v) => set("status", v === ANY ? undefined : (v as Draft["status"]))}>
+            <Select
+              value={draft.status ?? ANY}
+              onValueChange={(v) => set("status", v === ANY ? undefined : (v as Draft["status"]))}
+            >
               <SelectTrigger className="w-full" aria-label="Status">
                 <SelectValue />
               </SelectTrigger>
@@ -131,7 +137,12 @@ export function BillFilterPanel({ filters, cashiers, timeZone, onApply, onReset 
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button type="submit">Apply filters</Button>
-          <Button type="button" variant="ghost" onClick={onReset} disabled={count === 0 && JSON.stringify(draft) === JSON.stringify(filters)}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onReset}
+            disabled={count === 0 && JSON.stringify(draft) === JSON.stringify(filters)}
+          >
             <X aria-hidden /> Reset
           </Button>
           <span className="ml-auto flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -141,7 +152,13 @@ export function BillFilterPanel({ filters, cashiers, timeZone, onApply, onReset 
               ["Last 7 days", 6],
               ["Last 30 days", 29],
             ].map(([label, days]) => (
-              <Button key={label as string} type="button" variant="outline" size="xs" onClick={() => preset(days as number)}>
+              <Button
+                key={label as string}
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={() => preset(days as number)}
+              >
                 {label}
               </Button>
             ))}

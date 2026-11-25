@@ -1,16 +1,4 @@
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  getTableColumns,
-  ilike,
-  inArray,
-  isNull,
-  or,
-  sql,
-  type SQL,
-} from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { db, schema, type DbExecutor } from "@/db";
 import { toCsv, parseCsv, unescapeCell } from "@/lib/csv";
 import { invalidatePosCatalog } from "@/lib/catalog-cache";
@@ -97,8 +85,7 @@ function filterConditions(filters: MenuFilters): SQL[] {
  * be ~100 KB each, so we only learn whether one exists and link to the image route.
  */
 const listColumns = () => {
-  const { imageUrl: _imageUrl, deletedAt: _d, createdUserId: _u, ...rest } =
-    getTableColumns(menuItems);
+  const { imageUrl: _imageUrl, deletedAt: _d, createdUserId: _u, ...rest } = getTableColumns(menuItems);
   return {
     ...rest,
     categoryName: categories.name,
@@ -138,7 +125,8 @@ function toListItem(row: ListRow): MenuListItem {
     currency: row.currency,
     status: row.status,
     sku: row.sku,
-    imageSrc: row.externalImage ?? (row.hasStoredImage ? `/api/menu/${row.id}/image?v=${row.updatedAt.getTime()}` : null),
+    imageSrc:
+      row.externalImage ?? (row.hasStoredImage ? `/api/menu/${row.id}/image?v=${row.updatedAt.getTime()}` : null),
     isVeg: row.isVeg,
     variants: row.variants,
     addons: row.addons,
@@ -161,7 +149,9 @@ export interface MenuListResult {
 }
 
 export async function listMenuItems(
-  query: MenuFilters & Pick<MenuListQuery, "sort" | "dir" | "page" | "pageSize"> & Partial<Pick<MenuListQuery, "group">>,
+  query: MenuFilters &
+    Pick<MenuListQuery, "sort" | "dir" | "page" | "pageSize"> &
+    Partial<Pick<MenuListQuery, "group">>,
 ): Promise<MenuListResult> {
   const where = and(...filterConditions(query));
   const direction = query.dir === "desc" ? desc : asc;
@@ -383,49 +373,51 @@ export async function updateMenuItem(id: number, patch: MenuItemPatch, userId: s
 /** Copies an item. The copy is disabled and has no SKU, so it never reaches the POS half-edited. */
 export async function duplicateMenuItem(id: number, userId: string): Promise<MenuListItem> {
   let copiedImage: string | null = null;
-  const newId = await db.transaction(async (tx) => {
-    const [source] = await tx
-      .select()
-      .from(menuItems)
-      .where(and(eq(menuItems.id, id), isNull(menuItems.deletedAt)));
-    if (!source) throw HttpError.notFound("Menu item not found.");
-    // Each item owns its object, so replacing or deleting one photo never breaks the other.
-    copiedImage = isStoredRef(source.imageUrl) ? await copyImage(source.imageUrl) : source.imageUrl;
+  const newId = await db
+    .transaction(async (tx) => {
+      const [source] = await tx
+        .select()
+        .from(menuItems)
+        .where(and(eq(menuItems.id, id), isNull(menuItems.deletedAt)));
+      if (!source) throw HttpError.notFound("Menu item not found.");
+      // Each item owns its object, so replacing or deleting one photo never breaks the other.
+      copiedImage = isStoredRef(source.imageUrl) ? await copyImage(source.imageUrl) : source.imageUrl;
 
-    const [copy] = await tx
-      .insert(menuItems)
-      .values({
-        name: `${source.name} (copy)`.slice(0, 120),
-        description: source.description,
-        categoryId: source.categoryId,
-        price: source.price,
-        sgst: source.sgst,
-        cgst: source.cgst,
-        currency: source.currency,
-        status: "disabled",
-        sku: null,
-        imageUrl: copiedImage,
-        unit: source.unit,
-        isVeg: source.isVeg,
-        variants: source.variants,
-        addons: source.addons,
-        trackStock: source.trackStock,
-        reorderLevel: source.reorderLevel,
-        costPrice: source.costPrice,
-        packagingCharge: source.packagingCharge,
-        createdUserId: userId,
-      })
-      .returning({ id: menuItems.id });
-    if (!copy) throw new Error("Duplicate insert returned no row");
-    await AuditService.record(
-      { userId, action: "menu.duplicate", entity: "menu_item", entityId: copy.id, metadata: { from: id } },
-      tx,
-    );
-    return copy.id;
-  }).catch(async (error: unknown) => {
-    if (isStoredRef(copiedImage)) await deleteImages([copiedImage]);
-    throw error;
-  });
+      const [copy] = await tx
+        .insert(menuItems)
+        .values({
+          name: `${source.name} (copy)`.slice(0, 120),
+          description: source.description,
+          categoryId: source.categoryId,
+          price: source.price,
+          sgst: source.sgst,
+          cgst: source.cgst,
+          currency: source.currency,
+          status: "disabled",
+          sku: null,
+          imageUrl: copiedImage,
+          unit: source.unit,
+          isVeg: source.isVeg,
+          variants: source.variants,
+          addons: source.addons,
+          trackStock: source.trackStock,
+          reorderLevel: source.reorderLevel,
+          costPrice: source.costPrice,
+          packagingCharge: source.packagingCharge,
+          createdUserId: userId,
+        })
+        .returning({ id: menuItems.id });
+      if (!copy) throw new Error("Duplicate insert returned no row");
+      await AuditService.record(
+        { userId, action: "menu.duplicate", entity: "menu_item", entityId: copy.id, metadata: { from: id } },
+        tx,
+      );
+      return copy.id;
+    })
+    .catch(async (error: unknown) => {
+      if (isStoredRef(copiedImage)) await deleteImages([copiedImage]);
+      throw error;
+    });
   invalidatePosCatalog();
   return getMenuItem(newId);
 }
@@ -434,8 +426,14 @@ export async function duplicateMenuItem(id: number, userId: string): Promise<Men
 async function referencedIds(ids: number[], tx: DbExecutor): Promise<Set<number>> {
   const [fromBills, fromStock, fromPurchases] = await Promise.all([
     tx.selectDistinct({ id: billItems.menuItemId }).from(billItems).where(inArray(billItems.menuItemId, ids)),
-    tx.selectDistinct({ id: stockMovements.menuItemId }).from(stockMovements).where(inArray(stockMovements.menuItemId, ids)),
-    tx.selectDistinct({ id: purchaseItems.menuItemId }).from(purchaseItems).where(inArray(purchaseItems.menuItemId, ids)),
+    tx
+      .selectDistinct({ id: stockMovements.menuItemId })
+      .from(stockMovements)
+      .where(inArray(stockMovements.menuItemId, ids)),
+    tx
+      .selectDistinct({ id: purchaseItems.menuItemId })
+      .from(purchaseItems)
+      .where(inArray(purchaseItems.menuItemId, ids)),
   ]);
   const used = new Set<number>();
   for (const row of [...fromBills, ...fromStock, ...fromPurchases]) if (row.id !== null) used.add(row.id);
@@ -525,7 +523,10 @@ export async function bulkUpdateMenuItems(input: MenuBulkInput, userId: string):
           userId,
           action: `menu.bulk_${input.action}`,
           entity: "menu_item",
-          metadata: { ids: updated.map((r) => r.id), ...(input.action === "move" ? { categoryId: input.categoryId } : {}) },
+          metadata: {
+            ids: updated.map((r) => r.id),
+            ...(input.action === "move" ? { categoryId: input.categoryId } : {}),
+          },
         },
         tx,
       );
@@ -543,15 +544,28 @@ export async function bulkUpdateMenuItems(input: MenuBulkInput, userId: string):
 // CSV export and import
 // ---------------------------------------------------------------------------
 
-const CSV_HEADER = ["Name", "Category", "Price", "SGST %", "CGST %", "Currency", "Status", "SKU", "Type", "Description"];
+const CSV_HEADER = [
+  "Name",
+  "Category",
+  "Price",
+  "SGST %",
+  "CGST %",
+  "Currency",
+  "Status",
+  "SKU",
+  "Type",
+  "Description",
+];
 const EXPORT_LIMIT = 10_000;
 
 /** CSV of the items matching the filters (the same ones the list uses). */
 export async function exportMenuCsv(filters: MenuFilters): Promise<string> {
-  const rows = await selectList(and(...filterConditions(filters)), [
-    asc(sql`lower(${categories.name})`),
-    asc(sql`lower(${menuItems.name})`),
-  ], EXPORT_LIMIT, 0);
+  const rows = await selectList(
+    and(...filterConditions(filters)),
+    [asc(sql`lower(${categories.name})`), asc(sql`lower(${menuItems.name})`)],
+    EXPORT_LIMIT,
+    0,
+  );
   return toCsv([
     CSV_HEADER,
     ...rows.map((r) => [
@@ -617,10 +631,7 @@ function parseType(value: string): boolean | null | undefined {
   return undefined;
 }
 
-export async function importMenuCsv(
-  csv: string,
-  options: { dryRun: boolean; userId: string },
-): Promise<ImportResult> {
+export async function importMenuCsv(csv: string, options: { dryRun: boolean; userId: string }): Promise<ImportResult> {
   let table: string[][];
   try {
     table = parseCsv(csv);
@@ -664,8 +675,7 @@ export async function importMenuCsv(
   const seenSkus = new Set<string>();
   const newCategoryNames = new Map<string, string>();
 
-  const cell = (row: string[], key: string): string =>
-    unescapeCell((row[columnIndex.get(key) ?? -1] ?? "").trim());
+  const cell = (row: string[], key: string): string => unescapeCell((row[columnIndex.get(key) ?? -1] ?? "").trim());
 
   dataRows.forEach((row, index) => {
     const rowNumber = index + 2;
@@ -773,7 +783,9 @@ export async function importMenuCsv(
     });
   } catch (error) {
     if (isUniqueViolation(error)) {
-      throw HttpError.conflict("A SKU in the file is already used by an item that was not matched. Fix the SKU and try again.");
+      throw HttpError.conflict(
+        "A SKU in the file is already used by an item that was not matched. Fix the SKU and try again.",
+      );
     }
     throw error;
   }

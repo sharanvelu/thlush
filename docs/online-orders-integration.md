@@ -10,15 +10,15 @@ Written: 2026-11-16, from web research. Items marked **(unverified)** came from 
 
 ## 2. What the platforms offer
 
-| Platform | What exists | How a restaurant gets access |
-|---|---|---|
-| Swiggy | An internal order-management platform that pushes orders to restaurant POS systems. No public API reference was found. | Through Swiggy's partner team. Per a LimeTray guide, partners fill a sign-up form, then Swiggy contacts them for legal documents and verification. **(unverified)** |
-| Zomato | A "POS Developer Platform" for POS partners, with unified API docs and real-time testing. | Partner sign-up and approval on Zomato's side. |
-| Petpooja | An Online Ordering API: sync menu, push an order into Petpooja's POS (`save_order`), status callbacks (Accept, Reject, Food Ready), item stock and store availability toggles. Docs on Apiary. | Credentials issued by Petpooja support. **(unverified)** |
+| Platform | What exists                                                                                                                                                                                    | How a restaurant gets access                                                                                                                                        |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Swiggy   | An internal order-management platform that pushes orders to restaurant POS systems. No public API reference was found.                                                                         | Through Swiggy's partner team. Per a LimeTray guide, partners fill a sign-up form, then Swiggy contacts them for legal documents and verification. **(unverified)** |
+| Zomato   | A "POS Developer Platform" for POS partners, with unified API docs and real-time testing.                                                                                                      | Partner sign-up and approval on Zomato's side.                                                                                                                      |
+| Petpooja | An Online Ordering API: sync menu, push an order into Petpooja's POS (`save_order`), status callbacks (Accept, Reject, Food Ready), item stock and store availability toggles. Docs on Apiary. | Credentials issued by Petpooja support. **(unverified)**                                                                                                            |
 
 Important points:
 
-- **Petpooja's API is not a source of Swiggy/Zomato orders for us.** It is how aggregators push orders *into Petpooja's own POS*. It only helps if we ran Petpooja. We do not.
+- **Petpooja's API is not a source of Swiggy/Zomato orders for us.** It is how aggregators push orders _into Petpooja's own POS_. It only helps if we ran Petpooja. We do not.
 - **Single outlets are usually not onboarded directly.** Swiggy and Zomato approve POS vendors, not individual restaurants. A one-outlet shop should expect to go through a middleware company, or to apply as a POS vendor itself.
 - Public documentation for Swiggy's and Zomato's partner APIs could not be found. The exact payloads, authentication and webhook formats are unknown until a partner agreement gives us the specs.
 

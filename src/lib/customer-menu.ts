@@ -29,19 +29,17 @@ export function buildCustomerMenu(catalog: CachedPosCatalog): CustomerMenuSectio
   for (const category of catalog.categories) {
     const items = catalog.items
       .filter((i) => i.categoryId === category.id && i.status === "active")
-      .map(
-        (i): CustomerMenuItem => ({
-          id: i.id,
-          name: i.name,
-          price: i.price,
-          isVeg: i.isVeg,
-          // Stored photos are at /api/menu/<id>/image; on the customer domain that path maps to a public route.
-          imageSrc: i.imageSrc,
-          unit: i.unit,
-          variants: i.variants.map((v) => ({ name: v.name, price: new D(i.price).plus(v.priceDelta).toFixed(2) })),
-          addons: i.addons.map((a) => ({ name: a.name, price: a.price })),
-        }),
-      );
+      .map((i): CustomerMenuItem => ({
+        id: i.id,
+        name: i.name,
+        price: i.price,
+        isVeg: i.isVeg,
+        // Stored photos are at /api/menu/<id>/image; on the customer domain that path maps to a public route.
+        imageSrc: i.imageSrc,
+        unit: i.unit,
+        variants: i.variants.map((v) => ({ name: v.name, price: new D(i.price).plus(v.priceDelta).toFixed(2) })),
+        addons: i.addons.map((a) => ({ name: a.name, price: a.price })),
+      }));
     if (items.length > 0) sections.push({ id: category.id, name: category.name, items });
   }
   return sections;

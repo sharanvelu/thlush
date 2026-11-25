@@ -34,7 +34,9 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
     if (!needle) return sections;
     return sections.flatMap((section) => {
       // Searching for a category name shows all of its items.
-      const items = section.name.toLowerCase().includes(needle) ? section.items : section.items.filter((i) => matches(i, needle));
+      const items = section.name.toLowerCase().includes(needle)
+        ? section.items
+        : section.items.filter((i) => matches(i, needle));
       return items.length > 0 ? [{ ...section, items }] : [];
     });
   }, [sections, needle]);
@@ -51,7 +53,10 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
     <div className="flex flex-col gap-4">
       <div className="sticky top-0 z-10 -mx-4 bg-background/75 px-4 py-3 backdrop-blur-xl">
         <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-brand" aria-hidden />
+          <Search
+            className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-brand"
+            aria-hidden
+          />
           <label htmlFor={`${baseId}-search`} className="sr-only">
             Search the menu
           </label>
@@ -111,7 +116,13 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                     disabled={searching}
                     className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-accent/40 disabled:cursor-default disabled:hover:bg-transparent motion-reduce:transition-none"
                   >
-                    <span aria-hidden className={cn("h-6 w-1 shrink-0 rounded-full transition-colors motion-reduce:transition-none", expanded ? "bg-primary" : "bg-border")} />
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "h-6 w-1 shrink-0 rounded-full transition-colors motion-reduce:transition-none",
+                        expanded ? "bg-primary" : "bg-border",
+                      )}
+                    />
                     <span className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight">{section.name}</span>
                     <span className="shrink-0 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-brand tabular-nums">
                       {section.items.length}
@@ -123,7 +134,13 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                         searching && "opacity-0",
                       )}
                     >
-                      <ChevronDown className={cn("size-4 transition-transform motion-reduce:transition-none", expanded && "rotate-180")} aria-hidden />
+                      <ChevronDown
+                        className={cn(
+                          "size-4 transition-transform motion-reduce:transition-none",
+                          expanded && "rotate-180",
+                        )}
+                        aria-hidden
+                      />
                     </span>
                   </button>
                 </h2>
@@ -138,8 +155,15 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                 >
                   <ul className="min-h-0 divide-y divide-border/60 overflow-hidden border-t border-border/60">
                     {section.items.map((item) => (
-                      <li key={item.id} className="flex gap-3.5 p-4 transition-colors hover:bg-accent/30 motion-reduce:transition-none">
-                        <ItemThumb src={item.imageSrc} name={item.name} className="size-[4.5rem] rounded-xl bg-muted ring-1 ring-border" />
+                      <li
+                        key={item.id}
+                        className="flex gap-3.5 p-4 transition-colors hover:bg-accent/30 motion-reduce:transition-none"
+                      >
+                        <ItemThumb
+                          src={item.imageSrc}
+                          name={item.name}
+                          className="size-[4.5rem] rounded-xl bg-muted ring-1 ring-border"
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
                             <p className="flex items-center gap-2 text-base leading-snug font-medium">
@@ -149,14 +173,19 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                             {item.variants.length === 0 ? (
                               <p className="shrink-0 text-base font-semibold text-brand tabular-nums">
                                 {money(item.price)}
-                                {item.unit !== "pcs" ? <span className="text-xs font-normal text-muted-foreground"> / {item.unit}</span> : null}
+                                {item.unit !== "pcs" ? (
+                                  <span className="text-xs font-normal text-muted-foreground"> / {item.unit}</span>
+                                ) : null}
                               </p>
                             ) : null}
                           </div>
                           {item.variants.length > 0 ? (
                             <ul className="mt-2 flex flex-wrap gap-2 text-sm">
                               {item.variants.map((v) => (
-                                <li key={v.name} className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 py-1 pr-3 pl-3">
+                                <li
+                                  key={v.name}
+                                  className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 py-1 pr-3 pl-3"
+                                >
                                   <span className="text-muted-foreground">{v.name}</span>
                                   <span className="font-semibold text-brand tabular-nums">{money(v.price)}</span>
                                 </li>
@@ -167,7 +196,8 @@ export function CustomerMenu({ sections, currency, locale }: CustomerMenuProps) 
                             <ul aria-label="Extras" className="mt-2 flex flex-wrap gap-1.5 text-xs">
                               {item.addons.map((a) => (
                                 <li key={a.name} className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-                                  + {a.name} <span className="font-medium text-foreground tabular-nums">{money(a.price)}</span>
+                                  + {a.name}{" "}
+                                  <span className="font-medium text-foreground tabular-nums">{money(a.price)}</span>
                                 </li>
                               ))}
                             </ul>

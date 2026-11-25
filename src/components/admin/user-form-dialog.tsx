@@ -7,7 +7,14 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,11 +55,18 @@ export function UserFormDialog({ open, onOpenChange, user, currentUserId, onSave
     reset,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "", email: "", role: "billing", password: "" } });
+  } = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: "", email: "", role: "billing", password: "" },
+  });
 
   useEffect(() => {
     if (!open) return;
-    reset(user ? { name: user.name, email: user.email, role: user.role, password: "" } : { name: "", email: "", role: "billing", password: "" });
+    reset(
+      user
+        ? { name: user.name, email: user.email, role: user.role, password: "" }
+        : { name: "", email: "", role: "billing", password: "" },
+    );
   }, [open, user, reset]);
 
   const onSubmit = handleSubmit(async (values) => {
@@ -65,7 +79,8 @@ export function UserFormDialog({ open, onOpenChange, user, currentUserId, onSave
       onSaved();
       onOpenChange(false);
     } catch (error) {
-      if (error instanceof ApiClientError && error.fieldErrors?.email?.[0]) setError("email", { message: error.fieldErrors.email[0] });
+      if (error instanceof ApiClientError && error.fieldErrors?.email?.[0])
+        setError("email", { message: error.fieldErrors.email[0] });
       else toast.error(errorMessage(error));
     }
   });
@@ -83,19 +98,33 @@ export function UserFormDialog({ open, onOpenChange, user, currentUserId, onSave
         <DialogHeader>
           <DialogTitle>{editing ? "Edit user" : "Add user"}</DialogTitle>
           <DialogDescription>
-            {editing ? "Change their details, role, or set a new password." : "They can sign in with this email and password straight away."}
+            {editing
+              ? "Change their details, role, or set a new password."
+              : "They can sign in with this email and password straight away."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} noValidate>
           <FieldGroup>
             <Field data-invalid={Boolean(errors.name)}>
               <FieldLabel htmlFor="user-name">Name</FieldLabel>
-              <Input id="user-name" autoFocus maxLength={100} aria-invalid={Boolean(errors.name)} {...register("name")} />
+              <Input
+                id="user-name"
+                autoFocus
+                maxLength={100}
+                aria-invalid={Boolean(errors.name)}
+                {...register("name")}
+              />
               <FieldError errors={[errors.name]} />
             </Field>
             <Field data-invalid={Boolean(errors.email)}>
               <FieldLabel htmlFor="user-email">Email</FieldLabel>
-              <Input id="user-email" type="email" autoComplete="off" aria-invalid={Boolean(errors.email)} {...register("email")} />
+              <Input
+                id="user-email"
+                type="email"
+                autoComplete="off"
+                aria-invalid={Boolean(errors.email)}
+                {...register("email")}
+              />
               <FieldError errors={[errors.email]} />
             </Field>
             <Controller
@@ -110,7 +139,9 @@ export function UserFormDialog({ open, onOpenChange, user, currentUserId, onSave
                     </SelectTrigger>
                     <SelectContent>
                       {ROLES.map((r) => (
-                        <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                        <SelectItem key={r} value={r}>
+                          {ROLE_LABELS[r]}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -129,16 +160,30 @@ export function UserFormDialog({ open, onOpenChange, user, currentUserId, onSave
                   aria-invalid={Boolean(errors.password)}
                   {...register("password")}
                 />
-                <Button type="button" variant="ghost" size="icon" className="absolute top-1/2 right-1 size-8 -translate-y-1/2" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
                   {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
                 </Button>
               </div>
-              <FieldDescription>{editing ? "Leave blank to keep the current password." : "At least 8 characters, with a letter and a number."}</FieldDescription>
+              <FieldDescription>
+                {editing
+                  ? "Leave blank to keep the current password."
+                  : "At least 8 characters, with a letter and a number."}
+              </FieldDescription>
               <FieldError errors={[errors.password]} />
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
               {editing ? "Save changes" : "Create user"}

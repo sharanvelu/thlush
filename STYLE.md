@@ -8,7 +8,7 @@ Conventions for code and UI. Follow what is here instead of inventing a new patt
 - **Imports** use the `@/` alias for everything under `src/`. Services are imported as namespaces: `import * as BillingService from "@/services/BillingService"`.
 - **Files**: components and hooks are `kebab-case.tsx` (`customer-picker.tsx`, `use-mobile.ts`); services are `PascalCaseService.ts`; pure service helpers and `lib/` files are `kebab-case.ts`; tests are `tests/<module>.test.ts`.
 - **Server vs client**: components are server components by default. Add `"use client"` only to the interactive leaf (usually the `*-view.tsx`). Never import `@/db` or services into a client component.
-- **Comments** explain *why*, in plain sentences, and doc comments sit on exported functions and non-obvious rules. Don't narrate what the code does.
+- **Comments** explain _why_, in plain sentences, and doc comments sit on exported functions and non-obvious rules. Don't narrate what the code does.
 - **Validation** is Zod, defined once in `src/lib/validation/` and reused by the form (react-hook-form + `@hookform/resolvers`) and the route.
 - **Errors**: throw `HttpError.*` in services; show `errorMessage(error)` in a `toast.error` on the client. Messages are for the cashier: short, plain, no jargon or stack traces.
 - **Money** only through `src/lib/money.ts` (`Decimal`). Never `+`, `*` or `toFixed` on amounts.

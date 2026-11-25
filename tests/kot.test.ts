@@ -5,8 +5,17 @@ import { allocateSent, sentKey } from "@/services/kot-plan";
 import type { BillItemOptions } from "@/db/schema";
 import type { BillDetail } from "@/types/bill";
 
-const prev = (menuItemId: number, sentQty: string, name = "Dosa", options: BillItemOptions | null = null) => ({ menuItemId, name, options, sentQty });
-const line = (menuItemId: number, quantity: string, options: BillItemOptions | null = null) => ({ menuItemId, options, quantity });
+const prev = (menuItemId: number, sentQty: string, name = "Dosa", options: BillItemOptions | null = null) => ({
+  menuItemId,
+  name,
+  options,
+  sentQty,
+});
+const line = (menuItemId: number, quantity: string, options: BillItemOptions | null = null) => ({
+  menuItemId,
+  options,
+  quantity,
+});
 
 describe("allocateSent", () => {
   it("sends only what the kitchen has not had", () => {
@@ -34,8 +43,20 @@ describe("allocateSent", () => {
     // A Large dosa was sent. The bill now also has a plain dosa, which the kitchen has not had.
     const result = allocateSent([prev(1, "1.000", "Dosa", large)], [line(1, "1", large), line(1, "1")], "send");
     expect(result.fresh).toEqual([{ index: 1, quantity: "1.000" }]);
-    expect(sentKey(1, { addons: [{ name: "b", price: "1" }, { name: "a", price: "1" }] })).toBe(
-      sentKey(1, { addons: [{ name: "a", price: "1" }, { name: "b", price: "1" }] }),
+    expect(
+      sentKey(1, {
+        addons: [
+          { name: "b", price: "1" },
+          { name: "a", price: "1" },
+        ],
+      }),
+    ).toBe(
+      sentKey(1, {
+        addons: [
+          { name: "a", price: "1" },
+          { name: "b", price: "1" },
+        ],
+      }),
     );
   });
 
@@ -61,18 +82,66 @@ describe("allocateSent", () => {
 });
 
 const bill: BillDetail = {
-  id: 9, billNo: "HOLD-ab12cd34", status: "held", createdAt: "2026-11-16T10:00:00.000Z", currency: "INR",
-  subtotal: "0.00", totalDiscount: "0.00", totalTax: "0.00", totalAmount: "0.00", discountType: null, discountValue: "0.00",
-  amountPaid: "0.00", changeDue: "0.00", orderType: "dine_in", tableNo: "4", notes: null, voidReason: null,
-  customer: null, cashier: null,
+  id: 9,
+  billNo: "HOLD-ab12cd34",
+  status: "held",
+  createdAt: "2026-11-16T10:00:00.000Z",
+  currency: "INR",
+  subtotal: "0.00",
+  totalDiscount: "0.00",
+  totalTax: "0.00",
+  totalAmount: "0.00",
+  discountType: null,
+  discountValue: "0.00",
+  amountPaid: "0.00",
+  changeDue: "0.00",
+  orderType: "dine_in",
+  tableNo: "4",
+  notes: null,
+  voidReason: null,
+  customer: null,
+  cashier: null,
   items: [
-    { id: 1, menuItemId: 1, name: "Dosa", price: "90.00", sgst: "0", cgst: "0", quantity: "3", discount: "0.00", total: "270.00", options: null, sentQty: "3.000", isPackaging: false },
-    { id: 2, menuItemId: 2, name: "Idli", price: "40.00", sgst: "0", cgst: "0", quantity: "1", discount: "0.00", total: "40.00", options: null, sentQty: "1.000", isPackaging: false },
+    {
+      id: 1,
+      menuItemId: 1,
+      name: "Dosa",
+      price: "90.00",
+      sgst: "0",
+      cgst: "0",
+      quantity: "3",
+      discount: "0.00",
+      total: "270.00",
+      options: null,
+      sentQty: "3.000",
+      isPackaging: false,
+    },
+    {
+      id: 2,
+      menuItemId: 2,
+      name: "Idli",
+      price: "40.00",
+      sgst: "0",
+      cgst: "0",
+      quantity: "1",
+      discount: "0.00",
+      total: "40.00",
+      options: null,
+      sentQty: "1.000",
+      isPackaging: false,
+    },
   ],
   payments: [],
   kots: [
     { seq: 1, createdAt: "2026-11-16T10:00:00.000Z", items: [{ name: "Dosa", quantity: "2.000", details: [] }] },
-    { seq: 2, createdAt: "2026-11-16T10:20:00.000Z", items: [{ name: "Idli", quantity: "1.000", details: [] }, { name: "Dosa", quantity: "1.000", details: [] }] },
+    {
+      seq: 2,
+      createdAt: "2026-11-16T10:20:00.000Z",
+      items: [
+        { name: "Idli", quantity: "1.000", details: [] },
+        { name: "Dosa", quantity: "1.000", details: [] },
+      ],
+    },
   ],
 };
 
@@ -122,7 +191,9 @@ describe("order number on the kitchen slip", () => {
   });
 
   it("puts the order type first and the number after it on one line", () => {
-    const line = slip(done).split("\n").find((l) => l.includes("Dine-in"));
+    const line = slip(done)
+      .split("\n")
+      .find((l) => l.includes("Dine-in"));
     expect(line).toMatch(/Dine-in - Table 4[^\n]*#0007/);
   });
 
@@ -136,7 +207,23 @@ describe("packaging on the kitchen slip", () => {
   it("leaves the system's packaging line off the full-bill slip", () => {
     const withPackaging = {
       ...bill,
-      items: [...bill.items, { id: 9, menuItemId: null, name: "Packaging", price: "20.00", sgst: "0", cgst: "0", quantity: "1", discount: "0.00", total: "20.00", options: null, sentQty: "0.000", isPackaging: true }],
+      items: [
+        ...bill.items,
+        {
+          id: 9,
+          menuItemId: null,
+          name: "Packaging",
+          price: "20.00",
+          sgst: "0",
+          cgst: "0",
+          quantity: "1",
+          discount: "0.00",
+          total: "20.00",
+          options: null,
+          sentQty: "0.000",
+          isPackaging: true,
+        },
+      ],
     };
     const job = text(buildPrintJob(withPackaging, defaultSettings, { kitchen: true, receipt: false }));
     expect(job).toContain("3 x Dosa");

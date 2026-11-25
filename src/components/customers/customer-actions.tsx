@@ -37,7 +37,12 @@ export function CustomerActions({ customer }: { customer: CustomerRecord }) {
       <Button variant="destructive" onClick={() => setDeleting(true)}>
         <Trash2 aria-hidden /> Delete
       </Button>
-      <CustomerFormDialog open={editing} onOpenChange={setEditing} customer={customer} onSaved={() => router.refresh()} />
+      <CustomerFormDialog
+        open={editing}
+        onOpenChange={setEditing}
+        customer={customer}
+        onSaved={() => router.refresh()}
+      />
       <ConfirmDialog
         open={deleting}
         onOpenChange={setDeleting}

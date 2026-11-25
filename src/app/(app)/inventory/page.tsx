@@ -28,7 +28,9 @@ export default async function InventoryPage({ searchParams }: PageProps<"/invent
   }
 
   const raw = await searchParams;
-  const query = stockListQuerySchema.parse(Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])));
+  const query = stockListQuerySchema.parse(
+    Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
+  );
   const [{ rows, total, summary }, categories] = await Promise.all([listStock(query), listCategoryOptions()]);
 
   return (

@@ -19,14 +19,26 @@ export default async function AuditLogPage({ searchParams }: PageProps<"/admin/a
   if (!allowed) return <Forbidden />;
 
   const raw = await searchParams;
-  const query = auditQuerySchema.parse(Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])));
+  const query = auditQuerySchema.parse(
+    Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
+  );
   const locale = await getSettingsGroup("locale");
-  const [{ rows, total }, users, entities] = await Promise.all([listAuditLogs(query, locale.timezone), listUserOptions(), listAuditEntities()]);
+  const [{ rows, total }, users, entities] = await Promise.all([
+    listAuditLogs(query, locale.timezone),
+    listUserOptions(),
+    listAuditEntities(),
+  ]);
 
   return (
     <>
       <PageHeader {...PAGE_COPY.auditLog} />
-      <AuditFilters key={JSON.stringify([query.user, query.entity, query.action, query.from, query.to])} query={query} users={users} entities={entities} total={total} />
+      <AuditFilters
+        key={JSON.stringify([query.user, query.entity, query.action, query.from, query.to])}
+        query={query}
+        users={users}
+        entities={entities}
+        total={total}
+      />
       {rows.length === 0 ? (
         <EmptyState icon={ScrollText} title="Nothing to show" description="No activity matches these filters." />
       ) : (
