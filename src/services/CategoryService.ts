@@ -57,7 +57,10 @@ export async function listCategories(
       .orderBy(asc(categories.sortOrder), asc(categories.name))
       .limit(pageSize)
       .offset((page - 1) * pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(categories).where(where),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(categories)
+      .where(where),
   ]);
 
   return {
@@ -164,7 +167,13 @@ export async function updateCategory(id: number, patch: CategoryPatch, userId: s
           : await tx.select({ id: categories.id }).from(categories).where(eq(categories.id, id));
       if (!updated) throw HttpError.notFound("Category not found.");
       await AuditService.record(
-        { userId, action: "category.update", entity: "category", entityId: id, metadata: { fields: Object.keys(values) } },
+        {
+          userId,
+          action: "category.update",
+          entity: "category",
+          entityId: id,
+          metadata: { fields: Object.keys(values) },
+        },
         tx,
       );
     });

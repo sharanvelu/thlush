@@ -98,7 +98,10 @@ export async function listHeldBills(user: SessionUser): Promise<HeldBillSummary[
       tableNo: bills.tableNo,
       total: bills.totalAmount,
       customerName: customers.name,
-      itemCount: sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(Number),
+      itemCount:
+        sql<number>`(select count(*) from ${billItems} where ${billItems.billId} = ${bills.id} and not ${billItems.isPackaging})`.mapWith(
+          Number,
+        ),
       kotCount: sql<number>`(select count(*) from ${billKots} where ${billKots.billId} = ${bills.id})`.mapWith(Number),
     })
     .from(bills)
@@ -119,11 +122,21 @@ export async function listHeldBills(user: SessionUser): Promise<HeldBillSummary[
 
 export async function discardHeldBill(id: number, user: SessionUser): Promise<void> {
   await db.transaction(async (tx) => {
-    const [bill] = await tx.select().from(bills).where(and(eq(bills.id, id), eq(bills.status, "held"))).for("update");
+    const [bill] = await tx
+      .select()
+      .from(bills)
+      .where(and(eq(bills.id, id), eq(bills.status, "held")))
+      .for("update");
     if (!bill || !canSee(user, bill.createdUserId)) throw HttpError.notFound("Held bill not found.");
     await tx.delete(bills).where(eq(bills.id, id)); // Items cascade.
     await AuditService.record(
-      { userId: user.id, action: "bill.discard_held", entity: "bill", entityId: id, metadata: { total: bill.totalAmount } },
+      {
+        userId: user.id,
+        action: "bill.discard_held",
+        entity: "bill",
+        entityId: id,
+        metadata: { total: bill.totalAmount },
+      },
       tx,
     );
   });
@@ -239,7 +252,9 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
         customerId = await CustomerService.resolveNewCustomer(input.customer, tx);
       }
 
-      const billNo = completing ? await nextBillNo(tx, now, settings) : (held?.billNo ?? `HOLD-${randomUUID().slice(0, 8)}`);
+      const billNo = completing
+        ? await nextBillNo(tx, now, settings)
+        : (held?.billNo ?? `HOLD-${randomUUID().slice(0, 8)}`);
       const header = billHeader(plan, {
         billNo,
         customerId,
@@ -253,7 +268,12 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
       // What the kitchen already has, read before the lines are rewritten.
       const previous = held
         ? await tx
-            .select({ menuItemId: billItems.menuItemId, name: billItems.name, options: billItems.options, sentQty: billItems.sentQty })
+            .select({
+              menuItemId: billItems.menuItemId,
+              name: billItems.name,
+              options: billItems.options,
+              sentQty: billItems.sentQty,
+            })
             .from(billItems)
             .where(eq(billItems.billId, held.id))
         : [];
@@ -297,7 +317,10 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
 
       let newKotSeq: number | null = null;
       if (allocation.fresh.length > 0) {
-        const [last] = await tx.select({ seq: max(billKots.seq) }).from(billKots).where(eq(billKots.billId, id));
+        const [last] = await tx
+          .select({ seq: max(billKots.seq) })
+          .from(billKots)
+          .where(eq(billKots.billId, id));
         newKotSeq = (last?.seq ?? 0) + 1;
         await tx.insert(billKots).values({
           billId: id,
@@ -329,7 +352,13 @@ export async function saveBill(input: BillSaveInput, user: SessionUser): Promise
           action: completing ? "bill.create" : input.action === "kot" ? "bill.kot" : "bill.hold",
           entity: "bill",
           entityId: id,
-          metadata: { billNo, total: plan.totals.grandTotal, items: plan.lines.length, fromHold: held?.id ?? null, kot: newKotSeq },
+          metadata: {
+            billNo,
+            total: plan.totals.grandTotal,
+            items: plan.lines.length,
+            fromHold: held?.id ?? null,
+            kot: newKotSeq,
+          },
         },
         tx,
       );

@@ -23,7 +23,10 @@ export default async function CustomerHomePage() {
         className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-transform hover:scale-[1.02] active:scale-[0.98] motion-reduce:transition-none"
       >
         View the menu
-        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden />
+        <ArrowRight
+          className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+          aria-hidden
+        />
       </Link>
     </main>
   );

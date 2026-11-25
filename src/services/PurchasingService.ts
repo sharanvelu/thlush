@@ -26,14 +26,26 @@ export interface SupplierRecord {
   purchases: number;
 }
 
-export async function listSuppliers(query: { q?: string; page: number; pageSize: number }): Promise<{ rows: SupplierRecord[]; total: number }> {
+export async function listSuppliers(query: {
+  q?: string;
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: SupplierRecord[]; total: number }> {
   const pattern = query.q ? likePattern(query.q) : null;
-  const where = pattern ? or(ilike(suppliers.name, pattern), ilike(suppliers.contactName, pattern), ilike(suppliers.phone, pattern)) : undefined;
+  const where = pattern
+    ? or(ilike(suppliers.name, pattern), ilike(suppliers.contactName, pattern), ilike(suppliers.phone, pattern))
+    : undefined;
   const [rows, totals] = await Promise.all([
     db
       .select({
-        id: suppliers.id, name: suppliers.name, contactName: suppliers.contactName, phone: suppliers.phone, email: suppliers.email,
-        address: suppliers.address, notes: suppliers.notes, status: suppliers.status,
+        id: suppliers.id,
+        name: suppliers.name,
+        contactName: suppliers.contactName,
+        phone: suppliers.phone,
+        email: suppliers.email,
+        address: suppliers.address,
+        notes: suppliers.notes,
+        status: suppliers.status,
         // Counted with a join: a subquery on a single-table select loses its table prefix and compares the wrong columns.
         purchases: sql<number>`count(${purchases.id})`.mapWith(Number),
       })
@@ -44,13 +56,22 @@ export async function listSuppliers(query: { q?: string; page: number; pageSize:
       .orderBy(asc(sql`lower(${suppliers.name})`), asc(suppliers.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(suppliers).where(where),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(suppliers)
+      .where(where),
   ]);
   return { rows, total: totals[0]?.n ?? 0 };
 }
 
-export async function listSupplierOptions(): Promise<Array<{ id: number; name: string; status: "active" | "disabled" }>> {
-  return db.select({ id: suppliers.id, name: suppliers.name, status: suppliers.status }).from(suppliers).orderBy(asc(sql`lower(${suppliers.name})`)).limit(500);
+export async function listSupplierOptions(): Promise<
+  Array<{ id: number; name: string; status: "active" | "disabled" }>
+> {
+  return db
+    .select({ id: suppliers.id, name: suppliers.name, status: suppliers.status })
+    .from(suppliers)
+    .orderBy(asc(sql`lower(${suppliers.name})`))
+    .limit(500);
 }
 
 async function getSupplier(id: number): Promise<SupplierRecord> {
@@ -64,20 +85,42 @@ export async function createSupplier(input: SupplierData, user: SessionUser): Pr
   const id = await db.transaction(async (tx) => {
     const [created] = await tx.insert(suppliers).values(input).returning({ id: suppliers.id });
     if (!created) throw new Error("Supplier insert returned no row");
-    await AuditService.record({ userId: user.id, action: "supplier.create", entity: "supplier", entityId: created.id, metadata: { name: input.name } }, tx);
+    await AuditService.record(
+      {
+        userId: user.id,
+        action: "supplier.create",
+        entity: "supplier",
+        entityId: created.id,
+        metadata: { name: input.name },
+      },
+      tx,
+    );
     return created.id;
   });
   return getSupplier(id);
 }
 
-export async function updateSupplier(id: number, patch: Partial<SupplierData>, user: SessionUser): Promise<SupplierRecord> {
+export async function updateSupplier(
+  id: number,
+  patch: Partial<SupplierData>,
+  user: SessionUser,
+): Promise<SupplierRecord> {
   await db.transaction(async (tx) => {
     const [updated] =
       Object.keys(patch).length > 0
         ? await tx.update(suppliers).set(patch).where(eq(suppliers.id, id)).returning({ id: suppliers.id })
         : await tx.select({ id: suppliers.id }).from(suppliers).where(eq(suppliers.id, id));
     if (!updated) throw HttpError.notFound("Supplier not found.");
-    await AuditService.record({ userId: user.id, action: "supplier.update", entity: "supplier", entityId: id, metadata: { fields: Object.keys(patch) } }, tx);
+    await AuditService.record(
+      {
+        userId: user.id,
+        action: "supplier.update",
+        entity: "supplier",
+        entityId: id,
+        metadata: { fields: Object.keys(patch) },
+      },
+      tx,
+    );
   });
   return getSupplier(id);
 }
@@ -87,9 +130,21 @@ export async function deleteSupplier(id: number, user: SessionUser): Promise<{ p
   return db.transaction(async (tx) => {
     const [supplier] = await tx.select().from(suppliers).where(eq(suppliers.id, id)).for("update");
     if (!supplier) throw HttpError.notFound("Supplier not found.");
-    const [kept] = await tx.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(purchases).where(eq(purchases.supplierId, id));
+    const [kept] = await tx
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(purchases)
+      .where(eq(purchases.supplierId, id));
     await tx.delete(suppliers).where(eq(suppliers.id, id));
-    await AuditService.record({ userId: user.id, action: "supplier.delete", entity: "supplier", entityId: id, metadata: { name: supplier.name, purchasesKept: kept?.n ?? 0 } }, tx);
+    await AuditService.record(
+      {
+        userId: user.id,
+        action: "supplier.delete",
+        entity: "supplier",
+        entityId: id,
+        metadata: { name: supplier.name, purchasesKept: kept?.n ?? 0 },
+      },
+      tx,
+    );
     return { purchasesKept: kept?.n ?? 0 };
   });
 }
@@ -114,14 +169,26 @@ export interface PurchaseDetail extends PurchaseRow {
   items: Array<{ id: number; name: string; quantity: string; costPrice: string; total: string }>;
 }
 
-export async function listPurchases(query: { supplier?: number; page: number; pageSize: number }): Promise<{ rows: PurchaseRow[]; total: number }> {
+export async function listPurchases(query: {
+  supplier?: number;
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: PurchaseRow[]; total: number }> {
   const where = query.supplier ? eq(purchases.supplierId, query.supplier) : undefined;
   const [rows, totals] = await Promise.all([
     db
       .select({
-        id: purchases.id, invoiceNo: purchases.invoiceNo, purchasedAt: purchases.purchasedAt, supplierId: purchases.supplierId,
-        supplierName: suppliers.name, total: purchases.totalAmount, createdBy: schema.users.name,
-        itemCount: sql<number>`(select count(*) from ${purchaseItems} where ${purchaseItems.purchaseId} = ${purchases.id})`.mapWith(Number),
+        id: purchases.id,
+        invoiceNo: purchases.invoiceNo,
+        purchasedAt: purchases.purchasedAt,
+        supplierId: purchases.supplierId,
+        supplierName: suppliers.name,
+        total: purchases.totalAmount,
+        createdBy: schema.users.name,
+        itemCount:
+          sql<number>`(select count(*) from ${purchaseItems} where ${purchaseItems.purchaseId} = ${purchases.id})`.mapWith(
+            Number,
+          ),
       })
       .from(purchases)
       .leftJoin(suppliers, eq(suppliers.id, purchases.supplierId))
@@ -130,7 +197,10 @@ export async function listPurchases(query: { supplier?: number; page: number; pa
       .orderBy(desc(purchases.purchasedAt), desc(purchases.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(purchases).where(where),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(purchases)
+      .where(where),
   ]);
   return { rows: rows.map((r) => ({ ...r, purchasedAt: r.purchasedAt.toISOString() })), total: totals[0]?.n ?? 0 };
 }
@@ -138,9 +208,18 @@ export async function listPurchases(query: { supplier?: number; page: number; pa
 export async function getPurchase(id: number): Promise<PurchaseDetail> {
   const rows = await db
     .select({
-      id: purchases.id, invoiceNo: purchases.invoiceNo, purchasedAt: purchases.purchasedAt, supplierId: purchases.supplierId,
-      supplierName: suppliers.name, total: purchases.totalAmount, notes: purchases.notes, createdBy: schema.users.name,
-      itemCount: sql<number>`(select count(*) from ${purchaseItems} where ${purchaseItems.purchaseId} = ${purchases.id})`.mapWith(Number),
+      id: purchases.id,
+      invoiceNo: purchases.invoiceNo,
+      purchasedAt: purchases.purchasedAt,
+      supplierId: purchases.supplierId,
+      supplierName: suppliers.name,
+      total: purchases.totalAmount,
+      notes: purchases.notes,
+      createdBy: schema.users.name,
+      itemCount:
+        sql<number>`(select count(*) from ${purchaseItems} where ${purchaseItems.purchaseId} = ${purchases.id})`.mapWith(
+          Number,
+        ),
     })
     .from(purchases)
     .leftJoin(suppliers, eq(suppliers.id, purchases.supplierId))
@@ -148,11 +227,21 @@ export async function getPurchase(id: number): Promise<PurchaseDetail> {
     .where(eq(purchases.id, id));
   const row = rows[0];
   if (!row) throw HttpError.notFound("Purchase not found.");
-  const items = await db.select().from(purchaseItems).where(eq(purchaseItems.purchaseId, id)).orderBy(asc(purchaseItems.id));
+  const items = await db
+    .select()
+    .from(purchaseItems)
+    .where(eq(purchaseItems.purchaseId, id))
+    .orderBy(asc(purchaseItems.id));
   return {
     ...row,
     purchasedAt: row.purchasedAt.toISOString(),
-    items: items.map((i) => ({ id: i.id, name: i.name, quantity: new D(i.quantity).toString(), costPrice: i.costPrice, total: i.total })),
+    items: items.map((i) => ({
+      id: i.id,
+      name: i.name,
+      quantity: new D(i.quantity).toString(),
+      costPrice: i.costPrice,
+      total: i.total,
+    })),
   };
 }
 
@@ -160,13 +249,23 @@ export async function getPurchase(id: number): Promise<PurchaseDetail> {
  * Receives stock: records the purchase, adds the quantities to stock, writes ledger rows and sets each
  * item's cost price to what was just paid. All of it commits together or not at all.
  */
-export async function createPurchase(input: PurchaseInput, user: SessionUser, timeZone: string): Promise<PurchaseDetail> {
-  const purchasedAt = input.date ? new Date(zonedStartOfDay(input.date, timeZone).getTime() + 12 * 3_600_000) : new Date();
-  if (purchasedAt.getTime() > Date.now() + 60_000) throw HttpError.badRequest("A purchase can't be dated in the future.");
+export async function createPurchase(
+  input: PurchaseInput,
+  user: SessionUser,
+  timeZone: string,
+): Promise<PurchaseDetail> {
+  const purchasedAt = input.date
+    ? new Date(zonedStartOfDay(input.date, timeZone).getTime() + 12 * 3_600_000)
+    : new Date();
+  if (purchasedAt.getTime() > Date.now() + 60_000)
+    throw HttpError.badRequest("A purchase can't be dated in the future.");
 
   const id = await db.transaction(async (tx) => {
     if (input.supplierId !== null) {
-      const [supplier] = await tx.select({ id: suppliers.id, status: suppliers.status }).from(suppliers).where(eq(suppliers.id, input.supplierId));
+      const [supplier] = await tx
+        .select({ id: suppliers.id, status: suppliers.status })
+        .from(suppliers)
+        .where(eq(suppliers.id, input.supplierId));
       if (!supplier) throw HttpError.badRequest("That supplier no longer exists.");
     }
 
@@ -181,36 +280,78 @@ export async function createPurchase(input: PurchaseInput, user: SessionUser, ti
     for (const line of input.items) {
       const item = byId.get(line.menuItemId);
       if (!item) throw HttpError.badRequest("An item on this purchase no longer exists.");
-      if (!item.trackStock) throw HttpError.badRequest(`"${item.name}" doesn't track stock. Turn on stock tracking for it in the menu first.`);
+      if (!item.trackStock)
+        throw HttpError.badRequest(
+          `"${item.name}" doesn't track stock. Turn on stock tracking for it in the menu first.`,
+        );
     }
 
     const lines = input.items.map((line) => {
       const item = byId.get(line.menuItemId)!;
-      return { item, quantity: new D(parseQuantity(line.quantity)), cost: parseMoney(line.costPrice), total: round2(new D(line.quantity).times(line.costPrice)) };
+      return {
+        item,
+        quantity: new D(parseQuantity(line.quantity)),
+        cost: parseMoney(line.costPrice),
+        total: round2(new D(line.quantity).times(line.costPrice)),
+      };
     });
     const total = lines.reduce((acc, l) => acc.plus(l.total), new D(0));
 
     const [purchase] = await tx
       .insert(purchases)
-      .values({ supplierId: input.supplierId, invoiceNo: input.invoiceNo, totalAmount: total.toFixed(2), notes: input.notes, purchasedAt, createdUserId: user.id })
+      .values({
+        supplierId: input.supplierId,
+        invoiceNo: input.invoiceNo,
+        totalAmount: total.toFixed(2),
+        notes: input.notes,
+        purchasedAt,
+        createdUserId: user.id,
+      })
       .returning({ id: purchases.id });
     if (!purchase) throw new Error("Purchase insert returned no row");
 
     await tx.insert(purchaseItems).values(
-      lines.map((l) => ({ purchaseId: purchase.id, menuItemId: l.item.id, name: l.item.name, quantity: l.quantity.toFixed(3), costPrice: l.cost, total: l.total.toFixed(2) })),
+      lines.map((l) => ({
+        purchaseId: purchase.id,
+        menuItemId: l.item.id,
+        name: l.item.name,
+        quantity: l.quantity.toFixed(3),
+        costPrice: l.cost,
+        total: l.total.toFixed(2),
+      })),
     );
 
     const ref = input.invoiceNo ?? `#${purchase.id}`;
     for (const l of lines) {
       const next = new D(l.item.stockQty).plus(l.quantity);
-      await tx.update(menuItems).set({ stockQty: next.toFixed(3), costPrice: l.cost }).where(eq(menuItems.id, l.item.id));
+      await tx
+        .update(menuItems)
+        .set({ stockQty: next.toFixed(3), costPrice: l.cost })
+        .where(eq(menuItems.id, l.item.id));
       await tx.insert(stockMovements).values({
-        menuItemId: l.item.id, delta: l.quantity.toFixed(3), reason: "purchase", userId: user.id, note: `Purchase ${ref}`, balanceAfter: next.toFixed(3), createdAt: purchasedAt,
+        menuItemId: l.item.id,
+        delta: l.quantity.toFixed(3),
+        reason: "purchase",
+        userId: user.id,
+        note: `Purchase ${ref}`,
+        balanceAfter: next.toFixed(3),
+        createdAt: purchasedAt,
       });
     }
 
     await AuditService.record(
-      { userId: user.id, action: "purchase.create", entity: "purchase", entityId: purchase.id, metadata: { invoiceNo: input.invoiceNo, supplierId: input.supplierId, items: lines.length, total: total.toFixed(2) } },
+      {
+        userId: user.id,
+        action: "purchase.create",
+        entity: "purchase",
+        entityId: purchase.id,
+        metadata: {
+          invoiceNo: input.invoiceNo,
+          supplierId: input.supplierId,
+          items: lines.length,
+          total: total.toFixed(2),
+        },
+      },
       tx,
     );
     return purchase.id;

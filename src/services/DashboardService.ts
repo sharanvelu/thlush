@@ -31,7 +31,10 @@ export interface DashboardData {
   paymentSplit: Array<{ method: PaymentMethod; amount: string; bills: number }>;
   topItems: Array<{ name: string; quantity: string; revenue: string }>;
   /** Null when the viewer's role cannot see inventory. */
-  lowStock: { total: number; items: Array<{ id: number; name: string; stock: string; reorderLevel: string; unit: string }> } | null;
+  lowStock: {
+    total: number;
+    items: Array<{ id: number; name: string; stock: string; reorderLevel: string; unit: string }>;
+  } | null;
   recentBills: BillHistoryService.BillListRow[];
 }
 
@@ -57,11 +60,16 @@ export async function getDashboard(range: ResolvedRange, user: SessionUser, time
     const where = and(...inPeriod(from, to));
     const [[totals], [items]] = await Promise.all([
       db
-        .select({ n: sql<number>`count(*)`.mapWith(Number), revenue: sql<string>`coalesce(sum(${bills.totalAmount}), 0)` })
+        .select({
+          n: sql<number>`count(*)`.mapWith(Number),
+          revenue: sql<string>`coalesce(sum(${bills.totalAmount}), 0)`,
+        })
         .from(bills)
         .where(where),
       db
-        .select({ qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)` })
+        .select({
+          qty: sql<string>`coalesce(sum(case when ${billItems.isPackaging} then 0 else ${billItems.quantity} end), 0)`,
+        })
         .from(billItems)
         .innerJoin(bills, eq(bills.id, billItems.billId))
         .where(where),
@@ -134,10 +142,16 @@ export async function getDashboard(range: ResolvedRange, user: SessionUser, time
       .limit(5),
     Promise.all([
       db
-        .select({ n: sql<number>`count(*)`.mapWith(Number), revenue: sql<string>`coalesce(sum(${bills.totalAmount}), 0)` })
+        .select({
+          n: sql<number>`count(*)`.mapWith(Number),
+          revenue: sql<string>`coalesce(sum(${bills.totalAmount}), 0)`,
+        })
         .from(bills)
         .where(and(eq(bills.status, "completed"), ...(ownOnly ? [eq(bills.createdUserId, user.id)] : []))),
-      db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(menuItems).where(isNull(menuItems.deletedAt)),
+      db
+        .select({ n: sql<number>`count(*)`.mapWith(Number) })
+        .from(menuItems)
+        .where(isNull(menuItems.deletedAt)),
       db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(categories),
       db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(customers),
     ]),
@@ -149,7 +163,10 @@ export async function getDashboard(range: ResolvedRange, user: SessionUser, time
   const dayKeys = listDays(range.from, range.to);
   const hourKeys = Array.from({ length: 24 }, (_, h) => String(h));
   const points = hourly
-    ? fillSeries(hourKeys, new Map(byHour.map((r) => [String(r.hour), { revenue: num(r.revenue).toFixed(2), bills: r.bills }])))
+    ? fillSeries(
+        hourKeys,
+        new Map(byHour.map((r) => [String(r.hour), { revenue: num(r.revenue).toFixed(2), bills: r.bills }])),
+      )
     : fillSeries(dayKeys, new Map(byDay.map((r) => [r.key, { revenue: num(r.revenue).toFixed(2), bills: r.bills }])));
   const hours = new Map(byHour.map((r) => [r.hour, r.bills]));
   const [[all], [menuCount], [categoryCount], [customerCount]] = overall;
@@ -174,11 +191,17 @@ export async function getDashboard(range: ResolvedRange, user: SessionUser, time
     revenueSeries: { granularity: hourly ? "hour" : "day", points },
     billsPerHour: Array.from({ length: 24 }, (_, hour) => ({ hour, bills: hours.get(hour) ?? 0 })),
     salesByCategory: foldSlices(
-      categoryRows.filter((r) => num(r.value).greaterThan(0)).map((r) => ({ name: r.name, value: num(r.value).toFixed(2), color: r.color })),
+      categoryRows
+        .filter((r) => num(r.value).greaterThan(0))
+        .map((r) => ({ name: r.name, value: num(r.value).toFixed(2), color: r.color })),
       8,
     ),
     paymentSplit: paymentRows.map((r) => ({ method: r.method, amount: num(r.amount).toFixed(2), bills: r.bills })),
-    topItems: topRows.map((r) => ({ name: r.name, quantity: num(r.quantity).toString(), revenue: num(r.revenue).toFixed(2) })),
+    topItems: topRows.map((r) => ({
+      name: r.name,
+      quantity: num(r.quantity).toString(),
+      revenue: num(r.revenue).toFixed(2),
+    })),
     lowStock: lowRows,
     recentBills: recent.rows,
   };

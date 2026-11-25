@@ -71,7 +71,9 @@ export function packagingLines(
   // Merge by tax rate: the usual single rate gives one "Packaging" line.
   const byRate = new Map<string, PackagingLine & { sum: Dec }>();
   for (const { amount, sgst, cgst } of amounts) {
-    const rates = settings.taxed ? { sgst: toDecimal(sgst).toString(), cgst: toDecimal(cgst).toString() } : { sgst: "0", cgst: "0" };
+    const rates = settings.taxed
+      ? { sgst: toDecimal(sgst).toString(), cgst: toDecimal(cgst).toString() }
+      : { sgst: "0", cgst: "0" };
     const key = `${rates.sgst}|${rates.cgst}`;
     const entry = byRate.get(key) ?? { price: "0.00", ...rates, sum: new D(0) };
     entry.sum = entry.sum.plus(amount);

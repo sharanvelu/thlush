@@ -1,0 +1,104 @@
+# Prove the app still builds and that the committed migrations match the schema, WITHOUT deploying anything.
+#
+# Required status check: "Build Check Gate" (only the gate: the work jobs are
+# path-filtered and may legitimately be skipped).
+
+name: build check
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: build-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      site: ${{ steps.filter.outputs.site || 'true' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # On workflow_dispatch there is no PR diff: the step is skipped and the
+      # `|| 'true'` fallback above forces every domain on.
+      - name: Filter changed paths
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            - 'src/**'
+            - 'tests/**'
+            - 'drizzle/**'
+            - 'scripts/**'
+            - 'public/**'
+            - 'package.json'
+            - 'package-lock.json'
+            - 'tsconfig.json'
+            - 'next.config.ts'
+            - 'vitest.config.mts'
+            - 'drizzle.config.ts'
+            - 'eslint.config.mjs'
+            - 'components.json'
+            - 'neon.ts'
+            - 'vercel.json'
+            - '.github/workflows/build-check.yml'
+            - '.github/actions/setup/**'
+
+  build:
+    name: migrations + next build
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      # Placeholders so the build can start. Nothing here connects to a database: pages render on demand.
+      DATABASE_URL: postgresql://ci:ci@localhost/ci?sslmode=require
+      AUTH_SECRET: ci-only-secret-not-used-anywhere-else-000000
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_ENV: local
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      # Generating from the schema must produce nothing new. If this fails, run `npm run db:generate`
+      # and commit the new migration.
+      - name: Migrations match the schema
+        run: |
+          npm run db:generate
+          git diff --exit-code -- drizzle
+          test -z "$(git ls-files --others --exclude-standard -- drizzle)"
+
+      - name: Build the app
+        run: npm run build
+
+  gate:
+    name: Build Check Gate
+    needs: [changes, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any needed job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: All good
+        run: echo "All jobs succeeded or were skipped as not relevant."

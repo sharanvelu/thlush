@@ -17,7 +17,15 @@ const PRESETS = [
  * Date-range control. The choice lives in the URL, so a view can be bookmarked or shared.
  * `defaultKey` is the range a page uses when the URL has none, so choosing it just clears the param.
  */
-export function RangeSelector({ range, today, defaultKey = "today" }: { range: ResolvedRange; today: string; defaultKey?: RangeKey }) {
+export function RangeSelector({
+  range,
+  today,
+  defaultKey = "today",
+}: {
+  range: ResolvedRange;
+  today: string;
+  defaultKey?: RangeKey;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -52,7 +60,10 @@ export function RangeSelector({ range, today, defaultKey = "today" }: { range: R
                 setCustomOpen(false);
                 go({ range: value === defaultKey ? null : value, from: null, to: null });
               }}
-              className={cn("rounded-lg px-3", selected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground")}
+              className={cn(
+                "rounded-lg px-3",
+                selected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+              )}
             >
               {label}
             </Button>
@@ -65,7 +76,10 @@ export function RangeSelector({ range, today, defaultKey = "today" }: { range: R
           aria-pressed={customOpen}
           aria-expanded={customOpen}
           onClick={() => setCustomOpen((open) => !open)}
-          className={cn("rounded-lg px-3", customOpen && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground")}
+          className={cn(
+            "rounded-lg px-3",
+            customOpen && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+          )}
         >
           Custom
         </Button>
@@ -81,11 +95,25 @@ export function RangeSelector({ range, today, defaultKey = "today" }: { range: R
         >
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             From
-            <Input type="date" value={from} max={today} onChange={(e) => setFrom(e.target.value)} className="h-8 w-40" required />
+            <Input
+              type="date"
+              value={from}
+              max={today}
+              onChange={(e) => setFrom(e.target.value)}
+              className="h-8 w-40"
+              required
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             To
-            <Input type="date" value={to} max={today} onChange={(e) => setTo(e.target.value)} className="h-8 w-40" required />
+            <Input
+              type="date"
+              value={to}
+              max={today}
+              onChange={(e) => setTo(e.target.value)}
+              className="h-8 w-40"
+              required
+            />
           </label>
           <Button type="submit" size="sm">
             Apply

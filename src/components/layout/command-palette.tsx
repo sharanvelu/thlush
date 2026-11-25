@@ -58,12 +58,7 @@ export function CommandPalette({ role, features, open, onOpenChange }: CommandPa
   ].filter((a): a is { label: string; href: string; icon: typeof ReceiptText } => Boolean(a));
 
   return (
-    <CommandDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Search"
-      description="Search pages and actions"
-    >
+    <CommandDialog open={open} onOpenChange={onOpenChange} title="Search" description="Search pages and actions">
       <CommandInput placeholder="Search pages and actions..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>

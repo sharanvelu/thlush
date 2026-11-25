@@ -89,9 +89,7 @@ function SortableRow({ category, onToggle, onEdit, onDelete }: RowProps) {
             </Badge>
           ) : null}
         </div>
-        {category.description ? (
-          <p className="truncate text-xs text-muted-foreground">{category.description}</p>
-        ) : null}
+        {category.description ? <p className="truncate text-xs text-muted-foreground">{category.description}</p> : null}
       </div>
 
       <Link

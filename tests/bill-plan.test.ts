@@ -77,11 +77,10 @@ describe("planBill: pricing", () => {
   });
 
   it("skips tax when the business ignores it", () => {
-    const plan = planBill(
-      request({ payments: [{ method: "cash", amount: "200.00" }] }),
-      catalog(dosa),
-      { ...settings, ignoreTax: true },
-    );
+    const plan = planBill(request({ payments: [{ method: "cash", amount: "200.00" }] }), catalog(dosa), {
+      ...settings,
+      ignoreTax: true,
+    });
     expect(plan.totals.totalTax).toBe("0.00");
     expect(plan.totals.grandTotal).toBe("200.00");
   });
@@ -115,7 +114,10 @@ describe("planBill: pricing", () => {
     expect(plan.lines[0]?.price).toBe("195.00");
     expect(plan.totals.grandTotal).toBe("409.50");
     expect(plan.lines[0]?.name).toBe("Cold Coffee (Large + Extra shot x3)");
-    expect(plan.lines[0]?.options).toEqual({ variant: "Large", addons: [{ name: "Extra shot", price: "25.00", quantity: 3 }] });
+    expect(plan.lines[0]?.options).toEqual({
+      variant: "Large",
+      addons: [{ name: "Extra shot", price: "25.00", quantity: 3 }],
+    });
   });
 
   it("still accepts add-ons sent as plain names, meaning one each", () => {
@@ -130,24 +132,51 @@ describe("planBill: pricing", () => {
   it("rejects an add-on count of zero or more than the limit", () => {
     const line = { menuItemId: 2, quantity: "1", variant: "Regular" };
     const base = { action: "hold", clientRef: "abcdefgh" };
-    expect(billSaveSchema.safeParse({ ...base, lines: [{ ...line, addons: [{ name: "Extra shot", quantity: 0 }] }] }).success).toBe(false);
-    expect(billSaveSchema.safeParse({ ...base, lines: [{ ...line, addons: [{ name: "Extra shot", quantity: 21 }] }] }).success).toBe(false);
+    expect(
+      billSaveSchema.safeParse({ ...base, lines: [{ ...line, addons: [{ name: "Extra shot", quantity: 0 }] }] })
+        .success,
+    ).toBe(false);
+    expect(
+      billSaveSchema.safeParse({ ...base, lines: [{ ...line, addons: [{ name: "Extra shot", quantity: 21 }] }] })
+        .success,
+    ).toBe(false);
   });
 
   it("requires a variant when the item has them, and rejects unknown ones", () => {
-    expectHttp(400, () => planBill(request({ lines: [{ menuItemId: 2, quantity: "1" }] }), catalog(coffee), settings), /Choose a variant/);
-    expectHttp(409, () => planBill(request({ lines: [{ menuItemId: 2, quantity: "1", variant: "Huge" }] }), catalog(coffee), settings));
-    expectHttp(400, () => planBill(request({ lines: [{ menuItemId: 1, quantity: "1", variant: "Large" }] }), catalog(dosa), settings), /no variants/);
+    expectHttp(
+      400,
+      () => planBill(request({ lines: [{ menuItemId: 2, quantity: "1" }] }), catalog(coffee), settings),
+      /Choose a variant/,
+    );
+    expectHttp(409, () =>
+      planBill(request({ lines: [{ menuItemId: 2, quantity: "1", variant: "Huge" }] }), catalog(coffee), settings),
+    );
+    expectHttp(
+      400,
+      () => planBill(request({ lines: [{ menuItemId: 1, quantity: "1", variant: "Large" }] }), catalog(dosa), settings),
+      /no variants/,
+    );
   });
 
   it("rejects unknown or repeated add-ons", () => {
     const line = { menuItemId: 2, quantity: "1", variant: "Regular" };
-    expectHttp(409, () => planBill(request({ lines: [{ ...line, addons: ["Free pizza"] }] }), catalog(coffee), settings));
-    expectHttp(400, () => planBill(request({ lines: [{ ...line, addons: ["Extra shot", "Extra shot"] }] }), catalog(coffee), settings), /repeated/);
+    expectHttp(409, () =>
+      planBill(request({ lines: [{ ...line, addons: ["Free pizza"] }] }), catalog(coffee), settings),
+    );
+    expectHttp(
+      400,
+      () =>
+        planBill(request({ lines: [{ ...line, addons: ["Extra shot", "Extra shot"] }] }), catalog(coffee), settings),
+      /repeated/,
+    );
   });
 
   it("sells whole pieces for pcs items but allows fractions for kg", () => {
-    expectHttp(400, () => planBill(request({ lines: [{ menuItemId: 1, quantity: "1.5" }] }), catalog(dosa), settings), /whole pieces/);
+    expectHttp(
+      400,
+      () => planBill(request({ lines: [{ menuItemId: 1, quantity: "1.5" }] }), catalog(dosa), settings),
+      /whole pieces/,
+    );
     const plan = planBill(
       request({ lines: [{ menuItemId: 4, quantity: "0.5" }], payments: [{ method: "cash", amount: "105.00" }] }),
       catalog(rice),
@@ -201,8 +230,24 @@ describe("planBill: discounts", () => {
   });
 
   it("refuses discounts when the feature is off", () => {
-    expectHttp(400, () => planBill(request({ discount: { type: "flat", value: "5" } }), catalog(dosa), { ...settings, discountsEnabled: false }), /turned off/);
-    expectHttp(400, () => planBill(request({ lines: [{ menuItemId: 1, quantity: "1", discount: "5" }] }), catalog(dosa), { ...settings, discountsEnabled: false }), /turned off/);
+    expectHttp(
+      400,
+      () =>
+        planBill(request({ discount: { type: "flat", value: "5" } }), catalog(dosa), {
+          ...settings,
+          discountsEnabled: false,
+        }),
+      /turned off/,
+    );
+    expectHttp(
+      400,
+      () =>
+        planBill(request({ lines: [{ menuItemId: 1, quantity: "1", discount: "5" }] }), catalog(dosa), {
+          ...settings,
+          discountsEnabled: false,
+        }),
+      /turned off/,
+    );
   });
 });
 
@@ -225,8 +270,14 @@ describe("planBill: payments", () => {
   });
 
   it("rejects payments that do not add up", () => {
-    expectHttp(400, () => planBill(request({ payments: [{ method: "cash", amount: "200.00" }] }), catalog(dosa), settings), /add up to 200\.00 but the bill total is 210\.00/);
-    expectHttp(400, () => planBill(request({ payments: [{ method: "cash", amount: "300.00" }] }), catalog(dosa), settings));
+    expectHttp(
+      400,
+      () => planBill(request({ payments: [{ method: "cash", amount: "200.00" }] }), catalog(dosa), settings),
+      /add up to 200\.00 but the bill total is 210\.00/,
+    );
+    expectHttp(400, () =>
+      planBill(request({ payments: [{ method: "cash", amount: "300.00" }] }), catalog(dosa), settings),
+    );
     expectHttp(400, () => planBill(request({ payments: [] }), catalog(dosa), settings), /Add a payment/);
   });
 
@@ -238,8 +289,21 @@ describe("planBill: payments", () => {
   });
 
   it("only gives change against cash", () => {
-    expectHttp(400, () => planBill(request({ payments: [{ method: "card", amount: "210.00" }], cashTendered: "300.00" }), catalog(dosa), settings), /cash payment/);
-    expectHttp(400, () => planBill(request({ cashTendered: "100.00" }), catalog(dosa), settings), /less than the cash payment/);
+    expectHttp(
+      400,
+      () =>
+        planBill(
+          request({ payments: [{ method: "card", amount: "210.00" }], cashTendered: "300.00" }),
+          catalog(dosa),
+          settings,
+        ),
+      /cash payment/,
+    );
+    expectHttp(
+      400,
+      () => planBill(request({ cashTendered: "100.00" }), catalog(dosa), settings),
+      /less than the cash payment/,
+    );
   });
 
   it("needs no payment for a bill that totals zero, and refuses one", () => {
@@ -251,7 +315,12 @@ describe("planBill: payments", () => {
     const plan = planBill(free, catalog(dosa), settings);
     expect(plan.totals.grandTotal).toBe("0.00");
     expect(plan.payments).toEqual([]);
-    expectHttp(400, () => planBill({ ...free, payments: [{ method: "cash", amount: "5.00", reference: null }] }, catalog(dosa), settings), /nothing to pay/);
+    expectHttp(
+      400,
+      () =>
+        planBill({ ...free, payments: [{ method: "cash", amount: "5.00", reference: null }] }, catalog(dosa), settings),
+      /nothing to pay/,
+    );
   });
 
   it("does not need payment to put a bill on hold", () => {
@@ -274,7 +343,10 @@ describe("planBill: stock", () => {
   it("adds up the same item across several lines", () => {
     const plan = planBill(
       request({
-        lines: [{ menuItemId: 3, quantity: "1" }, { menuItemId: 3, quantity: "2" }],
+        lines: [
+          { menuItemId: 3, quantity: "1" },
+          { menuItemId: 3, quantity: "2" },
+        ],
         payments: [{ method: "cash", amount: "126.00" }],
       }),
       catalog(samosa),
@@ -284,8 +356,17 @@ describe("planBill: stock", () => {
   });
 
   it("blocks overselling only when the setting is on", () => {
-    expectHttp(409, () => planBill(sale("6", "252.00"), catalog(samosa), { ...settings, blockOutOfStock: true }), /Only 5 pcs of "Samosa" left/);
-    expectHttp(409, () => planBill(sale("1", "42.00"), catalog({ ...samosa, stockQty: "0.000" }), { ...settings, blockOutOfStock: true }), /out of stock/);
+    expectHttp(
+      409,
+      () => planBill(sale("6", "252.00"), catalog(samosa), { ...settings, blockOutOfStock: true }),
+      /Only 5 pcs of "Samosa" left/,
+    );
+    expectHttp(
+      409,
+      () =>
+        planBill(sale("1", "42.00"), catalog({ ...samosa, stockQty: "0.000" }), { ...settings, blockOutOfStock: true }),
+      /out of stock/,
+    );
     expect(planBill(sale("6", "252.00"), catalog(samosa), settings).stockUse.get(3)).toBe("6.000");
   });
 
@@ -297,19 +378,32 @@ describe("planBill: stock", () => {
 
   it("does not touch stock for untracked items or held bills", () => {
     expect(planBill(request(), catalog(dosa), settings).stockUse.size).toBe(0);
-    const held = planBill(request({ action: "hold", lines: [{ menuItemId: 3, quantity: "50" }], payments: [] }), catalog(samosa), { ...settings, blockOutOfStock: true });
+    const held = planBill(
+      request({ action: "hold", lines: [{ menuItemId: 3, quantity: "50" }], payments: [] }),
+      catalog(samosa),
+      { ...settings, blockOutOfStock: true },
+    );
     expect(held.stockUse.size).toBe(0);
   });
 });
 
 describe("planBill: order details", () => {
   it("keeps the table number only for dine-in", () => {
-    expect(planBill(request({ orderType: "dine_in", tableNo: "T4" }), catalog(dosa), settings)).toMatchObject({ orderType: "dine_in", tableNo: "T4" });
-    expect(planBill(request({ orderType: "takeaway", tableNo: "T4" }), catalog(dosa), settings)).toMatchObject({ orderType: "takeaway", tableNo: null });
+    expect(planBill(request({ orderType: "dine_in", tableNo: "T4" }), catalog(dosa), settings)).toMatchObject({
+      orderType: "dine_in",
+      tableNo: "T4",
+    });
+    expect(planBill(request({ orderType: "takeaway", tableNo: "T4" }), catalog(dosa), settings)).toMatchObject({
+      orderType: "takeaway",
+      tableNo: null,
+    });
   });
 
   it("ignores order types when the feature is off", () => {
-    const plan = planBill(request({ orderType: "dine_in", tableNo: "T4" }), catalog(dosa), { ...settings, orderTypesEnabled: false });
+    const plan = planBill(request({ orderType: "dine_in", tableNo: "T4" }), catalog(dosa), {
+      ...settings,
+      orderTypesEnabled: false,
+    });
     expect(plan.orderType).toBeNull();
     expect(plan.tableNo).toBeNull();
   });
@@ -318,12 +412,18 @@ describe("planBill: order details", () => {
 describe("billSaveSchema", () => {
   it("requires at least one line and a client reference", () => {
     expect(billSaveSchema.safeParse({ action: "complete", clientRef: "abcdefgh", lines: [] }).success).toBe(false);
-    expect(billSaveSchema.safeParse({ action: "complete", clientRef: "x", lines: [{ menuItemId: 1, quantity: "1" }] }).success).toBe(false);
+    expect(
+      billSaveSchema.safeParse({ action: "complete", clientRef: "x", lines: [{ menuItemId: 1, quantity: "1" }] })
+        .success,
+    ).toBe(false);
   });
 
   it("rejects bad quantities", () => {
     for (const quantity of ["0", "-1", "abc", "1.2345", ""]) {
-      expect(billSaveSchema.safeParse({ action: "hold", clientRef: "abcdefgh", lines: [{ menuItemId: 1, quantity }] }).success).toBe(false);
+      expect(
+        billSaveSchema.safeParse({ action: "hold", clientRef: "abcdefgh", lines: [{ menuItemId: 1, quantity }] })
+          .success,
+      ).toBe(false);
     }
   });
 

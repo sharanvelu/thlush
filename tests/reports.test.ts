@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { exportFileName, formatCell, reportExportQuerySchema, reportQuerySchema, reportToCsv, share, sumColumn, type ReportData } from "@/lib/reports";
+import {
+  exportFileName,
+  formatCell,
+  reportExportQuerySchema,
+  reportQuerySchema,
+  reportToCsv,
+  share,
+  sumColumn,
+  type ReportData,
+} from "@/lib/reports";
 
 const report: ReportData = {
   kind: "category",
@@ -13,7 +22,7 @@ const report: ReportData = {
   ],
   rows: [
     { name: "Beverages", revenue: "1200.50", share: "60.0" },
-    { name: "=HYPERLINK(\"x\")", revenue: "800.00", share: "40.0" },
+    { name: '=HYPERLINK("x")', revenue: "800.00", share: "40.0" },
   ],
   totals: { revenue: "2000.50", share: "100.0" },
   chart: null,
@@ -67,5 +76,6 @@ describe("query parsing", () => {
 });
 
 describe("exportFileName", () => {
-  it("names the file after the range", () => expect(exportFileName("tax", "2026-10-01", "2026-10-30", "csv")).toBe("report-tax-2026-10-01_to_2026-10-30.csv"));
+  it("names the file after the range", () =>
+    expect(exportFileName("tax", "2026-10-01", "2026-10-30", "csv")).toBe("report-tax-2026-10-01_to_2026-10-30.csv"));
 });

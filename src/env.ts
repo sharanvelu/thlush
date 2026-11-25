@@ -7,10 +7,7 @@ const optionalString = z.preprocess(
   z.string().optional(),
 );
 
-const optionalUrl = z.preprocess(
-  (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-  z.url().optional(),
-);
+const optionalUrl = z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.url().optional());
 
 const envSchema = z
   .object({
@@ -39,8 +36,7 @@ const envSchema = z
     if (set.length > 0 && set.length < 3) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "OIDC_ISSUER, OIDC_CLIENT_ID and OIDC_CLIENT_SECRET must all be set together (or all left empty).",
+        message: "OIDC_ISSUER, OIDC_CLIENT_ID and OIDC_CLIENT_SECRET must all be set together (or all left empty).",
         path: ["OIDC_ISSUER"],
       });
     }
@@ -75,4 +71,3 @@ export const appEnv: Env["NEXT_PUBLIC_APP_ENV"] =
   process.env.NEXT_PUBLIC_APP_ENV === "production" || process.env.NEXT_PUBLIC_APP_ENV === "staging"
     ? process.env.NEXT_PUBLIC_APP_ENV
     : "local";
-

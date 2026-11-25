@@ -44,7 +44,9 @@ async function usbApi() {
 
 const hex = (n) => n.toString(16).padStart(4, "0");
 const printerInterface = (device) =>
-  device.configurations.flatMap((c) => c.interfaces).find((i) => i.alternates.some((a) => a.interfaceClass === PRINTER_CLASS));
+  device.configurations
+    .flatMap((c) => c.interfaces)
+    .find((i) => i.alternates.some((a) => a.interfaceClass === PRINTER_CLASS));
 
 /** USB printers visible to this process. */
 async function listPrinters() {
@@ -93,7 +95,10 @@ const fail = (e) => {
 if (process.argv.includes("--list")) {
   listPrinters().then((devices) => {
     if (devices.length === 0) console.log("No USB printers found.");
-    for (const d of devices) console.log(`${hex(d.vendorId)}:${hex(d.productId)}  ${d.manufacturerName ?? ""} ${d.productName ?? ""}  serial ${d.serialNumber ?? "-"}`);
+    for (const d of devices)
+      console.log(
+        `${hex(d.vendorId)}:${hex(d.productId)}  ${d.manufacturerName ?? ""} ${d.productName ?? ""}  serial ${d.serialNumber ?? "-"}`,
+      );
   }, fail);
 } else if (process.argv.includes("--test")) {
   const text = Buffer.from("Thlush printer test\nIf the paper is cut after this, ESC/POS is working.\n");
@@ -123,7 +128,8 @@ if (process.argv.includes("--list")) {
     }
     if (req.method === "GET" && req.url === "/health") {
       return listPrinters().then(
-        (devices) => send(200, { ok: devices.length > 0, printers: devices.map((d) => d.productName ?? "USB printer") }),
+        (devices) =>
+          send(200, { ok: devices.length > 0, printers: devices.map((d) => d.productName ?? "USB printer") }),
         (e) => send(500, { ok: false, error: e.message }),
       );
     }

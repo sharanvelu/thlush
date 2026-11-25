@@ -23,7 +23,15 @@ export interface Brand {
   logoUrl: string | null;
 }
 
-export function AppSidebar({ user, brand, features }: { user: SessionUser; brand: Brand; features: { inventory: boolean } }) {
+export function AppSidebar({
+  user,
+  brand,
+  features,
+}: {
+  user: SessionUser;
+  brand: Brand;
+  features: { inventory: boolean };
+}) {
   const pathname = usePathname();
   const { setOpenMobile, isMobile } = useSidebar();
   const groups = navForRole(user.role, features);
@@ -70,11 +78,7 @@ export function AppSidebar({ user, brand, features }: { user: SessionUser; brand
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
-                      <Link
-                        href={item.href}
-                        onClick={closeDrawer}
-                        aria-current={isActive ? "page" : undefined}
-                      >
+                      <Link href={item.href} onClick={closeDrawer} aria-current={isActive ? "page" : undefined}>
                         <Icon aria-hidden />
                         <span>{item.label}</span>
                       </Link>

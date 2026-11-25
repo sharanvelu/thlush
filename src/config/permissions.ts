@@ -49,13 +49,7 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Permission>> = {
   // Everything except user management, settings and custom thermal printing.
   manager: new Set(ALL.filter((p) => !MANAGER_EXCLUDED.includes(p))),
   // Cashier: dashboard, new bill, own bill history, read-only menu and customer lookup.
-  billing: new Set<Permission>([
-    "dashboard.view",
-    "bills.create",
-    "bills.view_own",
-    "menu.view",
-    "customers.view",
-  ]),
+  billing: new Set<Permission>(["dashboard.view", "bills.create", "bills.view_own", "menu.view", "customers.view"]),
 };
 
 export function isRole(value: unknown): value is Role {
@@ -66,10 +60,7 @@ export function hasPermission(role: Role | null | undefined, permission: Permiss
   return role ? ROLE_PERMISSIONS[role].has(permission) : false;
 }
 
-export function hasAnyPermission(
-  role: Role | null | undefined,
-  permissions: readonly Permission[],
-): boolean {
+export function hasAnyPermission(role: Role | null | undefined, permissions: readonly Permission[]): boolean {
   return permissions.some((p) => hasPermission(role, p));
 }
 
@@ -113,8 +104,7 @@ const SORTED_ROUTES = [...ROUTE_PERMISSIONS].sort((a, b) => b[0].length - a[0].l
  */
 export function permissionForPath(pathname: string): Permission | null | undefined {
   for (const [prefix, permission] of SORTED_ROUTES) {
-    const matches =
-      prefix === "/" ? pathname === "/" : pathname === prefix || pathname.startsWith(`${prefix}/`);
+    const matches = prefix === "/" ? pathname === "/" : pathname === prefix || pathname.startsWith(`${prefix}/`);
     if (matches) return permission;
   }
   return undefined;

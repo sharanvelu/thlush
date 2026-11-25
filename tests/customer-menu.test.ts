@@ -33,15 +33,20 @@ const catalog = (items: CachedPosItem[]): CachedPosCatalog => ({
 describe("buildCustomerMenu", () => {
   it("leaves out SKU, tax, stock and packaging details", () => {
     const [section] = buildCustomerMenu(catalog([item({})]));
-    expect(Object.keys(section!.items[0]!).sort()).toEqual(
-      ["addons", "id", "imageSrc", "isVeg", "name", "price", "unit", "variants"],
-    );
+    expect(Object.keys(section!.items[0]!).sort()).toEqual([
+      "addons",
+      "id",
+      "imageSrc",
+      "isVeg",
+      "name",
+      "price",
+      "unit",
+      "variants",
+    ]);
   });
 
   it("hides disabled items and categories with nothing to show", () => {
-    const sections = buildCustomerMenu(
-      catalog([item({ id: 1 }), item({ id: 2, categoryId: 2, status: "disabled" })]),
-    );
+    const sections = buildCustomerMenu(catalog([item({ id: 1 }), item({ id: 2, categoryId: 2, status: "disabled" })]));
     expect(sections.map((s) => s.name)).toEqual(["Tiffin"]);
   });
 

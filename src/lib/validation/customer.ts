@@ -38,16 +38,33 @@ export const customerPatchSchema = z.object(customerShape).partial();
 
 /** "regular, office" typed into one box becomes ["regular", "office"]. */
 export function parseTags(input: string): string[] {
-  return input.split(/[,\n]/).map((t) => t.trim()).filter(Boolean);
+  return input
+    .split(/[,\n]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
 }
 
 export const CUSTOMER_SORTS = [
-  "name_asc", "name_desc", "orders_desc", "orders_asc", "spend_desc", "spend_asc", "visit_desc", "visit_asc", "created_desc",
+  "name_asc",
+  "name_desc",
+  "orders_desc",
+  "orders_asc",
+  "spend_desc",
+  "spend_asc",
+  "visit_desc",
+  "visit_asc",
+  "created_desc",
 ] as const;
 export type CustomerSort = (typeof CUSTOMER_SORTS)[number];
 
 export const customerListQuerySchema = z.object({
-  q: z.string().trim().max(100).transform((v) => v || undefined).optional().catch(undefined),
+  q: z
+    .string()
+    .trim()
+    .max(100)
+    .transform((v) => v || undefined)
+    .optional()
+    .catch(undefined),
   sort: z.enum(CUSTOMER_SORTS).catch("name_asc").default("name_asc"),
   page: z.coerce.number().int().min(1).catch(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).catch(20).default(20),

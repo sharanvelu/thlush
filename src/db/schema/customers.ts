@@ -17,10 +17,7 @@ export const customers = table(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index(ix("customers_name_idx")).on(sql`lower(${t.name})`),
-    index(ix("customers_phone_idx")).on(t.phone),
-  ],
+  (t) => [index(ix("customers_name_idx")).on(sql`lower(${t.name})`), index(ix("customers_phone_idx")).on(t.phone)],
 );
 
 export type CustomerRow = typeof customers.$inferSelect;

@@ -5,7 +5,15 @@ import type { KitchenSlipModel } from "@/lib/receipt";
  * (`break-before: page`), so a thermal printer set to cut at the end of each page
  * cuts the receipt off before the slip and the slip off at its end.
  */
-export function KitchenSlip({ model, paperSize, standalone = false }: { model: KitchenSlipModel; paperSize: string; standalone?: boolean }) {
+export function KitchenSlip({
+  model,
+  paperSize,
+  standalone = false,
+}: {
+  model: KitchenSlipModel;
+  paperSize: string;
+  standalone?: boolean;
+}) {
   return (
     <>
       <style>{`
@@ -26,7 +34,10 @@ export function KitchenSlip({ model, paperSize, standalone = false }: { model: K
           .kitchen-slip.standalone { break-before: auto; page-break-before: auto; }
         }
       `}</style>
-      <article className={standalone ? "kitchen-slip standalone" : "kitchen-slip"} aria-label={`Kitchen slip ${model.kotLabel ?? model.orderNo ?? ""}`}>
+      <article
+        className={standalone ? "kitchen-slip standalone" : "kitchen-slip"}
+        aria-label={`Kitchen slip ${model.kotLabel ?? model.orderNo ?? ""}`}
+      >
         <div className="center title">KITCHEN</div>
         <hr />
         {model.kotLabel ? (
@@ -50,7 +61,9 @@ export function KitchenSlip({ model, paperSize, standalone = false }: { model: K
               <span>x {item.name}</span>
             </div>
             {item.details.map((d) => (
-              <div className="detail" key={d}>{d}</div>
+              <div className="detail" key={d}>
+                {d}
+              </div>
             ))}
           </div>
         ))}

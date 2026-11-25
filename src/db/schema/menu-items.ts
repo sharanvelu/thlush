@@ -1,13 +1,4 @@
-import {
-  boolean,
-  index,
-  jsonb,
-  numeric,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, numeric, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { bigId, bigRef, createdAt, entityStatus, ix, table, updatedAt } from "./_shared";
 import { categories } from "./categories";
 import { users } from "./users";

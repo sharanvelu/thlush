@@ -34,7 +34,10 @@ export function TopItems({ items, ...fmt }: Format & { items: DashboardData["top
             </span>
           </div>
           <div className="h-1.5 rounded-full bg-muted" aria-hidden>
-            <div className="h-full rounded-full bg-primary" style={{ width: `${max > 0 ? (Number(item.quantity) / max) * 100 : 0}%` }} />
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${max > 0 ? (Number(item.quantity) / max) * 100 : 0}%` }}
+            />
           </div>
         </li>
       ))}
@@ -60,7 +63,12 @@ export function LowStock({ data }: { data: NonNullable<DashboardData["lowStock"]
             <li key={item.id} className="flex items-center gap-3 text-sm">
               <Icon className={cn("size-4 shrink-0", out ? "text-destructive" : "text-warning")} aria-hidden />
               <span className="min-w-0 flex-1 truncate">{item.name}</span>
-              <span className={cn("rounded-md px-1.5 py-0.5 text-xs font-medium", out ? "bg-destructive/10 text-destructive" : "bg-warning/20")}>
+              <span
+                className={cn(
+                  "rounded-md px-1.5 py-0.5 text-xs font-medium",
+                  out ? "bg-destructive/10 text-destructive" : "bg-warning/20",
+                )}
+              >
                 {out ? "Out of stock" : "Low"}
               </span>
               <span className="w-24 text-right text-xs tabular-nums text-muted-foreground">
@@ -70,12 +78,24 @@ export function LowStock({ data }: { data: NonNullable<DashboardData["lowStock"]
           );
         })}
       </ul>
-      {data.total > data.items.length ? <p className="mt-3 text-xs text-muted-foreground">and {data.total - data.items.length} more</p> : null}
+      {data.total > data.items.length ? (
+        <p className="mt-3 text-xs text-muted-foreground">and {data.total - data.items.length} more</p>
+      ) : null}
     </>
   );
 }
 
-export function RecentBills({ bills, locale, timeZone, walkIn }: { bills: DashboardData["recentBills"]; locale: string; timeZone: string; walkIn: string }) {
+export function RecentBills({
+  bills,
+  locale,
+  timeZone,
+  walkIn,
+}: {
+  bills: DashboardData["recentBills"];
+  locale: string;
+  timeZone: string;
+  walkIn: string;
+}) {
   if (bills.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
@@ -98,7 +118,12 @@ export function RecentBills({ bills, locale, timeZone, walkIn }: { bills: Dashbo
               </span>
             </span>
             <BillStatusBadge status={bill.status} className="hidden sm:inline-flex" />
-            <span className={cn("w-24 text-right tabular-nums", bill.status !== "completed" && "text-muted-foreground line-through")}>
+            <span
+              className={cn(
+                "w-24 text-right tabular-nums",
+                bill.status !== "completed" && "text-muted-foreground line-through",
+              )}
+            >
               {formatMoney(bill.total, { currency: bill.currency, locale })}
             </span>
           </Link>

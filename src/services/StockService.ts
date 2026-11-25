@@ -40,19 +40,25 @@ const ORDER = {
   name_asc: [asc(sql`lower(${menuItems.name})`)],
   stock_asc: [asc(menuItems.stockQty), asc(sql`lower(${menuItems.name})`)],
   stock_desc: [desc(menuItems.stockQty), asc(sql`lower(${menuItems.name})`)],
-  value_desc: [desc(sql`greatest(${menuItems.stockQty}, 0) * ${menuItems.costPrice}`), asc(sql`lower(${menuItems.name})`)],
+  value_desc: [
+    desc(sql`greatest(${menuItems.stockQty}, 0) * ${menuItems.costPrice}`),
+    asc(sql`lower(${menuItems.name})`),
+  ],
   category_asc: [asc(sql`lower(${categories.name})`), asc(sql`lower(${menuItems.name})`)],
 } as const;
 
 function statusCondition(status: StockQuery["status"]): SQL | undefined {
   if (status === "out") return lte(menuItems.stockQty, "0");
-  if (status === "low") return and(sql`${menuItems.stockQty} > 0`, sql`${menuItems.stockQty} <= ${menuItems.reorderLevel}`);
+  if (status === "low")
+    return and(sql`${menuItems.stockQty} > 0`, sql`${menuItems.stockQty} <= ${menuItems.reorderLevel}`);
   if (status === "in") return sql`${menuItems.stockQty} > 0 and ${menuItems.stockQty} > ${menuItems.reorderLevel}`;
   return undefined;
 }
 type StockQuery = Pick<StockListQuery, "status">;
 
-export async function listStock(query: StockListQuery): Promise<{ rows: StockRow[]; total: number; summary: StockSummary }> {
+export async function listStock(
+  query: StockListQuery,
+): Promise<{ rows: StockRow[]; total: number; summary: StockSummary }> {
   const pattern = query.q ? likePattern(query.q) : null;
   const where = and(
     tracked,
@@ -64,8 +70,15 @@ export async function listStock(query: StockListQuery): Promise<{ rows: StockRow
   const [rows, totals, summary] = await Promise.all([
     db
       .select({
-        id: menuItems.id, name: menuItems.name, sku: menuItems.sku, categoryId: menuItems.categoryId, categoryName: categories.name,
-        unit: menuItems.unit, stock: menuItems.stockQty, reorderLevel: menuItems.reorderLevel, costPrice: menuItems.costPrice,
+        id: menuItems.id,
+        name: menuItems.name,
+        sku: menuItems.sku,
+        categoryId: menuItems.categoryId,
+        categoryName: categories.name,
+        unit: menuItems.unit,
+        stock: menuItems.stockQty,
+        reorderLevel: menuItems.reorderLevel,
+        costPrice: menuItems.costPrice,
       })
       .from(menuItems)
       .innerJoin(categories, eq(categories.id, menuItems.categoryId))
@@ -73,14 +86,19 @@ export async function listStock(query: StockListQuery): Promise<{ rows: StockRow
       .orderBy(...ORDER[query.sort], asc(menuItems.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(menuItems).where(where),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(menuItems)
+      .where(where),
     // The summary describes all tracked stock, not just what the filters show.
     db
       .select({
         n: sql<number>`count(*)`.mapWith(Number),
         value: sql<string>`coalesce(sum(greatest(${menuItems.stockQty}, 0) * ${menuItems.costPrice}), 0)`,
         out: sql<number>`count(*) filter (where ${menuItems.stockQty} <= 0)`.mapWith(Number),
-        low: sql<number>`count(*) filter (where ${menuItems.stockQty} > 0 and ${menuItems.stockQty} <= ${menuItems.reorderLevel})`.mapWith(Number),
+        low: sql<number>`count(*) filter (where ${menuItems.stockQty} > 0 and ${menuItems.stockQty} <= ${menuItems.reorderLevel})`.mapWith(
+          Number,
+        ),
       })
       .from(menuItems)
       .where(tracked),
@@ -115,7 +133,13 @@ export interface TrackedOption {
 /** Tracked items for pickers (adjustments, purchases). */
 export async function listTrackedOptions(): Promise<TrackedOption[]> {
   const rows = await db
-    .select({ id: menuItems.id, name: menuItems.name, unit: menuItems.unit, stock: menuItems.stockQty, costPrice: menuItems.costPrice })
+    .select({
+      id: menuItems.id,
+      name: menuItems.name,
+      unit: menuItems.unit,
+      stock: menuItems.stockQty,
+      costPrice: menuItems.costPrice,
+    })
     .from(menuItems)
     .where(tracked)
     .orderBy(asc(sql`lower(${menuItems.name})`))
@@ -127,20 +151,35 @@ export async function listTrackedOptions(): Promise<TrackedOption[]> {
  * Adds or removes stock and records why, in one transaction. The ledger row is never edited or deleted;
  * a mistake is fixed with another adjustment. Removing more than is on hand is refused.
  */
-export async function adjustStock(input: StockAdjustInput, user: SessionUser): Promise<{ stock: string; delta: string }> {
+export async function adjustStock(
+  input: StockAdjustInput,
+  user: SessionUser,
+): Promise<{ stock: string; delta: string }> {
   return db.transaction(async (tx) => {
-    const [item] = await tx.select().from(menuItems).where(and(eq(menuItems.id, input.menuItemId), isNull(menuItems.deletedAt))).for("update");
+    const [item] = await tx
+      .select()
+      .from(menuItems)
+      .where(and(eq(menuItems.id, input.menuItemId), isNull(menuItems.deletedAt)))
+      .for("update");
     if (!item) throw HttpError.notFound("Item not found.");
-    if (!item.trackStock) throw HttpError.badRequest(`"${item.name}" doesn't track stock. Turn on stock tracking for it in the menu first.`);
+    if (!item.trackStock)
+      throw HttpError.badRequest(
+        `"${item.name}" doesn't track stock. Turn on stock tracking for it in the menu first.`,
+      );
 
     const quantity = new D(input.quantity);
     const delta = input.direction === "add" ? quantity : quantity.negated();
     const next = new D(item.stockQty).plus(delta);
     if (next.isNegative()) {
-      throw HttpError.conflict(`Only ${new D(item.stockQty).toString()} ${item.unit} of "${item.name}" in stock, so ${quantity.toString()} can't be removed.`);
+      throw HttpError.conflict(
+        `Only ${new D(item.stockQty).toString()} ${item.unit} of "${item.name}" in stock, so ${quantity.toString()} can't be removed.`,
+      );
     }
 
-    await tx.update(menuItems).set({ stockQty: next.toFixed(3) }).where(eq(menuItems.id, item.id));
+    await tx
+      .update(menuItems)
+      .set({ stockQty: next.toFixed(3) })
+      .where(eq(menuItems.id, item.id));
     await tx.insert(stockMovements).values({
       menuItemId: item.id,
       delta: delta.toFixed(3),
@@ -150,7 +189,13 @@ export async function adjustStock(input: StockAdjustInput, user: SessionUser): P
       balanceAfter: next.toFixed(3),
     });
     await AuditService.record(
-      { userId: user.id, action: "stock.adjust", entity: "menu_item", entityId: item.id, metadata: { name: item.name, reason: input.reason, delta: delta.toFixed(3), balance: next.toFixed(3) } },
+      {
+        userId: user.id,
+        action: "stock.adjust",
+        entity: "menu_item",
+        entityId: item.id,
+        metadata: { name: item.name, reason: input.reason, delta: delta.toFixed(3), balance: next.toFixed(3) },
+      },
       tx,
     );
     return { stock: next.toString(), delta: delta.toString() };
@@ -173,7 +218,10 @@ export interface MovementRow {
 }
 
 /** The stock ledger, newest first. */
-export async function listMovements(query: MovementQuery, timeZone: string): Promise<{ rows: MovementRow[]; total: number }> {
+export async function listMovements(
+  query: MovementQuery,
+  timeZone: string,
+): Promise<{ rows: MovementRow[]; total: number }> {
   const { start, end } = zonedDayRange(query.from, query.to, timeZone);
   const where = and(
     query.item ? eq(stockMovements.menuItemId, query.item) : undefined,
@@ -184,9 +232,18 @@ export async function listMovements(query: MovementQuery, timeZone: string): Pro
   const [rows, totals] = await Promise.all([
     db
       .select({
-        id: stockMovements.id, createdAt: stockMovements.createdAt, menuItemId: stockMovements.menuItemId, itemName: menuItems.name,
-        unit: menuItems.unit, delta: stockMovements.delta, balanceAfter: stockMovements.balanceAfter, reason: stockMovements.reason,
-        note: stockMovements.note, billId: stockMovements.billId, billNo: bills.billNo, userName: users.name,
+        id: stockMovements.id,
+        createdAt: stockMovements.createdAt,
+        menuItemId: stockMovements.menuItemId,
+        itemName: menuItems.name,
+        unit: menuItems.unit,
+        delta: stockMovements.delta,
+        balanceAfter: stockMovements.balanceAfter,
+        reason: stockMovements.reason,
+        note: stockMovements.note,
+        billId: stockMovements.billId,
+        billNo: bills.billNo,
+        userName: users.name,
       })
       .from(stockMovements)
       .innerJoin(menuItems, eq(menuItems.id, stockMovements.menuItemId))
@@ -196,10 +253,18 @@ export async function listMovements(query: MovementQuery, timeZone: string): Pro
       .orderBy(desc(stockMovements.createdAt), desc(stockMovements.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(stockMovements).where(where),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(stockMovements)
+      .where(where),
   ]);
   return {
-    rows: rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString(), delta: new D(r.delta).toString(), balanceAfter: r.balanceAfter === null ? null : new D(r.balanceAfter).toString() })),
+    rows: rows.map((r) => ({
+      ...r,
+      createdAt: r.createdAt.toISOString(),
+      delta: new D(r.delta).toString(),
+      balanceAfter: r.balanceAfter === null ? null : new D(r.balanceAfter).toString(),
+    })),
     total: totals[0]?.n ?? 0,
   };
 }
@@ -209,16 +274,29 @@ export async function lowStock(limit = 8) {
   const low = and(tracked, lte(menuItems.stockQty, menuItems.reorderLevel));
   const [rows, [count]] = await Promise.all([
     db
-      .select({ id: menuItems.id, name: menuItems.name, stock: menuItems.stockQty, reorderLevel: menuItems.reorderLevel, unit: menuItems.unit })
+      .select({
+        id: menuItems.id,
+        name: menuItems.name,
+        stock: menuItems.stockQty,
+        reorderLevel: menuItems.reorderLevel,
+        unit: menuItems.unit,
+      })
       .from(menuItems)
       .where(low)
       .orderBy(sql`${menuItems.stockQty} - ${menuItems.reorderLevel}`, menuItems.name)
       .limit(limit),
-    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(menuItems).where(low),
+    db
+      .select({ n: sql<number>`count(*)`.mapWith(Number) })
+      .from(menuItems)
+      .where(low),
   ]);
   return {
     total: count?.n ?? 0,
-    items: rows.map((r) => ({ ...r, stock: new D(r.stock).toString(), reorderLevel: new D(r.reorderLevel).toString() })),
+    items: rows.map((r) => ({
+      ...r,
+      stock: new D(r.stock).toString(),
+      reorderLevel: new D(r.reorderLevel).toString(),
+    })),
   };
 }
 export type LowStockAlerts = Awaited<ReturnType<typeof lowStock>>;

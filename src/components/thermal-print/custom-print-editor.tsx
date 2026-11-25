@@ -40,7 +40,8 @@ export function CustomPrintEditor({ paperSize }: { paperSize: PaperSize }) {
     setPending(true);
     try {
       const result = await printCustomText(fields, paperSize);
-      if (result === "printer") toast.success(slips === 1 ? "Sent to the printer." : `Sent ${slips} slips to the printer.`);
+      if (result === "printer")
+        toast.success(slips === 1 ? "Sent to the printer." : `Sent ${slips} slips to the printer.`);
     } finally {
       setPending(false);
     }
@@ -56,7 +57,12 @@ export function CustomPrintEditor({ paperSize }: { paperSize: PaperSize }) {
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h2 className="text-sm font-medium">Text {index + 1}</h2>
                 {fields.length > 1 ? (
-                  <Button variant="ghost" size="sm" onClick={() => remove(field.id)} aria-label={`Remove text ${index + 1}`}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => remove(field.id)}
+                    aria-label={`Remove text ${index + 1}`}
+                  >
                     <Trash2 aria-hidden /> Remove
                   </Button>
                 ) : null}
@@ -71,7 +77,12 @@ export function CustomPrintEditor({ paperSize }: { paperSize: PaperSize }) {
                 rows={4}
                 className="min-h-24 font-mono"
                 // As wide as one printed line, so the text wraps here the way it will on paper.
-                style={{ width: `calc(${width}ch + 1.25rem)`, maxWidth: "100%", textAlign: field.align, fontWeight: field.bold ? 700 : undefined }}
+                style={{
+                  width: `calc(${width}ch + 1.25rem)`,
+                  maxWidth: "100%",
+                  textAlign: field.align,
+                  fontWeight: field.bold ? 700 : undefined,
+                }}
               />
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -83,14 +94,32 @@ export function CustomPrintEditor({ paperSize }: { paperSize: PaperSize }) {
                   onValueChange={(v) => v && update(field.id, { align: v as CustomAlign })}
                   aria-label={`Alignment for text ${index + 1}`}
                 >
-                  <ToggleGroupItem value="left" aria-label="Align left"><AlignLeft aria-hidden /></ToggleGroupItem>
-                  <ToggleGroupItem value="center" aria-label="Align center"><AlignCenter aria-hidden /></ToggleGroupItem>
-                  <ToggleGroupItem value="right" aria-label="Align right"><AlignRight aria-hidden /></ToggleGroupItem>
+                  <ToggleGroupItem value="left" aria-label="Align left">
+                    <AlignLeft aria-hidden />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="center" aria-label="Align center">
+                    <AlignCenter aria-hidden />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="right" aria-label="Align right">
+                    <AlignRight aria-hidden />
+                  </ToggleGroupItem>
                 </ToggleGroup>
-                <Toggle variant="outline" size="sm" pressed={field.bold} onPressedChange={(v) => update(field.id, { bold: v })} aria-label="Bold">
+                <Toggle
+                  variant="outline"
+                  size="sm"
+                  pressed={field.bold}
+                  onPressedChange={(v) => update(field.id, { bold: v })}
+                  aria-label="Bold"
+                >
                   <Bold aria-hidden />
                 </Toggle>
-                <Toggle variant="outline" size="sm" pressed={field.large} onPressedChange={(v) => update(field.id, { large: v })} aria-label="Large text">
+                <Toggle
+                  variant="outline"
+                  size="sm"
+                  pressed={field.large}
+                  onPressedChange={(v) => update(field.id, { large: v })}
+                  aria-label="Large text"
+                >
                   <Maximize2 aria-hidden /> Large
                 </Toggle>
                 <p className="ml-auto text-xs text-muted-foreground tabular-nums">{width} characters per line</p>
@@ -109,7 +138,9 @@ export function CustomPrintEditor({ paperSize }: { paperSize: PaperSize }) {
           {slips > 1 ? `Print ${slips} slips` : "Print"}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">Each text field prints as its own slip, and the paper is cut after each one. Empty fields are skipped.</p>
+      <p className="text-xs text-muted-foreground">
+        Each text field prints as its own slip, and the paper is cut after each one. Empty fields are skipped.
+      </p>
     </div>
   );
 }

@@ -1,21 +1,61 @@
 import { describe, expect, it } from "vitest";
 import { billSaveSchema } from "@/lib/validation/bill";
-import { buildKitchenSlipModel, buildReceiptModel, mailtoUrl, receiptText, receiptTotals, whatsappUrl } from "@/lib/receipt";
+import {
+  buildKitchenSlipModel,
+  buildReceiptModel,
+  mailtoUrl,
+  receiptText,
+  receiptTotals,
+  whatsappUrl,
+} from "@/lib/receipt";
 import { planBill, type PlanItem } from "@/services/bill-plan";
 import { defaultSettings } from "@/config";
 import type { BillDetail } from "@/types/bill";
 
 const item = (id: number, name: string, price: string, rate: string): PlanItem => ({
-  id, name, price, sgst: rate, cgst: rate, status: "active", categoryStatus: "active", deleted: false,
-  unit: "pcs", trackStock: false, stockQty: "0", variants: [], addons: [], packagingCharge: "0.00",
+  id,
+  name,
+  price,
+  sgst: rate,
+  cgst: rate,
+  status: "active",
+  categoryStatus: "active",
+  deleted: false,
+  unit: "pcs",
+  trackStock: false,
+  stockQty: "0",
+  variants: [],
+  addons: [],
+  packagingCharge: "0.00",
 });
 const catalog = new Map([
   [1, item(1, "Masala Dosa", "90.00", "2.5")],
-  [4, { ...item(4, "Cold Coffee", "90.00", "2.5"), variants: [{ name: "Large", priceDelta: "30" }], addons: [{ name: "Extra shot", price: "20" }, { name: "Mayo", price: "10" }] }],
+  [
+    4,
+    {
+      ...item(4, "Cold Coffee", "90.00", "2.5"),
+      variants: [{ name: "Large", priceDelta: "30" }],
+      addons: [
+        { name: "Extra shot", price: "20" },
+        { name: "Mayo", price: "10" },
+      ],
+    },
+  ],
   [2, item(2, "Packaged Water 1L", "20.00", "9")],
   [3, item(3, "Cake Slice", "33.33", "6")],
 ]);
-const PLAN_SETTINGS = { ignoreTax: false, discountsEnabled: true, orderTypesEnabled: true, blockOutOfStock: false, packaging: { orderTypes: [] as Array<"dine_in" | "takeaway" | "delivery">, mode: "per_unit" as const, taxed: true, billAmount: "0.00" } };
+const PLAN_SETTINGS = {
+  ignoreTax: false,
+  discountsEnabled: true,
+  orderTypesEnabled: true,
+  blockOutOfStock: false,
+  packaging: {
+    orderTypes: [] as Array<"dine_in" | "takeaway" | "delivery">,
+    mode: "per_unit" as const,
+    taxed: true,
+    billAmount: "0.00",
+  },
+};
 
 /** Saves a bill through the real planner and returns it the way `getBill` would. */
 function billFrom(overrides: Record<string, unknown>, ignoreTax = false): BillDetail {
@@ -26,19 +66,50 @@ function billFrom(overrides: Record<string, unknown>, ignoreTax = false): BillDe
     payments: [],
     ...overrides,
   });
-  const probe = planBill({ ...input, action: "hold", payments: [] }, catalog, { ...PLAN_SETTINGS, ignoreTax, discountsEnabled: true });
+  const probe = planBill({ ...input, action: "hold", payments: [] }, catalog, {
+    ...PLAN_SETTINGS,
+    ignoreTax,
+    discountsEnabled: true,
+  });
   const paid = planBill(
     { ...input, payments: [{ method: "cash", amount: probe.totals.grandTotal, reference: null }] },
     catalog,
     { ...PLAN_SETTINGS, ignoreTax },
   );
   return {
-    id: 1, billNo: "INV-20261030-0001", status: "completed", createdAt: "2026-10-30T10:00:00.000Z", currency: "INR",
-    subtotal: paid.totals.subtotal, totalDiscount: paid.totals.totalDiscount, totalTax: paid.totals.totalTax,
-    totalAmount: paid.totals.grandTotal, discountType: paid.discount?.type ?? null, discountValue: paid.discount?.value ?? "0.00",
-    amountPaid: paid.amountPaid, changeDue: paid.changeDue, orderType: null, tableNo: null, notes: null, voidReason: null,
-    customer: { id: 1, name: "Asha", phone: "98450 10001", email: "asha@example.com" }, cashier: { id: "u", name: "Charu" },
-    items: paid.lines.map((l, i) => ({ id: i + 1, menuItemId: l.menuItemId, name: l.name, price: l.price, sgst: l.sgst, cgst: l.cgst, quantity: l.quantity, discount: l.discount, total: l.total, options: l.options, sentQty: "0.000", isPackaging: l.isPackaging })),
+    id: 1,
+    billNo: "INV-20261030-0001",
+    status: "completed",
+    createdAt: "2026-10-30T10:00:00.000Z",
+    currency: "INR",
+    subtotal: paid.totals.subtotal,
+    totalDiscount: paid.totals.totalDiscount,
+    totalTax: paid.totals.totalTax,
+    totalAmount: paid.totals.grandTotal,
+    discountType: paid.discount?.type ?? null,
+    discountValue: paid.discount?.value ?? "0.00",
+    amountPaid: paid.amountPaid,
+    changeDue: paid.changeDue,
+    orderType: null,
+    tableNo: null,
+    notes: null,
+    voidReason: null,
+    customer: { id: 1, name: "Asha", phone: "98450 10001", email: "asha@example.com" },
+    cashier: { id: "u", name: "Charu" },
+    items: paid.lines.map((l, i) => ({
+      id: i + 1,
+      menuItemId: l.menuItemId,
+      name: l.name,
+      price: l.price,
+      sgst: l.sgst,
+      cgst: l.cgst,
+      quantity: l.quantity,
+      discount: l.discount,
+      total: l.total,
+      options: l.options,
+      sentQty: "0.000",
+      isPackaging: l.isPackaging,
+    })),
     payments: paid.payments.map((p, i) => ({ id: i + 1, method: p.method, amount: p.amount, reference: p.reference })),
     kots: [],
   };
@@ -47,9 +118,36 @@ function billFrom(overrides: Record<string, unknown>, ignoreTax = false): BillDe
 describe("receiptTotals", () => {
   const cases: Array<[string, Record<string, unknown>]> = [
     ["a plain bill", {}],
-    ["mixed tax rates", { lines: [{ menuItemId: 1, quantity: "2" }, { menuItemId: 2, quantity: "5" }, { menuItemId: 3, quantity: "3" }] }],
-    ["line and bill discounts", { lines: [{ menuItemId: 1, quantity: "2", discount: "7" }, { menuItemId: 3, quantity: "3" }], discount: { type: "percent", value: "12.5" } }],
-    ["a flat bill discount", { lines: [{ menuItemId: 2, quantity: "7" }, { menuItemId: 3, quantity: "1" }], discount: { type: "flat", value: "13" } }],
+    [
+      "mixed tax rates",
+      {
+        lines: [
+          { menuItemId: 1, quantity: "2" },
+          { menuItemId: 2, quantity: "5" },
+          { menuItemId: 3, quantity: "3" },
+        ],
+      },
+    ],
+    [
+      "line and bill discounts",
+      {
+        lines: [
+          { menuItemId: 1, quantity: "2", discount: "7" },
+          { menuItemId: 3, quantity: "3" },
+        ],
+        discount: { type: "percent", value: "12.5" },
+      },
+    ],
+    [
+      "a flat bill discount",
+      {
+        lines: [
+          { menuItemId: 2, quantity: "7" },
+          { menuItemId: 3, quantity: "1" },
+        ],
+        discount: { type: "flat", value: "13" },
+      },
+    ],
   ];
 
   it.each(cases)("rebuilds the saved tax and total for %s", (_name, overrides) => {
@@ -101,7 +199,17 @@ describe("receipt model and sharing", () => {
 
 describe("variants and add-ons on the receipt and the kitchen slip", () => {
   const bill = billFrom({
-    lines: [{ menuItemId: 4, quantity: "2", variant: "Large", addons: [{ name: "Extra shot", quantity: 2 }, { name: "Mayo", quantity: 1 }] }],
+    lines: [
+      {
+        menuItemId: 4,
+        quantity: "2",
+        variant: "Large",
+        addons: [
+          { name: "Extra shot", quantity: 2 },
+          { name: "Mayo", quantity: 1 },
+        ],
+      },
+    ],
   });
   const model = buildReceiptModel(bill, defaultSettings);
 
@@ -130,11 +238,30 @@ describe("variants and add-ons on the receipt and the kitchen slip", () => {
 
   it("gives the kitchen the item with its variant, then the add-ons, and no prices", () => {
     const slip = buildKitchenSlipModel(bill, defaultSettings);
-    expect(slip.items[0]).toEqual({ name: "Cold Coffee (Large)", quantity: "2", details: ["+ Extra shot x2", "+ Mayo"] });
+    expect(slip.items[0]).toEqual({
+      name: "Cold Coffee (Large)",
+      quantity: "2",
+      details: ["+ Extra shot x2", "+ Mayo"],
+    });
   });
 
   it("prints a bill saved before add-on counts the same way", () => {
-    const old = { ...bill, items: [{ ...bill.items[0]!, name: "Cold Coffee (Large + Extra shot, Mayo)", options: { variant: "Large", addons: [{ name: "Extra shot", price: "20.00" }, { name: "Mayo", price: "10.00" }] } }] };
+    const old = {
+      ...bill,
+      items: [
+        {
+          ...bill.items[0]!,
+          name: "Cold Coffee (Large + Extra shot, Mayo)",
+          options: {
+            variant: "Large",
+            addons: [
+              { name: "Extra shot", price: "20.00" },
+              { name: "Mayo", price: "10.00" },
+            ],
+          },
+        },
+      ],
+    };
     const slip = buildKitchenSlipModel(old, defaultSettings);
     expect(slip.items[0]?.name).toBe("Cold Coffee (Large)");
     expect(slip.items[0]?.details).toEqual(["+ Extra shot", "+ Mayo"]);

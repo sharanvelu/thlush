@@ -15,7 +15,9 @@ export default async function MenuPage({ searchParams }: PageProps<"/menu">) {
   if (!allowed) return <Forbidden />;
 
   const raw = await searchParams;
-  const flat = Object.fromEntries(Object.entries(raw).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]));
+  const flat = Object.fromEntries(
+    Object.entries(raw).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]),
+  );
   // Invalid values fall back to defaults, so a hand-edited URL never errors.
   const query = menuListQuerySchema.parse(flat);
 

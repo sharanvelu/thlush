@@ -57,7 +57,10 @@ const menuItemShape = {
   sku: optionalText(64, "SKU"),
   imageUrl: imageUrlSchema.nullish().transform((v) => v ?? null),
   /** true = veg, false = non-veg, null = not applicable. */
-  isVeg: z.boolean().nullish().transform((v) => v ?? null),
+  isVeg: z
+    .boolean()
+    .nullish()
+    .transform((v) => v ?? null),
   variants: z.array(variantSchema).max(10, "At most 10 variants"),
   addons: z.array(addonSchema).max(20, "At most 20 add-ons"),
   /** Stock is only counted for items that track it. */

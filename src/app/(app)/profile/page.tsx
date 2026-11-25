@@ -20,7 +20,13 @@ export default async function ProfilePage() {
   const facts = [
     { icon: Mail, label: "Email", value: profile.email },
     { icon: ShieldCheck, label: "Role", value: <RoleBadge role={profile.role} /> },
-    { icon: Clock, label: "Last sign-in", value: profile.lastLoginAt ? formatDateTime(profile.lastLoginAt, { locale: locale.locale, timeZone: locale.timezone }) : "Never" },
+    {
+      icon: Clock,
+      label: "Last sign-in",
+      value: profile.lastLoginAt
+        ? formatDateTime(profile.lastLoginAt, { locale: locale.locale, timeZone: locale.timezone })
+        : "Never",
+    },
   ];
 
   return (
@@ -37,7 +43,12 @@ export default async function ProfilePage() {
           </div>
         ))}
       </dl>
-      <ProfileForms name={profile.name} email={profile.email} hasPassword={profile.hasPassword} themePreference={profile.themePreference} />
+      <ProfileForms
+        name={profile.name}
+        email={profile.email}
+        hasPassword={profile.hasPassword}
+        themePreference={profile.themePreference}
+      />
     </>
   );
 }

@@ -48,7 +48,10 @@ function Saved({ bill, settings, onNewBill }: { bill: BillDetail; settings: AppS
     <Dialog open onOpenChange={(open) => !open && onNewBill()}>
       <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
         {/* Sits just left of the dialog's own close (x) button, which is at top 2, right 2. */}
-        <p className="absolute top-2 right-11 flex h-7 items-center text-xs text-muted-foreground tabular-nums" aria-live="off">
+        <p
+          className="absolute top-2 right-11 flex h-7 items-center text-xs text-muted-foreground tabular-nums"
+          aria-live="off"
+        >
           Closing in {Math.max(left, 0)}s
         </p>
         <DialogHeader className="items-center text-center">
@@ -61,7 +64,10 @@ function Saved({ bill, settings, onNewBill }: { bill: BillDetail; settings: AppS
         </DialogHeader>
 
         {change.greaterThan(0) ? (
-          <p role="status" className="rounded-lg bg-success/10 px-4 py-3 text-center text-base font-semibold text-success">
+          <p
+            role="status"
+            className="rounded-lg bg-success/10 px-4 py-3 text-center text-base font-semibold text-success"
+          >
             Give back {money(bill.changeDue)}
           </p>
         ) : null}

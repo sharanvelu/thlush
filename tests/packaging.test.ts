@@ -13,7 +13,12 @@ const settings = (patch: Partial<PackagingSettings> = {}): PackagingSettings => 
   ...patch,
 });
 const src = (charge: string, quantity: string, extra: Partial<PackagingSource> = {}): PackagingSource => ({
-  charge, quantity, unit: "pcs", sgst: "2.5", cgst: "2.5", ...extra,
+  charge,
+  quantity,
+  unit: "pcs",
+  sgst: "2.5",
+  cgst: "2.5",
+  ...extra,
 });
 
 describe("packagingLines", () => {
@@ -24,7 +29,9 @@ describe("packagingLines", () => {
   });
 
   it("per unit: charge x quantity", () => {
-    expect(packagingLines([src("10", "3")], "takeaway", settings())).toEqual([{ price: "30.00", sgst: "2.5", cgst: "2.5" }]);
+    expect(packagingLines([src("10", "3")], "takeaway", settings())).toEqual([
+      { price: "30.00", sgst: "2.5", cgst: "2.5" },
+    ]);
   });
 
   it("per line: the charge once per item line, however many units", () => {
@@ -42,7 +49,11 @@ describe("packagingLines", () => {
   });
 
   it("once per bill with a global amount: the global amount replaces the item charges", () => {
-    const lines = packagingLines([src("10", "3"), src("20", "1")], "takeaway", settings({ mode: "per_bill", billAmount: "15" }));
+    const lines = packagingLines(
+      [src("10", "3"), src("20", "1")],
+      "takeaway",
+      settings({ mode: "per_bill", billAmount: "15" }),
+    );
     expect(lines).toEqual([{ price: "15.00", sgst: "2.5", cgst: "2.5" }]);
   });
 
@@ -56,12 +67,20 @@ describe("packagingLines", () => {
   });
 
   it("the global amount is ignored in the other modes, and only counts for the chosen order types", () => {
-    expect(packagingLines([src("10", "3")], "takeaway", settings({ mode: "per_unit", billAmount: "15" }))[0]?.price).toBe("30.00");
+    expect(
+      packagingLines([src("10", "3")], "takeaway", settings({ mode: "per_unit", billAmount: "15" }))[0]?.price,
+    ).toBe("30.00");
     expect(packagingLines([src("10", "3")], "dine_in", settings({ mode: "per_bill", billAmount: "15" }))).toEqual([]);
   });
 
   it("falls back to the highest item charge when the global amount is 0", () => {
-    expect(packagingLines([src("10", "1"), src("20", "1")], "takeaway", settings({ mode: "per_bill", billAmount: "0.00" }))[0]?.price).toBe("20.00");
+    expect(
+      packagingLines(
+        [src("10", "1"), src("20", "1")],
+        "takeaway",
+        settings({ mode: "per_bill", billAmount: "0.00" }),
+      )[0]?.price,
+    ).toBe("20.00");
   });
 
   it("counts a weighed item once per line even per unit", () => {
@@ -79,7 +98,9 @@ describe("packagingLines", () => {
   });
 
   it("untaxed packaging carries no tax rates", () => {
-    expect(packagingLines([src("10", "1")], "takeaway", settings({ taxed: false }))).toEqual([{ price: "10.00", sgst: "0", cgst: "0" }]);
+    expect(packagingLines([src("10", "1")], "takeaway", settings({ taxed: false }))).toEqual([
+      { price: "10.00", sgst: "0", cgst: "0" },
+    ]);
   });
 });
 
@@ -99,27 +120,60 @@ describe("bill discount and packaging", () => {
 });
 
 const item = (id: number, name: string, price: string, packagingCharge: string): PlanItem => ({
-  id, name, price, sgst: "2.50", cgst: "2.50", status: "active", categoryStatus: "active", deleted: false,
-  unit: "pcs", trackStock: false, stockQty: "0", variants: [], addons: [], packagingCharge,
+  id,
+  name,
+  price,
+  sgst: "2.50",
+  cgst: "2.50",
+  status: "active",
+  categoryStatus: "active",
+  deleted: false,
+  unit: "pcs",
+  trackStock: false,
+  stockQty: "0",
+  variants: [],
+  addons: [],
+  packagingCharge,
 });
 const planSettings = (packaging: PackagingSettings): PlanSettings => ({
-  ignoreTax: false, discountsEnabled: true, orderTypesEnabled: true, blockOutOfStock: false, packaging,
+  ignoreTax: false,
+  discountsEnabled: true,
+  orderTypesEnabled: true,
+  blockOutOfStock: false,
+  packaging,
 });
-const catalog = new Map([[1, item(1, "Biryani", "200.00", "10.00")], [2, item(2, "Water", "20.00", "0.00")]]);
+const catalog = new Map([
+  [1, item(1, "Biryani", "200.00", "10.00")],
+  [2, item(2, "Water", "20.00", "0.00")],
+]);
 const request = (overrides: Partial<BillSaveRequest> = {}) =>
   billSaveSchema.parse({
     action: "hold",
     clientRef: "packaging-test-1",
-    lines: [{ menuItemId: 1, quantity: "2" }, { menuItemId: 2, quantity: "1" }],
+    lines: [
+      { menuItemId: 1, quantity: "2" },
+      { menuItemId: 2, quantity: "1" },
+    ],
     ...overrides,
   });
 
 describe("planBill with packaging", () => {
   it("adds a Packaging line after the items for takeaway, taxed, and outside the discount", () => {
-    const plan = planBill(request({ orderType: "takeaway", discount: { type: "percent", value: "10" } }), catalog, planSettings(settings()));
+    const plan = planBill(
+      request({ orderType: "takeaway", discount: { type: "percent", value: "10" } }),
+      catalog,
+      planSettings(settings()),
+    );
     const last = plan.lines.at(-1);
     expect(plan.lines).toHaveLength(3);
-    expect(last).toMatchObject({ name: "Packaging", isPackaging: true, menuItemId: null, price: "20.00", quantity: "1.000", discount: "0.00" });
+    expect(last).toMatchObject({
+      name: "Packaging",
+      isPackaging: true,
+      menuItemId: null,
+      price: "20.00",
+      quantity: "1.000",
+      discount: "0.00",
+    });
     // Items come to 2 x 200 + 20 = 420, so 10% is 42. The 20 of packaging is not discounted, then taxed at 5%.
     expect(plan.totals.billDiscount).toBe("42.00");
     expect(last?.total).toBe("21.00"); // 20 + 5% tax
@@ -131,7 +185,10 @@ describe("planBill with packaging", () => {
   });
 
   it("adds nothing when order types are switched off", () => {
-    const plan = planBill(request({ orderType: "takeaway" }), catalog, { ...planSettings(settings()), orderTypesEnabled: false });
+    const plan = planBill(request({ orderType: "takeaway" }), catalog, {
+      ...planSettings(settings()),
+      orderTypesEnabled: false,
+    });
     expect(plan.lines.some((l) => l.isPackaging)).toBe(false);
   });
 

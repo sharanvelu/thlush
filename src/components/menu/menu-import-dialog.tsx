@@ -24,7 +24,18 @@ interface MenuImportDialogProps {
 
 const TEMPLATE = toCsv([
   ["Name", "Category", "Price", "SGST %", "CGST %", "Currency", "Status", "SKU", "Type", "Description"],
-  ["Masala Dosa", "South Indian", "90", "2.5", "2.5", "INR", "active", "SIN-001", "Veg", "Crisp dosa with potato filling"],
+  [
+    "Masala Dosa",
+    "South Indian",
+    "90",
+    "2.5",
+    "2.5",
+    "INR",
+    "active",
+    "SIN-001",
+    "Veg",
+    "Crisp dosa with potato filling",
+  ],
   ["Chicken Biryani", "North Indian", "260", "2.5", "2.5", "INR", "active", "NIN-004", "Non-veg", ""],
 ]);
 
@@ -131,8 +142,8 @@ export function MenuImportDialog({ open, onOpenChange, onImported }: MenuImportD
             </p>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Required columns: Name, Category, Price. Optional: SGST %, CGST %, Currency, Status, SKU, Type, Description.
-              Missing categories are created for you.
+              Required columns: Name, Category, Price. Optional: SGST %, CGST %, Currency, Status, SKU, Type,
+              Description. Missing categories are created for you.
             </p>
           )}
 
@@ -163,8 +174,12 @@ export function MenuImportDialog({ open, onOpenChange, onImported }: MenuImportD
                     <CheckCircle2 className="size-4" aria-hidden /> Ready to import
                   </p>
                   <ul className="mt-2 space-y-1">
-                    <li>{preview.created} new {preview.created === 1 ? "item" : "items"}</li>
-                    <li>{preview.updated} {preview.updated === 1 ? "item" : "items"} updated</li>
+                    <li>
+                      {preview.created} new {preview.created === 1 ? "item" : "items"}
+                    </li>
+                    <li>
+                      {preview.updated} {preview.updated === 1 ? "item" : "items"} updated
+                    </li>
                     {preview.newCategories.length > 0 ? (
                       <li>New categories: {preview.newCategories.join(", ")}</li>
                     ) : null}

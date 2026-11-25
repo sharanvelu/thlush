@@ -35,14 +35,17 @@ export async function putImageFromDataUrl(dataUrl: string): Promise<string> {
 }
 
 /** Opens a stored photo for streaming. Returns null when the object is gone. */
-export async function openImage(ref: string): Promise<{ contentType: string; body: ReadableStream<Uint8Array> } | null> {
+export async function openImage(
+  ref: string,
+): Promise<{ contentType: string; body: ReadableStream<Uint8Array> } | null> {
   const key = keyOf(ref);
   try {
     const file = await files().download(key);
     const ext = key.split(".").pop() ?? "";
     return { contentType: CONTENT_TYPES[ext] ?? file.contentType ?? "application/octet-stream", body: file.stream() };
   } catch (error) {
-    if ((error as { code?: string }).code !== "NotFound") console.error("Could not read image from object storage", key, error);
+    if ((error as { code?: string }).code !== "NotFound")
+      console.error("Could not read image from object storage", key, error);
     return null;
   }
 }
